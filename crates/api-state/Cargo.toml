@@ -8,7 +8,6 @@ base64 = "0.22"
 utils = { path = "../utils" }
 oauth2 = { path = "../oauth2" }
 log = "0.4"
-jsonwebtoken = { version = "9" }
 reqwest = "0.12"
 rocket = { version = "0.5", features = ["json"] }
 rocket_okapi = { version = "0.8", features = [ "rapidoc" ]}
