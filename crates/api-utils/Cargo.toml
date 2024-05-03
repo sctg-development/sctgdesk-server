@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 log = "0.4"
-rocket = { version = "0.5.0", features = ["json", "tls", "secrets"] }
+rocket = { version = "0.5", features = ["json", "secrets"] }
 tracing = "0.1"
 rand = "0.8"
 base64 = "0.22"
