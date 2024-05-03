@@ -55,6 +55,7 @@ jobs:
     - name: Extract openapi3.json
       run: |
         target/${{ matrix.target }}/release/sctgdesk-api-server &
+        sleep 5
         curl http://127.0.0.1:21114/openapi.json > openapi3.json
         kill $!
     
