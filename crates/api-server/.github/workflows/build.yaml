@@ -19,17 +19,17 @@ jobs:
         #     os: macos-latest
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
+        #   - target: aarch64-unknown-linux-gnu
+        #     os: ubuntu-latest
 
     steps:
     - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-            
+
     - uses: actions/checkout@v2
 
     - name: Install dependencies
@@ -51,6 +51,43 @@ jobs:
       with:
         command: build
         args: --release --target ${{ matrix.target }}
+    
+    - name: Extract openapi3.json
+      run: |
+        target/${{ matrix.target }}/release/sctgdesk-api-server &
+        curl http://127.0.0.1:21114/openapi.json > openapi3.json
+        kill $!
+    
+    - name: Create Rapidoc index.html
+      run: |
+        mkdir -p rapidoc
+        cat <<EOF > rapidoc/index.html
+        <!DOCTYPE html>
+        <!-- Important: must specify -->
+        <html>
+        <head>
+            <meta charset="utf-8" />
+            <!-- Important: rapi-doc uses utf8 charecters -->
+            <script
+            type="module"
+            src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"
+            ></script>
+        </head>
+        <body>
+            <rapi-doc
+            spec-url="data:application/json;base64,$(base64 -w 0 openapi3.json)"
+            render-style="read"
+            >
+            </rapi-doc>
+        </body>
+        </html>
+        EOF
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
