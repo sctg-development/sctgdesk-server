@@ -24,6 +24,6 @@ utils = { path = "libs/utils" }
 oauth2 = { path = "libs/oauth2" }
 uuid = { version = "1.0", features = ["v4"] }
 base64 = "0.22"
-url = { version = "2.3", features = ["serde"] }
+url = { version = "2", features = ["serde"] }
 urlencoding = "2.1"
 serde_json = "1.0"
