@@ -24,3 +24,30 @@ The server requires an `oauth2.toml` configuration file to function. By default,
 
 The server is designed to be fully documented using OpenAPI. The documentation is generated using `rocket_okapi`. The server serves the Rapidoc module at `/api/doc`, which allows visualizing and testing the various API routes.  
 Obviously without any test possible a Rapidoc server is deployed at [https://sctg-development.github.io/sctgdesk-api-server/](https://sctg-development.github.io/sctgdesk-api-server/)
+
+## Integration with Rustdesk-Server
+
+The server is designed to be integrated with the Rustdesk-server you can easily integrate it by modifying the main.rs:
+
+```rust
+use sctgdesk_api_server::build_rocket;
+
+#[rocket::main]
+async fn start_rocket() -> ResultType<()> {
+    let port = get_arg_or("port", RENDEZVOUS_PORT.to_string()).parse::<i32>()?;
+    let figment = rocket::Config::figment()
+        .merge(("address", "0.0.0.0"))
+        .merge(("port", port-2))
+        .merge(("log_level", LogLevel::Debug))
+        .merge(("secret_key", "wJq+s/xvwZjmMX3ev0p4gQTs9Ej5wt0brsk3ZGhoBTg="))
+        .merge(("limits", Limits::new().limit("json", 2.mebibytes())));
+    let _rocket = build_rocket(figment).await.ignite().await?.launch().await?;
+    Ok(())
+}
+```
+
+and in the `main` function:
+
+```rust
+start_rocket();
+```
