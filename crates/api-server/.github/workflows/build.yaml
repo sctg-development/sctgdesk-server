@@ -54,15 +54,16 @@ jobs:
     
     - name: Extract openapi3.json
       run: |
+        mkdir -p docs
         target/${{ matrix.target }}/release/sctgdesk-api-server &
         sleep 5
-        curl http://127.0.0.1:21114/openapi.json > openapi3.json
+        curl http://127.0.0.1:21114/openapi.json > docs/openapi3.json
         kill $!
     
     - name: Create Rapidoc index.html
       run: |
-        mkdir -p rapidoc
-        cat <<EOF > rapidoc/index.html
+        mkdir -p docs
+        cat <<EOF > docs/index.html
         <!DOCTYPE html>
         <!-- Important: must specify -->
         <html>
@@ -76,7 +77,7 @@ jobs:
         </head>
         <body>
             <rapi-doc
-            spec-url="data:application/json;base64,$(base64 -w 0 openapi3.json)"
+            spec-url="data:application/json;base64,$(base64 -w 0 docs/openapi3.json)"
             render-style="read"
             >
             </rapi-doc>
