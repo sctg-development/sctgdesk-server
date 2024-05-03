@@ -1,0 +1,22 @@
+[package]
+name = "state"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+base64 = "0.22"
+utils = { path = "../utils" }
+oauth2 = { path = "../oauth2" }
+log = "0.4"
+jsonwebtoken = { version = "9" }
+reqwest = "0.12"
+rocket = { version = "0.5.0", features = ["json", "tls"] }
+rocket_okapi = { version = "0.8", features = [ "rapidoc" ]}
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.20", features = ["macros", "rt-multi-thread", "sync"] }
+tracing = "0.1"
+tracing-subscriber = "0.2"
+sqlx = { version = "0.6.0", features = ["sqlite", "runtime-tokio-rustls", "macros", "chrono", "json"] }
+bcrypt = "0.13"
+uuid = { version = "1.0", features = ["v4"] }

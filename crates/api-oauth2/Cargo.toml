@@ -1,0 +1,23 @@
+[package]
+name = "oauth2"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+base64 = "0.22"
+log = "0.4"
+reqwest = "0.12"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+url = "2.2"
+tempfile = "3"
+
+[features]
+default = []
+
+[lib]
+name = "oauth2"
+path = "src/lib.rs"
+
+
