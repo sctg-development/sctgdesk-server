@@ -77,6 +77,7 @@ jobs:
         </head>
         <body>
             <rapi-doc
+            allow-spec-file-download="true"
             spec-url="data:application/json;base64,$(base64 -w 0 docs/openapi3.json)"
             render-style="read"
             >
