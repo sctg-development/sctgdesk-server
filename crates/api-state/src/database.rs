@@ -583,7 +583,7 @@ impl Database {
         .execute(&mut conn.conn)
         .await;
         if res.is_err() {
-            log::debug!(
+            log::error!(
                 "get_user_for_oauth2 error while creating/getting user: {:?}",
                 res
             );
@@ -597,7 +597,7 @@ impl Database {
         ).fetch_one(&mut conn.conn).await;
 
         if res.is_err() {
-            log::debug!(
+            log::error!(
                 "get_user_for_oauth2 error while creating/getting user: {:?}",
                 res
             );
@@ -655,14 +655,14 @@ impl Database {
         .fetch_one(&mut conn)
         .await;
         if res.is_err() {
-            log::debug!("get_ab_personal_guid error: {:?}", res);
+            log::error!("get_ab_personal_guid error: {:?}", res);
             return None;
         }
 
         let res = res.unwrap();
         let guid_u8: Result<[u8; 16], _> = res.guid.try_into();
         if guid_u8.is_err() {
-            log::debug!("get_ab_personal_guid error: {:?}", guid_u8);
+            log::error!("get_ab_personal_guid error: {:?}", guid_u8);
             return None;
         }
         let guid_u8: [u8; 16] = guid_u8.unwrap();
@@ -675,7 +675,7 @@ impl Database {
         let mut conn = self.pool.acquire().await.unwrap();
         let ab_guid = Uuid::parse_str(ab);
         if ab_guid.is_err() {
-            log::debug!("add_peer_to_ab error: {:?}", ab_guid);
+            log::error!("add_peer_to_ab error: {:?}", ab_guid);
             return None;
         }
         let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
@@ -708,7 +708,7 @@ impl Database {
         .execute(&mut conn)
         .await;
         if res.is_err() {
-            log::debug!("add_peer_to_ab error: {:?}", res);
+            log::error!("add_peer_to_ab error: {:?}", res);
             return None;
         }
         Some(())
@@ -718,7 +718,7 @@ impl Database {
         let mut conn = self.pool.acquire().await.unwrap();
         let ab_guid = Uuid::parse_str(ab);
         if ab_guid.is_err() {
-            log::debug!("get_peers_from_ab error: {:?}", ab_guid);
+            log::error!("get_peers_from_ab error: {:?}", ab_guid);
             return None;
         }
         let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
@@ -736,7 +736,7 @@ impl Database {
         .fetch_all(&mut conn)
         .await;
         if res.is_err() {
-            log::debug!("get_peers_from_ab error: {:?}", res);
+            log::error!("get_peers_from_ab error: {:?}", res);
             return None;
         }
         let res = res.unwrap();
@@ -753,7 +753,7 @@ impl Database {
         let mut conn = self.pool.acquire().await.unwrap();
         let ab_guid = Uuid::parse_str(ab);
         if ab_guid.is_err() {
-            log::debug!("delete_peer_from_ab error: {:?}", ab_guid);
+            log::error!("delete_peer_from_ab error: {:?}", ab_guid);
             return None;
         }
         let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
@@ -767,7 +767,7 @@ impl Database {
         .execute(&mut conn)
         .await;
         if res.is_err() {
-            log::debug!("delete_peer_from_ab error: {:?}", res);
+            log::error!("delete_peer_from_ab error: {:?}", res);
             return None;
         }
         Some(())
@@ -777,7 +777,7 @@ impl Database {
         let mut conn = self.pool.acquire().await.unwrap();
         let ab_guid = Uuid::parse_str(ab);
         if ab_guid.is_err() {
-            log::debug!("get_ab_peer error: {:?}", ab_guid);
+            log::error!("get_ab_peer error: {:?}", ab_guid);
             return None;
         }
         let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
@@ -796,7 +796,7 @@ impl Database {
         .fetch_one(&mut conn)
         .await;
         if res.is_err() {
-            log::debug!("get_ab_peer error: {:?}", res);
+            log::error!("get_ab_peer error: {:?}", res);
             return None;
         }
         let res = res.unwrap();
@@ -808,7 +808,7 @@ impl Database {
         let mut conn = self.pool.acquire().await.unwrap();
         let ab_guid = Uuid::parse_str(ab);
         if ab_guid.is_err() {
-            log::debug!("add_tag_to_ab error: {:?}", ab_guid);
+            log::error!("add_tag_to_ab error: {:?}", ab_guid);
             return None;
         }
         let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
@@ -826,7 +826,7 @@ impl Database {
         .execute(&mut conn)
         .await;
         if res.is_err() {
-            log::debug!("add_tag_to_ab error: {:?}", res);
+            log::error!("add_tag_to_ab error: {:?}", res);
             return None;
         }
         Some(())
@@ -836,7 +836,7 @@ impl Database {
         let mut conn = self.pool.acquire().await.unwrap();
         let ab_guid = Uuid::parse_str(ab);
         if ab_guid.is_err() {
-            log::debug!("get_ab_tags error: {:?}", ab_guid);
+            log::error!("get_ab_tags error: {:?}", ab_guid);
             return None;
         }
         let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
@@ -855,7 +855,7 @@ impl Database {
         .fetch_all(&mut conn)
         .await;
         if res.is_err() {
-            log::debug!("get_ab_tags error: {:?}", res);
+            log::error!("get_ab_tags error: {:?}", res);
             return None;
         }
         let res = res.unwrap();
@@ -874,7 +874,7 @@ impl Database {
         let mut conn = self.pool.acquire().await.unwrap();
         let ab_guid = Uuid::parse_str(ab);
         if ab_guid.is_err() {
-            log::debug!("get_ab_tag error: {:?}", ab_guid);
+            log::error!("get_ab_tag error: {:?}", ab_guid);
             return None;
         }
         let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
@@ -895,7 +895,7 @@ impl Database {
         .fetch_all(&mut conn)
         .await;
         if res.is_err() {
-            log::debug!("get_ab_tags error: {:?}", res);
+            log::error!("get_ab_tags error: {:?}", res);
             return None;
         }
         let res = res.unwrap();
@@ -913,7 +913,7 @@ impl Database {
         let mut conn = self.pool.acquire().await.unwrap();
         let ab_guid = Uuid::parse_str(ab);
         if ab_guid.is_err() {
-            log::debug!("rename_ab_tag error: {:?}", ab_guid);
+            log::error!("rename_ab_tag error: {:?}", ab_guid);
             return None;
         }
         let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
@@ -929,7 +929,7 @@ impl Database {
         .execute(&mut conn)
         .await;
         if res.is_err() {
-            log::debug!("rename_ab_tag error: {:?}", res);
+            log::error!("rename_ab_tag error: {:?}", res);
             return None;
         }
         Some(())
@@ -939,7 +939,7 @@ impl Database {
         let mut conn = self.pool.acquire().await.unwrap();
         let ab_guid = Uuid::parse_str(ab);
         if ab_guid.is_err() {
-            log::debug!("delete_tag_from_ab error: {:?}", ab_guid);
+            log::error!("delete_tag_from_ab error: {:?}", ab_guid);
             return None;
         }
         let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
@@ -953,7 +953,7 @@ impl Database {
         .execute(&mut conn)
         .await;
         if res.is_err() {
-            log::debug!("delete_tag_from_ab error: {:?}", res);
+            log::error!("delete_tag_from_ab error: {:?}", res);
             return None;
         }
         Some(())
