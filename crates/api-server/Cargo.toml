@@ -3,12 +3,12 @@ name = "sctgdesk-api-server"
 version = "0.1.0"
 edition = "2021"
 
-[workspace]
-members = [
-    "libs/utils",
-    "libs/state",
-    "libs/oauth2"
-]
+# [workspace]
+# members = [
+#     "libs/utils",
+#     "libs/state",
+#     "libs/oauth2"
+# ]
 
 [dependencies]
 log = "0.4"
