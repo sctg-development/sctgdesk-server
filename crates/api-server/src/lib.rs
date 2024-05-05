@@ -57,6 +57,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 heartbeat,
                 sysinfo,
                 groups,
+                group_add,
                 users,
                 user_add,
                 user_enable,
@@ -235,7 +236,7 @@ async fn ab(
 }
 
 /// Get the current user
-#[openapi(tag = "todo")]
+#[openapi(tag = "User (todo)")]
 #[post("/api/currentUser", format = "application/json", data = "<request>")]
 async fn current_user(
     state: &State<ApiState>,
@@ -320,7 +321,7 @@ async fn sysinfo(state: &State<ApiState>, request: Json<utils::SystemInfo>) -> S
 }
 
 /// Get the list of users
-#[openapi(tag = "User")]
+#[openapi(tag = "User (todo)")]
 #[get("/api/user-list?<current>&<pageSize>", format = "application/json")]
 async fn users(
     state: &State<ApiState>,
@@ -350,6 +351,26 @@ async fn groups(
     pageSize: u32,
 ) -> Result<Json<UsersResponse>, status::NotFound<()>> {
     log::debug!("users");
+    state.check_maintenance().await;
+
+    let response = UsersResponse {
+        msg: "success".to_string(),
+        total: 1,
+        data: "[{}]".to_string(),
+    };
+
+    Ok(Json(response))
+}
+
+/// Add a group
+#[openapi(tag = "todo")]
+#[post("/api/group", format = "application/json", data = "<request>")]
+async fn group_add(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<AddUserRequest>,
+) -> Result<Json<UsersResponse>, status::Unauthorized<()>> {
+    log::debug!("create_user");
     state.check_maintenance().await;
 
     let response = UsersResponse {
@@ -808,7 +829,7 @@ async fn strategies(
 }
 
 /// Add user
-#[openapi(tag = "User")]
+#[openapi(tag = "User (todo)")]
 #[post("/api/user", format = "application/json", data = "<request>")]
 async fn user_add(
     state: &State<ApiState>,
@@ -828,7 +849,7 @@ async fn user_add(
 }
 
 /// Enable users
-#[openapi(tag = "todo")]
+#[openapi(tag = "User (todo)")]
 #[post("/api/enable-users", format = "application/json", data = "<request>")]
 async fn user_enable(
     state: &State<ApiState>,
