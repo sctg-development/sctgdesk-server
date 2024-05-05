@@ -7,6 +7,7 @@ use std::env;
 use api::ActionResponse;
 use extended_json::ExtendedJson;
 
+use rocket::http::hyper::request;
 use rocket::{delete, put};
 
 use state::{self};
@@ -23,7 +24,10 @@ use rocket::{
     self, figment::Figment, get, post, response::status, serde::json::Json, Build, Rocket, State,
 };
 use state::{ApiState, UserPasswordInfo};
-use utils::{include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddressBook};
+use utils::{
+    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook,
+    EnableUserRequest, OidcSettingsResponse,
+};
 use utils::{
     AbGetResponse, AbRequest, AuditRequest, CurrentUserRequest, CurrentUserResponse,
     HeartbeatRequest, LoginReply, LoginRequest, LogoutReply, UserInfo, UsersResponse,
@@ -52,11 +56,17 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 logout,
                 heartbeat,
                 sysinfo,
+                groups,
                 users,
+                user_add,
+                user_enable,
                 peers,
+                strategies,
                 oidc_auth,
                 oidc_state,
                 oidc_callback,
+                oidc_add,
+                oidc_get,
                 ab_peer_add,
                 ab_peer_update,
                 ab_peer_delete,
@@ -310,11 +320,13 @@ async fn sysinfo(state: &State<ApiState>, request: Json<utils::SystemInfo>) -> S
 }
 
 /// Get the list of users
-#[openapi(tag = "todo")]
-#[get("/api/users", format = "application/json")]
+#[openapi(tag = "User")]
+#[get("/api/user-list?<current>&<pageSize>", format = "application/json")]
 async fn users(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    _user: AuthenticatedAdmin,
+    current: u32,
+    pageSize: u32,
 ) -> Result<Json<UsersResponse>, status::NotFound<()>> {
     log::debug!("users");
     state.check_maintenance().await;
@@ -323,6 +335,27 @@ async fn users(
         msg: "success".to_string(),
         total: 1,
         data: "[{\"name\":\"Default user\",\"email\":\"test@world.com\",\"note\":\"note\",\"status\":1,\"is_admin\":true}]".to_string(),
+    };
+
+    Ok(Json(response))
+}
+
+/// Get the list of groups
+#[openapi(tag = "todo")]
+#[get("/api/groups?<current>&<pageSize>", format = "application/json")]
+async fn groups(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    current: u32,
+    pageSize: u32,
+) -> Result<Json<UsersResponse>, status::NotFound<()>> {
+    log::debug!("users");
+    state.check_maintenance().await;
+
+    let response = UsersResponse {
+        msg: "success".to_string(),
+        total: 1,
+        data: "[{}]".to_string(),
     };
 
     Ok(Json(response))
@@ -583,7 +616,11 @@ async fn ab_tag_update(
 
 /// Rename a tag
 #[openapi(tag = "address book")]
-#[put("/api/ab/tag/rename/<ab>", format = "application/json", data = "<request>")]
+#[put(
+    "/api/ab/tag/rename/<ab>",
+    format = "application/json",
+    data = "<request>"
+)]
 async fn ab_tag_rename(
     state: &State<ApiState>,
     _user: AuthenticatedUser,
@@ -593,14 +630,16 @@ async fn ab_tag_rename(
     state.check_maintenance().await;
     let ab_tag_old_name = request.0.old;
     let ab_tag_new_name = request.0.new;
-    
+
     let ab_tag_old = state.get_ab_tag(ab, ab_tag_old_name.as_str()).await;
     if ab_tag_old.is_none() {
         return Err(status::Unauthorized::<()>(()));
     }
     let mut ab_tag_new = ab_tag_old.unwrap();
     ab_tag_new.name = ab_tag_new_name;
-    state.rename_ab_tag(ab, ab_tag_old_name.as_str(), ab_tag_new).await;
+    state
+        .rename_ab_tag(ab, ab_tag_old_name.as_str(), ab_tag_new)
+        .await;
     Ok(ActionResponse::Empty)
 }
 
@@ -618,7 +657,7 @@ async fn ab_tag_delete(
     }
     let tags_to_delete = request.0;
     state.check_maintenance().await;
-    state.delete_ab_tags(ab,tags_to_delete).await;
+    state.delete_ab_tags(ab, tags_to_delete).await;
     Ok(ActionResponse::Empty)
 }
 
@@ -719,7 +758,9 @@ async fn ab_peer_update(
     ab_peer.platform = ab_peer.platform.or(old_ab_peer.platform);
     ab_peer.alias = ab_peer.alias.or(old_ab_peer.alias);
     ab_peer.tags = ab_peer.tags.or(old_ab_peer.tags);
-    ab_peer.force_always_relay = ab_peer.force_always_relay.or(old_ab_peer.force_always_relay);
+    ab_peer.force_always_relay = ab_peer
+        .force_always_relay
+        .or(old_ab_peer.force_always_relay);
     ab_peer.rdp_port = ab_peer.rdp_port.or(old_ab_peer.rdp_port);
     ab_peer.rdp_username = ab_peer.rdp_username.or(old_ab_peer.rdp_username);
     ab_peer.login_name = ab_peer.login_name.or(old_ab_peer.login_name);
@@ -731,11 +772,7 @@ async fn ab_peer_update(
 
 /// Delete peer
 #[openapi(tag = "address book")]
-#[delete(
-    "/api/ab/peer/<ab>",
-    format = "application/json",
-    data = "<request>"
-)]
+#[delete("/api/ab/peer/<ab>", format = "application/json", data = "<request>")]
 async fn ab_peer_delete(
     state: &State<ApiState>,
     _user: AuthenticatedUser,
@@ -747,6 +784,91 @@ async fn ab_peer_delete(
     }
     let peers_to_delete = request.0;
     state.check_maintenance().await;
-    state.delete_ab_peer(ab,peers_to_delete).await;
+    state.delete_ab_peer(ab, peers_to_delete).await;
     Ok(ActionResponse::Empty)
+}
+
+/// List strategies
+#[openapi(tag = "todo")]
+#[get("/api/stategies", format = "application/json")]
+async fn strategies(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+) -> Result<Json<UsersResponse>, status::NotFound<()>> {
+    log::debug!("peers");
+    state.check_maintenance().await;
+
+    let response = UsersResponse {
+        msg: "success".to_string(),
+        total: 1,
+        data: "[{}]".to_string(),
+    };
+
+    Ok(Json(response))
+}
+
+/// Add user
+#[openapi(tag = "User")]
+#[post("/api/user", format = "application/json", data = "<request>")]
+async fn user_add(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<AddUserRequest>,
+) -> Result<Json<UsersResponse>, status::Unauthorized<()>> {
+    log::debug!("create_user");
+    state.check_maintenance().await;
+
+    let response = UsersResponse {
+        msg: "success".to_string(),
+        total: 1,
+        data: "[{}]".to_string(),
+    };
+
+    Ok(Json(response))
+}
+
+/// Enable users
+#[openapi(tag = "todo")]
+#[post("/api/enable-users", format = "application/json", data = "<request>")]
+async fn user_enable(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<EnableUserRequest>,
+) -> Result<Json<UsersResponse>, status::Unauthorized<()>> {
+    log::debug!("create_user");
+    state.check_maintenance().await;
+
+    let response = UsersResponse {
+        msg: "success".to_string(),
+        total: 1,
+        data: "[{}]".to_string(),
+    };
+
+    Ok(Json(response))
+}
+
+/// Add OIDC Provider
+#[openapi(tag = "todo")]
+#[put("/api/oidc/settings", format = "application/json", data = "<request>")]
+async fn oidc_add(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<EnableUserRequest>,
+) -> Result<Json<EnableUserRequest>, status::Unauthorized<()>> {
+    log::debug!("create_user");
+    state.check_maintenance().await;
+
+    Err(status::Unauthorized::<()>(()))
+}
+
+/// Get OIDC Providers
+#[openapi(tag = "todo")]
+#[get("/api/oidc/settings", format = "application/json")]
+async fn oidc_get(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+) -> Result<Json<OidcSettingsResponse>, status::Unauthorized<()>> {
+    log::debug!("create_user");
+    state.check_maintenance().await;
+    Err(status::Unauthorized::<()>(()))
 }

@@ -517,3 +517,39 @@ struct JwtClaims {
    iss: String,
    aud: String,
 }
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct AddUserRequest {
+    name: String,
+    password: String,
+    #[serde(rename = "confirm-password")]
+    confirm_password: String,
+    email: String,
+    is_admin: bool,
+    group_name: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct EnableUserRequest {
+    rows: Vec<String>,
+    disable: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct Provider {
+    name: String,
+    order_index: u32,
+    enabled: bool,
+    client_id: String,
+    client_secret: String,
+    authorization_endpoint: String,
+    token_endpoint: String,
+    userinfo_endpoint: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct OidcSettingsResponse {
+    max_auth_count: u32,
+    callback_url: String,
+    providers: Vec<Provider>,
+}
