@@ -5,12 +5,12 @@ pub fn get_host(headers: HashMap<String, String>) -> String {
     let mut proto = "http".to_string(); 
 
     // Check if the headers contain the X-Forwarded-Proto header
-    if let Some(proto_in_headers) = headers.get("X-Forwarded-Proto") {
+    if let Some(proto_in_headers) = headers.get("x-forwarded-proto") {
         proto = proto_in_headers.to_string();
     }
 
     // Check if the headers contain the X-Forwarded-Host header
-    if let Some(host_in_headers) = headers.get("X-Forwarded-Host") {
+    if let Some(host_in_headers) = headers.get("x-forwarded-host") {
         return format!("{}://{}", proto, host_in_headers);
     }
 
