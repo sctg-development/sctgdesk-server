@@ -394,6 +394,39 @@ pub struct User {
     note: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, JsonSchema)]
+pub struct UpdateUserRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub password: Option<String>,
+    #[serde(default, rename = "confirm-password", skip_serializing_if = "Option::is_none")]
+    pub confirm_password: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub is_admin: Option<bool>,
+    #[serde(default, rename = "group_name", skip_serializing_if = "Option::is_none")]
+    pub group_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub status: Option<i32>,
+}
+impl Default for UpdateUserRequest {
+    fn default() -> Self {
+        UpdateUserRequest {
+            name: None,
+            password: None,
+            confirm_password: None,
+            email: None,
+            is_admin: None,
+            group_name: None,
+            note: None,
+            status: None,
+        }
+    }
+}
 #[derive(Serialize, Deserialize, Clone, JsonSchema, Debug)]
 pub struct OidcDeviceInfo {
     pub name: String,

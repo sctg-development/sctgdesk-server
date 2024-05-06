@@ -12,6 +12,7 @@ use std::path::Path;
 use utils::types::AddressBook;
 use utils::AbPeer;
 use utils::AbTag;
+use utils::UpdateUserRequest;
 use utils::UserListResponse;
 
 use base64::prelude::{Engine as _, BASE64_STANDARD};
@@ -1123,5 +1124,57 @@ impl Database {
             users.push(user);
         }
         Some(users)
+    }
+
+    pub async fn user_update(
+        &self,
+        user_id: UserId,
+        user_parameters: UpdateUserRequest,
+    ) -> Option<()> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let mut query = "UPDATE user SET ".to_string();
+        let mut query_params = Vec::new();
+        if user_parameters.name.is_some() {
+            query.push_str("name = ?, ");
+            query_params.push(user_parameters.name.unwrap());
+        }
+        if user_parameters.email.is_some() {
+            query.push_str("email = ?, ");
+            query_params.push(user_parameters.email.unwrap());
+        }
+        if user_parameters.note.is_some() {
+            query.push_str("note = ?, ");
+            query_params.push(user_parameters.note.unwrap());
+        }
+        if user_parameters.password.is_some() && user_parameters.confirm_password.is_some() {
+            let password = user_parameters.password.unwrap();
+            let confirm_password = user_parameters.confirm_password.unwrap();
+            if password == confirm_password {
+                let password_hashed = UserPasswordInfo::hash_password(password.as_str());
+                query.push_str("password = ?, ");
+                query_params.push(password_hashed);
+            }
+        }
+        if let Some(status) = user_parameters.status {
+            query.push_str("status = ?, ");
+            query_params.push(status.to_string());
+        }
+        if let Some(is_admin) = user_parameters.is_admin {
+            query.push_str("role = ?, ");
+            query_params.push(is_admin.to_string());
+        }
+        query.pop();
+        query.pop();
+
+        query.push_str(" WHERE guid = ?");
+
+        log::debug!("query: {:?}", query);
+        let mut res = sqlx::query(&query);
+        for param in query_params {
+            res = res.bind(param);
+        }
+        let res = res.bind(user_id).execute(&mut conn).await;
+
+        Some(())
     }
 }

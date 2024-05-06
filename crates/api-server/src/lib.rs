@@ -8,7 +8,6 @@ use api::ActionResponse;
 use extended_json::ExtendedJson;
 
 use rocket::form::validate::Len;
-use rocket::http::hyper::request;
 use rocket::{delete, put};
 
 use state::{self};
@@ -26,8 +25,7 @@ use rocket::{
 };
 use state::{ApiState, UserPasswordInfo};
 use utils::{
-    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook,
-    EnableUserRequest, OidcSettingsResponse, UserList,
+    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook, EnableUserRequest, OidcSettingsResponse, UpdateUserRequest, UserList
 };
 use utils::{
     AbGetResponse, AbRequest, AuditRequest, CurrentUserRequest, CurrentUserResponse,
@@ -62,6 +60,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 users,
                 user_add,
                 user_enable,
+                user_update,
                 peers,
                 strategies,
                 oidc_auth,
@@ -896,6 +895,25 @@ async fn user_enable(
     Ok(Json(response))
 }
 
+/// Update current user password
+#[openapi(tag = "User (todo)")]
+#[put("/api/user", format = "application/json", data = "<request>")]
+async fn user_update(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    request: Json<UpdateUserRequest>,
+) -> Result<Json<UsersResponse>, status::Unauthorized<()>> {
+    log::debug!("update_user");
+    state.check_maintenance().await;
+    let response = UsersResponse {
+        msg: "success".to_string(),
+        total: 1,
+        data: "[{}]".to_string(),
+    };
+    let user_update = request.0;
+    state.user_update(user.info.user_id, user_update).await;
+    Ok(Json(response))
+}
 /// Add OIDC Provider
 #[openapi(tag = "todo")]
 #[put("/api/oidc/settings", format = "application/json", data = "<request>")]
