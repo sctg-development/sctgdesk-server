@@ -91,22 +91,22 @@ jobs:
         </html>
         EOF
 
-    # - name: Upload artifact
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: ${{ matrix.target }}
-    #     path: target/${{ matrix.target }}/release/
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.target }}
+        path: target/${{ matrix.target }}/release/
 
     - name: Publish CI binary (${{ matrix.target }})
       continue-on-error: true
       run: |
-        zip -r /tmp/linux-ubuntu-22.04_ci_${{ matrix.target }}.zip target/${{ matrix.target }}/release/scgdesk-api-server
-    - name: Upload Release Assets binaries for Ubuntu 22.04 amd64
+        zip -r /tmp/${{ matrix.os }}_ci_${{ matrix.target }}.zip target/${{ matrix.target }}/release/sctgdesk-api-server
+    - name: Upload Release Assets binaries for ${{ matrix.os }} ${{ matrix.target }}
       uses: softprops/action-gh-release@v2
       continue-on-error: true
       with:
         files: |
-          /tmp/linux-ubuntu-22.04_ci_${{ matrix.target }}.zip
+          /tmp/${{ matrix.os }}_ci_${{ matrix.target }}.zip
           docs/openapi3.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
