@@ -105,6 +105,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       continue-on-error: true
       with:
+        tag_name: nightly
         files: |
           /tmp/${{ matrix.os }}_ci_${{ matrix.target }}.zip
           docs/openapi3.json
