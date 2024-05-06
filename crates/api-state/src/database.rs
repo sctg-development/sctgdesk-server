@@ -12,6 +12,7 @@ use std::path::Path;
 use utils::types::AddressBook;
 use utils::AbPeer;
 use utils::AbTag;
+use utils::UserListResponse;
 
 use base64::prelude::{Engine as _, BASE64_STANDARD};
 
@@ -1041,5 +1042,86 @@ impl Database {
             return None;
         }
         Some(())
+    }
+
+    pub async fn get_all_users(
+        &self,
+        name: Option<&str>,
+        email: Option<&str>,
+        current: u32,
+        page_size: u32,
+    ) -> Option<Vec<UserListResponse>> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let mut email_filter = "%";
+        let mut name_filter = "%";
+        if email.is_some() {
+            email_filter = email.unwrap();
+        }
+        if name.is_some() {
+            name_filter = name.unwrap();
+        }
+        let current = {
+            if current < 1 {
+                1
+            } else {
+                current
+            }
+        };
+        let offset = ((current - 1) * page_size) as i32;
+        let page_size = page_size as i32;
+
+        let res = sqlx::query!(
+            r#"
+            SELECT
+                user.guid as id,
+                user.status as "active!: i32",
+                user.role as "admin!: bool",
+                user.name as username,
+                user.email as email,
+                user.note as note,
+                grp.name as group_name
+            FROM
+                user
+                LEFT JOIN grp
+                    ON user.grp = grp.guid
+            WHERE
+                user.name LIKE ?
+                AND user.email LIKE ?
+            LIMIT ?
+            OFFSET ?
+        "#,
+            name_filter,
+            email_filter,
+            page_size,
+            offset
+        )
+        .fetch_all(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("get_all_users error: {:?}", res);
+            return None;
+        }
+        let res = res.unwrap();
+        let mut users: Vec<UserListResponse> = Vec::new();
+        for row in res {
+            let guid_u8: Result<[u8; 16], _> = row.id.try_into();
+            if guid_u8.is_err() {
+                log::error!("get_ab_personal_guid error: {:?}", guid_u8);
+                return None;
+            }
+            let guid_u8: [u8; 16] = guid_u8.unwrap();
+            let guid = Uuid::from_bytes(guid_u8).to_string();
+            let user = UserListResponse {
+                guid: guid,
+                name: row.username,
+                email: row.email.unwrap_or("".to_string()),
+                note: row.note,
+                status: row.active,
+                is_admin: row.admin,
+                group_name: row.group_name.unwrap_or("Defaut".to_string()),
+            };
+            users.push(user);
+        }
+        Some(users)
     }
 }

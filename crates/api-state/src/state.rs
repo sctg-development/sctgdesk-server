@@ -15,7 +15,7 @@ use std::{
 use oauth2::ProviderConfig;
 
 use tokio::sync::RwLock;
-use utils::{AbPeer, AbTag, AddUserRequest, AddressBook, OidcState, Token};
+use utils::{AbPeer, AbTag, AddUserRequest, AddressBook, OidcState, Token, UserListResponse};
 
 
 pub struct ApiState {
@@ -571,6 +571,11 @@ impl ApiState {
     /// Change user status
     pub async fn user_change_status(&self, user: &str, disable: bool)-> Option<()> {
         self.db.user_change_status(user, disable as u32).await
+    }
+
+    /// Get all users
+    pub async fn get_all_users(&self, name: Option<&str>, email: Option<&str>, current: u32, page_size: u32) -> Option<Vec<UserListResponse>> {
+        self.db.get_all_users(name,email,current,page_size).await
     }
 
 }

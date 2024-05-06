@@ -7,6 +7,7 @@ use std::env;
 use api::ActionResponse;
 use extended_json::ExtendedJson;
 
+use rocket::form::validate::Len;
 use rocket::http::hyper::request;
 use rocket::{delete, put};
 
@@ -26,7 +27,7 @@ use rocket::{
 use state::{ApiState, UserPasswordInfo};
 use utils::{
     include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook,
-    EnableUserRequest, OidcSettingsResponse,
+    EnableUserRequest, OidcSettingsResponse, UserList,
 };
 use utils::{
     AbGetResponse, AbRequest, AuditRequest, CurrentUserRequest, CurrentUserResponse,
@@ -322,20 +323,26 @@ async fn sysinfo(state: &State<ApiState>, request: Json<utils::SystemInfo>) -> S
 
 /// Get the list of users
 #[openapi(tag = "User (todo)")]
-#[get("/api/user-list?<current>&<pageSize>", format = "application/json")]
+#[get("/api/user-list?<current>&<pageSize>&<email>&<name>", format = "application/json")]
 async fn users(
     state: &State<ApiState>,
     _user: AuthenticatedAdmin,
     current: u32,
     pageSize: u32,
-) -> Result<Json<UsersResponse>, status::NotFound<()>> {
+    email: Option<&str>,
+    name: Option<&str>,
+) -> Result<Json<UserList>, status::NotFound<()>> {
     log::debug!("users");
     state.check_maintenance().await;
 
-    let response = UsersResponse {
+    let res = state.get_all_users(name,email,current, pageSize).await;
+    if res.is_none() {
+        return Err(status::NotFound::<()>(()));
+    }
+    let response = UserList {
         msg: "success".to_string(),
-        total: 1,
-        data: "[{\"name\":\"Default user\",\"email\":\"test@world.com\",\"note\":\"note\",\"status\":1,\"is_admin\":true}]".to_string(),
+        total: res.len() as u32,
+        data: res.unwrap(),
     };
 
     Ok(Json(response))

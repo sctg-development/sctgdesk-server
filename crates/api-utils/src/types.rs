@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use serde::de::Visitor;
-use serde::{Deserialize, Deserializer, Serialize};
 use rocket_okapi::okapi::schemars;
 use rocket_okapi::JsonSchema;
+use serde::de::Visitor;
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::Token;
 
@@ -34,7 +34,9 @@ impl<'de> Visitor<'de> for BoolVisitor {
         match value {
             "true" | "1" => Ok(Some(true)),
             "false" | "0" => Ok(Some(false)),
-            _ => Err(serde::de::Error::custom("expected 'true', 'false', '0', '1'")),
+            _ => Err(serde::de::Error::custom(
+                "expected 'true', 'false', '0', '1'",
+            )),
         }
     }
 
@@ -77,8 +79,8 @@ pub struct AddressBook {
 
 impl AddressBook {
     pub fn empty() -> Self {
-        Self { 
-            ab: "{}".to_string() 
+        Self {
+            ab: "{}".to_string(),
         }
     }
 }
@@ -165,7 +167,6 @@ pub struct Ab {
     pub peers: Vec<AbPeer>,
 }
 
-
 #[derive(Serialize, Debug, JsonSchema)]
 pub struct AbGetResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -179,14 +180,14 @@ pub struct AbGetResponse {
 pub struct AbPersonal {
     pub guid: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>
+    pub error: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, JsonSchema)]
 pub struct AbSettingsResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
-    pub max_peer_one_ab: u32
+    pub max_peer_one_ab: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, JsonSchema)]
@@ -215,7 +216,7 @@ pub struct AbSharedProfilesResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
     pub total: u32,
-    pub data: Vec<AbProfile>
+    pub data: Vec<AbProfile>,
 }
 
 impl Default for AbSharedProfilesResponse {
@@ -223,7 +224,7 @@ impl Default for AbSharedProfilesResponse {
         AbSharedProfilesResponse {
             error: None,
             total: 0,
-            data: Vec::new()
+            data: Vec::new(),
         }
     }
 }
@@ -232,7 +233,7 @@ impl Default for AbSharedProfilesResponse {
 pub struct AbPeer {
     pub id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub hash: Option<String>, 
+    pub hash: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -245,15 +246,26 @@ pub struct AbPeer {
     pub alias: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<Vec<String>>,
-    #[serde(rename = "forceAlwaysRelay",default, skip_serializing_if = "Option::is_none", deserialize_with = "from_str_to_bool", serialize_with = "from_bool_to_str")]
+    #[serde(
+        rename = "forceAlwaysRelay",
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "from_str_to_bool",
+        serialize_with = "from_bool_to_str"
+    )]
     pub force_always_relay: Option<bool>,
     #[serde(rename = "rdpPort")]
     pub rdp_port: Option<String>,
-    #[serde(rename = "rdpUsername",skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "rdpUsername", skip_serializing_if = "Option::is_none")]
     pub rdp_username: Option<String>,
-    #[serde(rename = "loginName",skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "loginName", skip_serializing_if = "Option::is_none")]
     pub login_name: Option<String>, //login username
-    #[serde(skip_serializing_if = "Option::is_none",default, deserialize_with = "from_str_to_bool", serialize_with = "from_bool_to_str")]
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        default,
+        deserialize_with = "from_str_to_bool",
+        serialize_with = "from_bool_to_str"
+    )]
     pub same_server: Option<bool>,
 }
 impl Default for AbPeer {
@@ -321,14 +333,14 @@ pub struct AbPeersResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
     pub total: u32,
-    pub data: Vec<AbPeer>
+    pub data: Vec<AbPeer>,
 }
 impl Default for AbPeersResponse {
     fn default() -> Self {
         AbPeersResponse {
             error: None,
             total: 0,
-            data: Vec::new()
+            data: Vec::new(),
         }
     }
 }
@@ -337,7 +349,7 @@ impl AbPeersResponse {
         AbPeersResponse {
             error: None,
             total: 1,
-            data: vec![AbPeer::default_test()]
+            data: vec![AbPeer::default_test()],
         }
     }
 }
@@ -362,7 +374,7 @@ pub struct SystemInfoRequest {
     pub version: String,
 }
 
-#[derive(Serialize,Debug, JsonSchema)]
+#[derive(Serialize, Debug, JsonSchema)]
 pub struct UsersResponse {
     pub msg: String,
     pub total: u32,
@@ -406,13 +418,13 @@ pub struct OidcAuthRequest {
     pub uuid: String,
 }
 
-#[derive(Serialize, Deserialize,JsonSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct OidcAuthUrl {
     pub code: String,
     pub url: String,
 }
 
-#[derive(Serialize, Deserialize,JsonSchema, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug)]
 pub struct AuthQueryParams {
     pub code: String,
     pub id: String,
@@ -427,8 +439,7 @@ pub enum OidcUserStatus {
     Normal = 1,
     Unverified = -1,
 }
-impl Default for OidcUserStatus
-{
+impl Default for OidcUserStatus {
     fn default() -> Self {
         OidcUserStatus::Normal
     }
@@ -471,21 +482,20 @@ pub struct OidcUserInfo {
     pub email_verification: bool,
     pub email_alarm_notification: bool,
     pub login_device_whitelist: Vec<String>,
-    pub other: HashMap<String, String>
+    pub other: HashMap<String, String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OidcState {
-    pub id: String, // is id of the Rustdesk client
-    pub uuid: String, // is uuid of the Rustdesk client
+    pub id: String,           // is id of the Rustdesk client
+    pub uuid: String,         // is uuid of the Rustdesk client
     pub code: Option<String>, // is openid_code
     pub auth_token: Option<String>,
     pub redirect_url: Option<String>,
     pub callback_url: Option<String>,
     pub provider_config: Option<oauth2::ProviderConfig>,
 }
-impl Default for OidcState
-{
+impl Default for OidcState {
     fn default() -> Self {
         OidcState {
             id: "".to_string(),
@@ -494,7 +504,7 @@ impl Default for OidcState
             auth_token: None,
             redirect_url: None,
             callback_url: None,
-            provider_config: None
+            provider_config: None,
         }
     }
 }
@@ -509,13 +519,13 @@ pub struct OidcTokenResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
 struct JwtClaims {
-   sub: String,
-   email: String,
-   name: String,
-   iat: i64,
-   exp: i64,
-   iss: String,
-   aud: String,
+    sub: String,
+    email: String,
+    name: String,
+    iat: i64,
+    exp: i64,
+    iss: String,
+    aud: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, JsonSchema)]
@@ -552,4 +562,22 @@ pub struct OidcSettingsResponse {
     max_auth_count: u32,
     callback_url: String,
     providers: Vec<Provider>,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct UserListResponse {
+    pub guid: String,
+    pub name: String,
+    pub email: String,
+    pub note: Option<String>,
+    pub status: i32,
+    pub group_name: String,
+    pub is_admin: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct UserList {
+    pub msg: String,
+    pub total: u32,
+    pub data: Vec<UserListResponse>,
 }
