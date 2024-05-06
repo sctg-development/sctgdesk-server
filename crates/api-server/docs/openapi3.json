@@ -1,0 +1,2024 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "sctgdesk-api-server",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/login": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "description": "Login",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginReply"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/login-options": {
+      "get": {
+        "tags": [
+          "login"
+        ],
+        "description": "Login options\n\nThis is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable\n\n# Limitations\n\nCurrently it uses the client id as the user id the limitation is that the client cannot retrieve its address book if the client uses a different client. For having a `real` user name. We need to add a step after the Oauth2 authorization code is exchanged for an access token.",
+        "operationId": "login_options",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/ab": {
+      "get": {
+        "tags": [
+          "address book legacy"
+        ],
+        "description": "Get the user's legacy address book",
+        "operationId": "ab_get",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbGetResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "address book legacy"
+        ],
+        "description": "Set the user's address book",
+        "operationId": "ab",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/get": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Get the user's address book",
+        "operationId": "ab_post",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbGetResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/currentUser": {
+      "post": {
+        "tags": [
+          "User (todo)"
+        ],
+        "description": "Get the current user",
+        "operationId": "current_user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CurrentUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/audit": {
+      "post": {
+        "tags": [
+          "todo"
+        ],
+        "description": "Audit",
+        "operationId": "audit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuditRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "description": "Log the user out",
+        "operationId": "logout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CurrentUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutReply"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/heartbeat": {
+      "post": {
+        "tags": [
+          "peer"
+        ],
+        "description": "Heartbeat\n\nFrequently the client hits the /api/heartbeat endpoint. It updates the last_online field of the peer.",
+        "operationId": "heartbeat",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeartbeatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sysinfo": {
+      "post": {
+        "tags": [
+          "peer"
+        ],
+        "description": "Set the system info",
+        "operationId": "sysinfo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemInfo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groups": {
+      "get": {
+        "tags": [
+          "todo"
+        ],
+        "description": "Get the list of groups",
+        "operationId": "groups",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/group": {
+      "post": {
+        "tags": [
+          "todo"
+        ],
+        "description": "Add a group",
+        "operationId": "group_add",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/user-list": {
+      "get": {
+        "tags": [
+          "User (todo)"
+        ],
+        "description": "Get the list of users",
+        "operationId": "users",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/user": {
+      "post": {
+        "tags": [
+          "User (todo)"
+        ],
+        "description": "Add user",
+        "operationId": "user_add",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/enable-users": {
+      "post": {
+        "tags": [
+          "User (todo)"
+        ],
+        "description": "Enable users",
+        "operationId": "user_enable",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnableUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/peers": {
+      "get": {
+        "tags": [
+          "todo"
+        ],
+        "description": "Get the list of peers",
+        "operationId": "peers",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/stategies": {
+      "get": {
+        "tags": [
+          "todo"
+        ],
+        "description": "List strategies",
+        "operationId": "strategies",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/oidc/auth": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "description": "OIDC Auth request\n\nThis entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses",
+        "operationId": "oidc_auth",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OidcAuthRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcAuthUrl"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/oidc/auth-query": {
+      "get": {
+        "tags": [
+          "login"
+        ],
+        "description": "OIDC State request\n\nThis entrypoint is called by the client for getting the status of the OIDC session it returns an empty json object if the session is not found it returns an access token if the session is found",
+        "operationId": "oidc_state",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uuid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcResponse",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/oidc/callback": {
+      "get": {
+        "tags": [
+          "login"
+        ],
+        "description": "OIDC Auth callback\n\nThis entrypoint is the OAuth2 callback. It exchanges the code for an access token and stores it in the state",
+        "operationId": "oidc_callback",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/oidc/settings": {
+      "get": {
+        "tags": [
+          "todo"
+        ],
+        "description": "Get OIDC Providers",
+        "operationId": "oidc_get",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcSettingsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "todo"
+        ],
+        "description": "Add OIDC Provider",
+        "operationId": "oidc_add",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnableUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnableUserRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/ab/peer/add/{ab}": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Add peer",
+        "operationId": "ab_peer_add",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbPeer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/peer/update/{ab}": {
+      "put": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Update peer",
+        "operationId": "ab_peer_update",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbPeer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/peer/{ab}": {
+      "delete": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Delete peer",
+        "operationId": "ab_peer_delete",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/peers": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "description": "List peers",
+        "operationId": "ab_peers",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "ab",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbPeersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/personal": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Address book",
+        "operationId": "ab_personal",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbPersonal"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/tags/{ab}": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Get the tags",
+        "operationId": "ab_tags",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AbTag"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/tag/add/{ab}": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Add a tag",
+        "operationId": "ab_tag_add",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbTag"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/tag/update/{ab}": {
+      "put": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Update a tag",
+        "operationId": "ab_tag_update",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbTag"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/tag/rename/{ab}": {
+      "put": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Rename a tag",
+        "operationId": "ab_tag_rename",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbTagRenameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/tag/{ab}": {
+      "delete": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Delete a tag",
+        "operationId": "ab_tag_delete",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/shared/profiles": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Shared profile",
+        "operationId": "ab_shared",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbSharedProfilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/settings": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Settings",
+        "operationId": "ab_settings",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbSettingsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LoginReply": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "type",
+          "user"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserInfo"
+          },
+          "access_token": {
+            "$ref": "#/components/schemas/Token"
+          }
+        }
+      },
+      "UserInfo": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "Token": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "maxItems": 32,
+        "minItems": 32
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "password",
+          "username",
+          "uuid"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string"
+          }
+        }
+      },
+      "AbGetResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "string"
+          }
+        }
+      },
+      "AbRequest": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "string"
+          }
+        }
+      },
+      "CurrentUserResponse": {
+        "type": "object",
+        "required": [
+          "error",
+          "name"
+        ],
+        "properties": {
+          "error": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CurrentUserRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "uuid"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditRequest": {
+        "type": "object",
+        "properties": {
+          "Id": {
+            "default": 0,
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0
+          },
+          "action": {
+            "default": "",
+            "type": "string"
+          },
+          "id": {
+            "default": "",
+            "type": "string"
+          },
+          "ip": {
+            "default": "",
+            "type": "string"
+          },
+          "uuid": {
+            "default": "",
+            "type": "string"
+          }
+        }
+      },
+      "LogoutReply": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "string"
+          }
+        }
+      },
+      "HeartbeatRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "modified_at",
+          "uuid",
+          "ver"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "modified_at": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "uuid": {
+            "type": "string"
+          },
+          "ver": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "SystemInfo": {
+        "type": "object",
+        "properties": {
+          "cpu": {
+            "type": "string",
+            "nullable": true
+          },
+          "hostname": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "memory": {
+            "type": "string",
+            "nullable": true
+          },
+          "os": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "uuid": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "string",
+            "nullable": true
+          },
+          "ip": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UsersResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "msg",
+          "total"
+        ],
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "string"
+          }
+        }
+      },
+      "AddUserRequest": {
+        "type": "object",
+        "required": [
+          "confirm-password",
+          "email",
+          "group_name",
+          "is_admin",
+          "name",
+          "password"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "confirm-password": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "is_admin": {
+            "type": "boolean"
+          },
+          "group_name": {
+            "type": "string"
+          }
+        }
+      },
+      "EnableUserRequest": {
+        "type": "object",
+        "required": [
+          "disable",
+          "rows"
+        ],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "disable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "OidcAuthUrl": {
+        "type": "object",
+        "required": [
+          "code",
+          "url"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "OidcAuthRequest": {
+        "type": "object",
+        "required": [
+          "deviceInfo",
+          "id",
+          "op",
+          "uuid"
+        ],
+        "properties": {
+          "deviceInfo": {
+            "$ref": "#/components/schemas/OidcDeviceInfo"
+          },
+          "id": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string"
+          }
+        }
+      },
+      "OidcDeviceInfo": {
+        "type": "object",
+        "required": [
+          "name",
+          "os",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "os": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "OidcResponse": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "secret",
+          "tfa_type",
+          "type",
+          "user"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "tfa_type": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/OidcUser"
+          }
+        }
+      },
+      "OidcUser": {
+        "type": "object",
+        "required": [
+          "email",
+          "info",
+          "is_admin",
+          "name",
+          "note",
+          "status",
+          "third_auth_type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "info": {
+            "$ref": "#/components/schemas/OidcUserInfo"
+          },
+          "is_admin": {
+            "type": "boolean"
+          },
+          "third_auth_type": {
+            "type": "string"
+          }
+        }
+      },
+      "OidcUserInfo": {
+        "type": "object",
+        "required": [
+          "email_alarm_notification",
+          "email_verification",
+          "login_device_whitelist",
+          "other"
+        ],
+        "properties": {
+          "email_verification": {
+            "type": "boolean"
+          },
+          "email_alarm_notification": {
+            "type": "boolean"
+          },
+          "login_device_whitelist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "other": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "OidcSettingsResponse": {
+        "type": "object",
+        "required": [
+          "callback_url",
+          "max_auth_count",
+          "providers"
+        ],
+        "properties": {
+          "max_auth_count": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "callback_url": {
+            "type": "string"
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Provider"
+            }
+          }
+        }
+      },
+      "Provider": {
+        "type": "object",
+        "required": [
+          "authorization_endpoint",
+          "client_id",
+          "client_secret",
+          "enabled",
+          "name",
+          "order_index",
+          "token_endpoint",
+          "userinfo_endpoint"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "order_index": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret": {
+            "type": "string"
+          },
+          "authorization_endpoint": {
+            "type": "string"
+          },
+          "token_endpoint": {
+            "type": "string"
+          },
+          "userinfo_endpoint": {
+            "type": "string"
+          }
+        }
+      },
+      "AbPeer": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "hostname": {
+            "type": "string",
+            "nullable": true
+          },
+          "platform": {
+            "type": "string",
+            "nullable": true
+          },
+          "alias": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "forceAlwaysRelay": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "rdpPort": {
+            "type": "string",
+            "nullable": true
+          },
+          "rdpUsername": {
+            "type": "string",
+            "nullable": true
+          },
+          "loginName": {
+            "type": "string",
+            "nullable": true
+          },
+          "same_server": {
+            "type": "boolean",
+            "nullable": true
+          }
+        }
+      },
+      "AbPeersResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "total"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbPeer"
+            }
+          }
+        }
+      },
+      "AbPersonal": {
+        "type": "object",
+        "required": [
+          "guid"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AbTag": {
+        "type": "object",
+        "required": [
+          "color",
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "AbTagRenameRequest": {
+        "type": "object",
+        "required": [
+          "new",
+          "old"
+        ],
+        "properties": {
+          "old": {
+            "type": "string"
+          },
+          "new": {
+            "type": "string"
+          }
+        }
+      },
+      "AbSharedProfilesResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "total"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbProfile"
+            }
+          }
+        }
+      },
+      "AbProfile": {
+        "type": "object",
+        "required": [
+          "guid",
+          "name",
+          "owner",
+          "rule"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "rule": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "AbSettingsResponse": {
+        "type": "object",
+        "required": [
+          "max_peer_one_ab"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "max_peer_one_ab": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "authorization": {
+        "description": "Requires an API key to access, format the key as a 256 bit base64 encoded string like `Ak4DJ9IDYTpaceqBlAlK5pGJq595ERpq6haBaADg_lA`.",
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "256 bit base64 encoded string"
+      },
+      "authorization_admin": {
+        "description": "Requires an Admin API key to access, format the key as a 256 bit base64 encoded string like `o5Zci3V8o2QIWBDrRgDNxXwrfmX3Gk3sRjY5I302dzU=`.",
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "256 bit base64 encoded string"
+      }
+    }
+  }
+}
