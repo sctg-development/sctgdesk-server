@@ -839,6 +839,18 @@ async fn user_add(
     log::debug!("create_user");
     state.check_maintenance().await;
 
+    let user_parameters = request.0;
+    if user_parameters.password != user_parameters.confirm_password {
+        return Ok(Json(UsersResponse {
+            msg: "error: Passwords mismatch".to_string(),
+            total: 0,
+            data: "[{}]".to_string(),
+        }));
+    }
+    let res = state.add_user(user_parameters).await;
+    if res.is_none() {
+        return Err(status::Unauthorized::<()>(()));
+    }
     let response = UsersResponse {
         msg: "success".to_string(),
         total: 1,

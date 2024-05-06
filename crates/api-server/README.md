@@ -49,5 +49,40 @@ async fn start_rocket() -> ResultType<()> {
 and in the `main` function:
 
 ```rust
-start_rocket();
+    let rocket_thread = thread::spawn(|| {
+        let _ = start_rocket();
+    });
+
+    RendezvousServer::start(port, serial, &get_arg("key"), rmem)?;
+    let _ = rocket_thread.join();
+    Ok(())
 ```
+
+## Limitations
+
+* The server is not yet ready for production use. Buy a [Rustdesk-server-pro](https://rustdesk.com/pricing.html) license to get a production-ready server.  
+* The Bearen tokens are stored in memory without persistence. It means that each time the server is restarted, all the tokens are lost. You will need to re-authenticate with the server.  
+
+## CLI Usage
+
+* User login:  
+  
+    ```bash
+    curl -X POST "http://127.0.0.1:21114/api/login" \
+                    -H "accept: application/json"\
+                    -H "content-type: application/json" \
+                    -d '{"username":"admin","password":"Hello,world!","id":"string","uuid":"string"}' 
+        # Note the Bearen token in the response
+    ```
+
+* Create user:
+  
+    ```bash
+    curl -X POST "http://127.0.0.1:21114/api/user" \
+                    -H "accept: application/json"\
+                    -H "authorization: Bearer viZ2ArJutFtKsg0DDC1TiV-87uSRQqGBZXAoCeHrFHc"\
+                    -H "content-type: application/json" \
+                    -d '{"name":"testuser","password":"test","confirm-password":"test","email":"string","is_admin":false,"group_name":"Default"}' 
+    ```
+
+* Use Rapidoc to test the API at http://127.0.0.1:21114/api/doc

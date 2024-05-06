@@ -74,7 +74,9 @@ impl Database {
             WHERE
                 type='table'
         "#
-        ).fetch_all(&mut conn).await;
+        )
+        .fetch_all(&mut conn)
+        .await;
         if res.is_err() {
             log::debug!("init_db error: {:?}", res);
             return;
@@ -82,9 +84,8 @@ impl Database {
         let res = res.unwrap();
         if res.len() > 0 {
             let migrator = sqlx::migrate!("../../db_v2/migrations/");
-             migrator.run(pool).await.unwrap();
+            migrator.run(pool).await.unwrap();
         }
-        
 
         // query_file! macro use path relative to Cargo.toml
         sqlx::query_file!("../../db_v2/create/db.sql")
@@ -954,6 +955,63 @@ impl Database {
         .await;
         if res.is_err() {
             log::error!("delete_tag_from_ab error: {:?}", res);
+            return None;
+        }
+        Some(())
+    }
+
+    pub async fn add_user(
+        &self,
+        name: String,
+        password: String,
+        email: String,
+        is_admin: bool,
+        group_name: String,
+    ) -> Option<()> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let user_guid = Uuid::new_v4().as_bytes().to_vec();
+        // Check if the group exists
+        let res = sqlx::query!(
+            r#"
+            SELECT
+                guid
+            FROM
+                grp
+            WHERE
+                name = ?
+        "#,
+            group_name
+        )
+        .fetch_all(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("add_user error: {:?}", res);
+            return None;
+        }
+        let res = res.unwrap();
+        if res.len() == 0 {
+            return None;
+        }
+        let group_guid: Vec<u8> = res[0].guid.clone();
+        let password_hashed = UserPasswordInfo::hash_password(password.as_str());
+        let res = sqlx::query!(
+            r#"
+            INSERT INTO
+                user (guid, grp, team, status, role, name, password, email)
+            VALUES
+                (?, ?, (SELECT guid FROM team WHERE name = 'Default'), 1, ?, ?, ?, ?)
+        "#,
+            user_guid,
+            group_guid,
+            is_admin,
+            name,
+            password_hashed,
+            email
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("add_user error: {:?}", res);
             return None;
         }
         Some(())

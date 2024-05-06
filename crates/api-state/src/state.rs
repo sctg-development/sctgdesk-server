@@ -15,7 +15,7 @@ use std::{
 use oauth2::ProviderConfig;
 
 use tokio::sync::RwLock;
-use utils::{AbPeer, AbTag, AddressBook, OidcState, Token};
+use utils::{AbPeer, AbTag, AddUserRequest, AddressBook, OidcState, Token};
 
 
 pub struct ApiState {
@@ -501,18 +501,22 @@ impl ApiState {
         None
     }
 
+    /// Get the users's personal address book guid
     pub async fn get_ab_personal_guid(&self, user_id: UserId) -> Option<String> {
         self.db.get_ab_personal_guid(user_id).await
     }
 
+    /// Add a peer to an address book
     pub async fn add_ab_peer(&self, ab: &str, ab_peer: AbPeer) -> Option<()> {
         self.db.add_peer_to_ab(ab, ab_peer).await
     }
 
+    /// Get all peers from an address book
     pub async fn get_ab_peers(&self, ab: &str) -> Option<Vec<AbPeer>> {
         self.db.get_peers_from_ab(ab).await
     }
 
+    /// Delete a peer in an address book
     pub async fn delete_ab_peer(&self, ab: &str, peers_to_delete: Vec<String>) -> Option<()> {
         for peer in peers_to_delete {
             self.db.delete_peer_from_ab(ab, peer.as_str()).await;
@@ -520,18 +524,22 @@ impl ApiState {
         Some(())
     }
 
+    /// Get a peer from an address book
     pub async fn get_ab_peer(&self, ab: &str, peer: &str) -> Option<AbPeer> {
         self.db.get_ab_peer(ab, peer).await
     }
 
+    /// Add a tag to an address book
     pub async fn add_ab_tag(&self, ab: &str, tag: AbTag) -> Option<()> {
         self.db.add_tag_to_ab(ab, tag).await
     }
 
+    /// Get all tags from an address book
     pub async fn get_ab_tags(&self, ab: &str) -> Option<Vec<AbTag>> {
         self.db.get_ab_tags(ab).await
     }
 
+    /// Get a tag from an address book
     pub async fn get_ab_tag(&self, ab: &str, tag: &str) -> Option<AbTag> {
         let ab_tag = self.db.get_ab_tag(ab, tag).await;
         if ab_tag.is_none() {
@@ -541,15 +549,23 @@ impl ApiState {
         Some(ab_tag)
     }
 
+    /// Rename a tag in an address book
     pub async fn rename_ab_tag(&self, ab: &str, old_name: &str, tag: AbTag) -> Option<()> {
         self.db.rename_ab_tag(ab, old_name, tag).await
     }
 
+    /// Delete some tags from an address book
     pub async fn delete_ab_tags(&self, ab: &str, tags_to_delete: Vec<String>) -> Option<()> {
         for tag in tags_to_delete {
             self.db.delete_tag_from_ab(ab, tag.as_str()).await;
         }
         Some(())
+    }
+
+    /// Add a user
+    /// This function is used to add a user to the database
+    pub async fn add_user(&self, user_parameters: AddUserRequest) -> Option<()> {
+        self.db.add_user(user_parameters.name, user_parameters.password, user_parameters.email, user_parameters.is_admin, user_parameters.group_name).await
     }
 
 }

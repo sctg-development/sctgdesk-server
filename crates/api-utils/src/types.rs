@@ -520,13 +520,13 @@ struct JwtClaims {
 
 #[derive(Serialize, Deserialize, Clone, JsonSchema)]
 pub struct AddUserRequest {
-    name: String,
-    password: String,
+    pub name: String,
+    pub password: String,
     #[serde(rename = "confirm-password")]
-    confirm_password: String,
-    email: String,
-    is_admin: bool,
-    group_name: String,
+    pub confirm_password: String,
+    pub email: String,
+    pub is_admin: bool,
+    pub group_name: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, JsonSchema)]
