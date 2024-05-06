@@ -995,20 +995,25 @@ impl Database {
             return None;
         }
         let group_guid: Vec<u8> = res[0].guid.clone();
+        let ab_guid = Uuid::new_v4().as_bytes().to_vec();
         let password_hashed = UserPasswordInfo::hash_password(password.as_str());
         let res = sqlx::query!(
             r#"
-            INSERT INTO
-                user (guid, grp, team, status, role, name, password, email)
-            VALUES
-                (?, ?, (SELECT guid FROM team WHERE name = 'Default'), 1, ?, ?, ?, ?)
-        "#,
+            INSERT OR IGNORE INTO user(guid, grp, team, status, role, name, password, email)
+                VALUES (?,
+                    ?,
+                    (SELECT guid FROM team  WHERE name = 'Default'), 1, ?, ?, ?, ?);
+            INSERT OR IGNORE INTO ab(guid, name, owner, personal, info)
+                VALUES (?,"Personal Address Book",?,1,'{}');
+            "#,
             user_guid,
             group_guid,
             is_admin,
             name,
             password_hashed,
-            email
+            email,
+            ab_guid,
+            user_guid
         )
         .execute(&mut conn)
         .await;

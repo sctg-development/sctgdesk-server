@@ -58,6 +58,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 groups,
                 group_add,
                 users,
+                users_client,
                 user_add,
                 user_enable,
                 user_update,
@@ -938,4 +939,32 @@ async fn oidc_get(
     log::debug!("create_user");
     state.check_maintenance().await;
     Err(status::Unauthorized::<()>(()))
+}
+
+/// Get Users for client
+/// /api/users?current=1&pageSize=100&accessible&status=1
+#[openapi(tag = "User (todo)")]
+#[get("/api/users?<current>&<pageSize>&<accessible>&<status>", format = "application/json")]
+async fn users_client(
+    state: &State<ApiState>,
+    _user: AuthenticatedUser,
+    current: u32,
+    pageSize: u32,
+    accessible: Option<bool>,
+    status: Option<u32>,
+) -> Result<Json<UserList>, status::NotFound<()>> {
+    log::debug!("users");
+    state.check_maintenance().await;
+
+    let res = state.get_all_users(None, None, current, pageSize).await;
+    if res.is_none() {
+        return Err(status::NotFound::<()>(()));
+    }
+    let response = UserList {
+        msg: "success".to_string(),
+        total: res.len() as u32,
+        data: res.unwrap(),
+    };
+
+    Ok(Json(response))
 }
