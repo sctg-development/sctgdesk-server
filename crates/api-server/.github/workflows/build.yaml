@@ -99,3 +99,14 @@ jobs:
         git add docs/*
         git commit -m "Update GitHub Pages" docs/*
         git push origin HEAD
+
+    - name: Setup Github Pages
+      uses: actions/configure-pages@v5
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        # Upload docs directory
+        path: 'docs'
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
