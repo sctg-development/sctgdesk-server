@@ -871,9 +871,18 @@ async fn user_enable(
     log::debug!("create_user");
     state.check_maintenance().await;
 
+    let enable_users = request.0;
+
+    let mut count = 0;
+    for user in enable_users.rows {
+        let res = state.user_change_status(user.as_str(), enable_users.disable).await;
+        if res.is_some() {
+            count += 1;
+        }
+    }
     let response = UsersResponse {
         msg: "success".to_string(),
-        total: 1,
+        total: count,
         data: "[{}]".to_string(),
     };
 
@@ -888,7 +897,7 @@ async fn oidc_add(
     _user: AuthenticatedAdmin,
     request: Json<EnableUserRequest>,
 ) -> Result<Json<EnableUserRequest>, status::Unauthorized<()>> {
-    log::debug!("create_user");
+    log::debug!("Add OIDC Provider");
     state.check_maintenance().await;
 
     Err(status::Unauthorized::<()>(()))

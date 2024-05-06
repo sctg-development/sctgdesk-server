@@ -1016,4 +1016,30 @@ impl Database {
         }
         Some(())
     }
+
+    /// Change user status
+    /// if status is 1, the user is active
+    /// if status is 0, the user is inactive
+    pub async fn user_change_status(&self, name: &str, status: u32) -> Option<()> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let res = sqlx::query!(
+            r#"
+            UPDATE
+                user
+            SET
+                status = ?
+            WHERE
+                name = ?
+        "#,
+            status,
+            name
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("change_user_status error: {:?}", res);
+            return None;
+        }
+        Some(())
+    }
 }

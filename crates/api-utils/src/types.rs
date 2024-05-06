@@ -531,8 +531,8 @@ pub struct AddUserRequest {
 
 #[derive(Serialize, Deserialize, Clone, JsonSchema)]
 pub struct EnableUserRequest {
-    rows: Vec<String>,
-    disable: bool,
+    pub rows: Vec<String>,
+    pub disable: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, JsonSchema)]

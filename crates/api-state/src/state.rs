@@ -568,4 +568,9 @@ impl ApiState {
         self.db.add_user(user_parameters.name, user_parameters.password, user_parameters.email, user_parameters.is_admin, user_parameters.group_name).await
     }
 
+    /// Change user status
+    pub async fn user_change_status(&self, user: &str, disable: bool)-> Option<()> {
+        self.db.user_change_status(user, disable as u32).await
+    }
+
 }
