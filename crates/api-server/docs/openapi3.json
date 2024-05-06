@@ -435,6 +435,22 @@
               "format": "uint32",
               "minimum": 0.0
             }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
           }
         ],
         "responses": {
@@ -443,7 +459,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UsersResponse"
+                  "$ref": "#/components/schemas/UserList"
                 }
               }
             }
@@ -1567,6 +1583,66 @@
           },
           "group_name": {
             "type": "string"
+          }
+        }
+      },
+      "UserList": {
+        "type": "object",
+        "required": [
+          "data",
+          "msg",
+          "total"
+        ],
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserListResponse"
+            }
+          }
+        }
+      },
+      "UserListResponse": {
+        "type": "object",
+        "required": [
+          "email",
+          "group_name",
+          "guid",
+          "is_admin",
+          "name",
+          "status"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "group_name": {
+            "type": "string"
+          },
+          "is_admin": {
+            "type": "boolean"
           }
         }
       },
