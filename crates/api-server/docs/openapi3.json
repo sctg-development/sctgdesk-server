@@ -1407,6 +1407,40 @@
           }
         ]
       }
+    },
+    "/api/software": {
+      "get": {
+        "tags": [
+          "User (todo)"
+        ],
+        "description": "Software, get the software download url",
+        "operationId": "software",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2222,6 +2256,17 @@
             "type": "integer",
             "format": "uint32",
             "minimum": 0.0
+          }
+        }
+      },
+      "SoftwareResponse": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
           }
         }
       }
