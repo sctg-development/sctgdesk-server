@@ -614,3 +614,8 @@ pub struct UserList {
     pub total: u32,
     pub data: Vec<UserListResponse>,
 }
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct SoftwareResponse {
+    pub url: String,
+}

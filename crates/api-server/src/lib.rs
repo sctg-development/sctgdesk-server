@@ -7,9 +7,13 @@ use std::env;
 use api::ActionResponse;
 use extended_json::ExtendedJson;
 
+use rocket::fairing::{Fairing, Info, Kind};
 use rocket::form::validate::Len;
+use rocket::http::Header;
 use rocket::{delete, put};
+use rocket::{Request, Response};
 
+use s3software::{get_s3_config_file, get_signed_release_url_with_config};
 use state::{self};
 #[cfg(feature = "ui")]
 use ui;
@@ -25,7 +29,8 @@ use rocket::{
 };
 use state::{ApiState, UserPasswordInfo};
 use utils::{
-    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook, EnableUserRequest, OidcSettingsResponse, UpdateUserRequest, UserList
+    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook,
+    EnableUserRequest, OidcSettingsResponse, SoftwareResponse, UpdateUserRequest, UserList,
 };
 use utils::{
     AbGetResponse, AbRequest, AuditRequest, CurrentUserRequest, CurrentUserResponse,
@@ -38,10 +43,33 @@ type AuthenticatedAdmin = state::AuthenticatedAdmin<BearerAuthToken>;
 use rocket_okapi::{openapi, openapi_get_routes, rapidoc::*, settings::UrlObject};
 use uuid::Uuid;
 
+pub struct CORS;
+
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers to responses",
+            kind: Kind::Response,
+        }
+    }
+
+    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+        response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+        response.set_header(Header::new(
+            "Access-Control-Allow-Methods",
+            "POST, GET, PUT, DELETE, OPTIONS",
+        ));
+        response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
+    }
+}
+
 pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
     let state = ApiState::new_with_db("db_v2.sqlite3").await;
 
     let rocket = rocket::custom(figment)
+        .attach(CORS)
         .mount(
             "/",
             openapi_get_routes![
@@ -80,7 +108,8 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 ab_tag_rename,
                 ab_tag_delete,
                 ab_shared,
-                ab_settings
+                ab_settings,
+                software
             ],
         )
         .mount(
@@ -323,7 +352,10 @@ async fn sysinfo(state: &State<ApiState>, request: Json<utils::SystemInfo>) -> S
 
 /// Get the list of users
 #[openapi(tag = "User (todo)")]
-#[get("/api/user-list?<current>&<pageSize>&<email>&<name>", format = "application/json")]
+#[get(
+    "/api/user-list?<current>&<pageSize>&<email>&<name>",
+    format = "application/json"
+)]
 async fn users(
     state: &State<ApiState>,
     _user: AuthenticatedAdmin,
@@ -335,7 +367,7 @@ async fn users(
     log::debug!("users");
     state.check_maintenance().await;
 
-    let res = state.get_all_users(name,email,current, pageSize).await;
+    let res = state.get_all_users(name, email, current, pageSize).await;
     if res.is_none() {
         return Err(status::NotFound::<()>(()));
     }
@@ -882,7 +914,9 @@ async fn user_enable(
 
     let mut count = 0;
     for user in enable_users.rows {
-        let res = state.user_change_status(user.as_str(), enable_users.disable).await;
+        let res = state
+            .user_change_status(user.as_str(), enable_users.disable)
+            .await;
         if res.is_some() {
             count += 1;
         }
@@ -944,7 +978,10 @@ async fn oidc_get(
 /// Get Users for client
 /// /api/users?current=1&pageSize=100&accessible&status=1
 #[openapi(tag = "User (todo)")]
-#[get("/api/users?<current>&<pageSize>&<accessible>&<status>", format = "application/json")]
+#[get(
+    "/api/users?<current>&<pageSize>&<accessible>&<status>",
+    format = "application/json"
+)]
 async fn users_client(
     state: &State<ApiState>,
     _user: AuthenticatedUser,
@@ -967,4 +1004,46 @@ async fn users_client(
     };
 
     Ok(Json(response))
+}
+
+/// Software, get the software download url
+#[openapi(tag = "User (todo)")]
+#[get("/api/software?<key>", format = "application/json")]
+async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<()>> {
+    log::debug!("software");
+    let config = get_s3_config_file()
+        .await
+        .map_err(|e| status::NotFound(Box::new(e)));
+
+    let config = config.unwrap();
+    match key {
+        "osx" => {
+            let key =  config.clone().s3config.osxkey;
+            let url = get_signed_release_url_with_config(config, key.as_str())
+                .await
+                .map_err(|e| status::NotFound(Box::new(e)));
+            let url = url.unwrap();
+            let response = SoftwareResponse { url };
+            Ok(Json(response))
+        }
+        "w64" => {
+            let key =  config.clone().s3config.windows64_key;
+            let url = get_signed_release_url_with_config(config, key.as_str())
+                .await
+                .map_err(|e| status::NotFound(Box::new(e)));
+            let url = url.unwrap();
+            let response = SoftwareResponse { url };
+            Ok(Json(response))
+        }
+        "ios" => {
+            let key =  config.clone().s3config.ioskey;
+            let url = get_signed_release_url_with_config(config, key.as_str())
+                .await
+                .map_err(|e| status::NotFound(Box::new(e)));
+            let url = url.unwrap();
+            let response = SoftwareResponse { url };
+            Ok(Json(response))
+        }
+        _ => Err(status::NotFound(())),
+    }
 }

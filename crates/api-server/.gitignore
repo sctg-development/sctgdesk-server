@@ -1,3 +1,4 @@
 /target
 .oauth2.toml
-/.vscode
+/.vscode.s3config.toml
+.s3config.toml
