@@ -157,7 +157,7 @@
     "/api/currentUser": {
       "post": {
         "tags": [
-          "User (todo)"
+          "User"
         ],
         "description": "Get the current user",
         "operationId": "current_user",
@@ -411,7 +411,7 @@
     "/api/user-list": {
       "get": {
         "tags": [
-          "User (todo)"
+          "User"
         ],
         "description": "Get the list of users",
         "operationId": "users",
@@ -478,9 +478,9 @@
     "/api/users": {
       "get": {
         "tags": [
-          "User (todo)"
+          "User"
         ],
-        "description": "Get Users for client /api/users?current=1&pageSize=100&accessible&status=1",
+        "description": "Get Users for client",
         "operationId": "users_client",
         "parameters": [
           {
@@ -547,7 +547,7 @@
     "/api/user": {
       "put": {
         "tags": [
-          "User (todo)"
+          "User"
         ],
         "description": "Update current user password",
         "operationId": "user_update",
@@ -584,7 +584,7 @@
       },
       "post": {
         "tags": [
-          "User (todo)"
+          "User"
         ],
         "description": "Add user",
         "operationId": "user_add",
@@ -623,7 +623,7 @@
     "/api/enable-users": {
       "post": {
         "tags": [
-          "User (todo)"
+          "User"
         ],
         "description": "Enable users",
         "operationId": "user_enable",
@@ -1413,7 +1413,7 @@
         "tags": [
           "Software"
         ],
-        "description": "Software, get the software download url",
+        "description": "Get the software download url",
         "operationId": "software",
         "parameters": [
           {
@@ -1447,7 +1447,7 @@
         "tags": [
           "Software"
         ],
-        "summary": "[openapi(tag = \"Software\")]",
+        "description": "Retrieve the server version",
         "operationId": "software_version",
         "responses": {
           "200": {
