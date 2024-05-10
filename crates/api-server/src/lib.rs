@@ -1008,7 +1008,7 @@ async fn users_client(
 
 /// Software, get the software download url
 #[openapi(tag = "User (todo)")]
-#[get("/api/software?<key>", format = "application/json")]
+#[get("/api/software/client-download-link/<key>", format = "application/json")]
 async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<()>> {
     log::debug!("software");
     let config = get_s3_config_file()
