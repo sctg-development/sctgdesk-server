@@ -266,7 +266,7 @@ async fn ab(
 }
 
 /// Get the current user
-#[openapi(tag = "User (todo)")]
+#[openapi(tag = "User")]
 #[post("/api/currentUser", format = "application/json", data = "<request>")]
 async fn current_user(
     state: &State<ApiState>,
@@ -351,7 +351,7 @@ async fn sysinfo(state: &State<ApiState>, request: Json<utils::SystemInfo>) -> S
 }
 
 /// Get the list of users
-#[openapi(tag = "User (todo)")]
+#[openapi(tag = "User")]
 #[get(
     "/api/user-list?<current>&<pageSize>&<email>&<name>",
     format = "application/json"
@@ -868,7 +868,7 @@ async fn strategies(
 }
 
 /// Add user
-#[openapi(tag = "User (todo)")]
+#[openapi(tag = "User")]
 #[post("/api/user", format = "application/json", data = "<request>")]
 async fn user_add(
     state: &State<ApiState>,
@@ -900,7 +900,7 @@ async fn user_add(
 }
 
 /// Enable users
-#[openapi(tag = "User (todo)")]
+#[openapi(tag = "User")]
 #[post("/api/enable-users", format = "application/json", data = "<request>")]
 async fn user_enable(
     state: &State<ApiState>,
@@ -931,7 +931,7 @@ async fn user_enable(
 }
 
 /// Update current user password
-#[openapi(tag = "User (todo)")]
+#[openapi(tag = "User")]
 #[put("/api/user", format = "application/json", data = "<request>")]
 async fn user_update(
     state: &State<ApiState>,
@@ -976,8 +976,7 @@ async fn oidc_get(
 }
 
 /// Get Users for client
-/// /api/users?current=1&pageSize=100&accessible&status=1
-#[openapi(tag = "User (todo)")]
+#[openapi(tag = "User")]
 #[get(
     "/api/users?<current>&<pageSize>&<accessible>&<status>",
     format = "application/json"
@@ -1006,7 +1005,7 @@ async fn users_client(
     Ok(Json(response))
 }
 
-/// Software, get the software download url
+/// Get the software download url
 #[openapi(tag = "Software")]
 #[get("/api/software/client-download-link/<key>", format = "application/json")]
 async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<()>> {
@@ -1048,7 +1047,7 @@ async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<
     }
 }
 
-/// #[openapi(tag = "Software")]
+/// Retrieve the server version
 #[openapi(tag = "Software")]
 #[get("/api/software/version/server", format = "application/json")]
 async fn software_version() -> Json<SoftwareVersionResponse> {
