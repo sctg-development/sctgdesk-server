@@ -23,6 +23,7 @@
                 "OAUTH2_CREATE_USER": "1",
                 "OAUTH2_CONFIG_FILE": "${workspaceFolder}/.oauth2.toml",
                 "S3CONFIG_FILE": "${workspaceFolder}/.s3config.toml",
+                "MAIN_PKG_VERSION": "0.1.0",
             },
         },
         {

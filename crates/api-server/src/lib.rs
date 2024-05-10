@@ -29,8 +29,7 @@ use rocket::{
 };
 use state::{ApiState, UserPasswordInfo};
 use utils::{
-    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook,
-    EnableUserRequest, OidcSettingsResponse, SoftwareResponse, UpdateUserRequest, UserList,
+    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook, EnableUserRequest, OidcSettingsResponse, SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList
 };
 use utils::{
     AbGetResponse, AbRequest, AuditRequest, CurrentUserRequest, CurrentUserResponse,
@@ -109,7 +108,8 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 ab_tag_delete,
                 ab_shared,
                 ab_settings,
-                software
+                software,
+                software_version
             ],
         )
         .mount(
@@ -1007,7 +1007,7 @@ async fn users_client(
 }
 
 /// Software, get the software download url
-#[openapi(tag = "User (todo)")]
+#[openapi(tag = "Software")]
 #[get("/api/software/client-download-link/<key>", format = "application/json")]
 async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<()>> {
     log::debug!("software");
@@ -1046,4 +1046,17 @@ async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<
         }
         _ => Err(status::NotFound(())),
     }
+}
+
+/// #[openapi(tag = "Software")]
+#[openapi(tag = "Software")]
+#[get("/api/software/version/server", format = "application/json")]
+async fn software_version() -> Json<SoftwareVersionResponse> {
+    log::debug!("software_version");
+    let version = env::var("MAIN_PKG_VERSION").unwrap();
+    let response = SoftwareVersionResponse {
+        server: Some(version),
+        client: None
+    };
+    Json(response)
 }
