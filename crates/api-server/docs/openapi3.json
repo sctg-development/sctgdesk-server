@@ -1411,7 +1411,7 @@
     "/api/software/client-download-link/{key}": {
       "get": {
         "tags": [
-          "User (todo)"
+          "Software"
         ],
         "description": "Software, get the software download url",
         "operationId": "software",
@@ -1438,6 +1438,27 @@
           },
           "404": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/api/software/version/server": {
+      "get": {
+        "tags": [
+          "Software"
+        ],
+        "summary": "[openapi(tag = \"Software\")]",
+        "operationId": "software_version",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareVersionResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -2267,6 +2288,19 @@
         "properties": {
           "url": {
             "type": "string"
+          }
+        }
+      },
+      "SoftwareVersionResponse": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "type": "string",
+            "nullable": true
+          },
+          "client": {
+            "type": "string",
+            "nullable": true
           }
         }
       }
