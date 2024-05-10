@@ -1408,7 +1408,7 @@
         ]
       }
     },
-    "/api/software": {
+    "/api/software/client-download-link/{key}": {
       "get": {
         "tags": [
           "User (todo)"
@@ -1418,7 +1418,7 @@
         "parameters": [
           {
             "name": "key",
-            "in": "query",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
