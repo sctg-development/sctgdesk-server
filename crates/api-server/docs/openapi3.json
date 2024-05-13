@@ -722,7 +722,7 @@
         "tags": [
           "login"
         ],
-        "description": "OIDC Auth request\n\nThis entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses",
+        "description": "OIDC Auth request\n\nThis entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses\n\nFor testing you can generate a valid uuid field with the following command: `uuidgen | base64`",
         "operationId": "oidc_auth",
         "requestBody": {
           "content": {
@@ -1413,7 +1413,7 @@
         "tags": [
           "Software"
         ],
-        "description": "Get the software download url",
+        "description": "Get the software download url\n\n# Arguments\n\n* `key` - The key to the software download link, it can be `osx`, `w64` or `ios`\n\n# Usage\n\n* it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable\n\n<pre> [s3config] Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\" Region = \"eu-london-1\" AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\" SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\" Bucket = \"aezoz24elapn\" Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\" Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\" OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\" OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\" IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\" </pre>",
         "operationId": "software",
         "parameters": [
           {
