@@ -445,9 +445,11 @@ impl ApiState {
             .await;
             if exchange_result.is_ok() {
                 let access_token = exchange_result.unwrap();
-                oidc_session.auth_token = Some(access_token.clone());
+                oidc_session.auth_token = Some(access_token.0.clone());
+                oidc_session.name = Some(access_token.1.clone());
+                oidc_session.email = Some(access_token.2.clone());
                 log::debug!("oidc_session_exchange_code {:?}", oidc_session.auth_token);
-                return Some(access_token);
+                return Some(access_token.0);
             }
         }
         None
@@ -477,10 +479,20 @@ impl ApiState {
             return None;
         }
         let oidc_session = oidc_session.unwrap();
+        let name = if let Some(name) = oidc_session.name.clone() {
+            name
+        } else {
+            oidc_session.id.clone()
+        };
+        let email = if let Some(email) = oidc_session.email.clone() {
+            email
+        } else {
+            "tobefilled@example;org".to_string()
+        };
         if oidc_session.auth_token.is_some() {
             let res = self
                 .db
-                .get_user_for_oauth2(oidc_session.id.clone(), oidc_session.uuid.clone())
+                .get_user_for_oauth2(name, email, oidc_session.uuid.clone())
                 .await;
             if res.is_none() {
                 log::debug!("oidc_check_session user not found");

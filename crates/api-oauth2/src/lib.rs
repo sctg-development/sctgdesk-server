@@ -1,4 +1,7 @@
-use base64::prelude::{Engine as _, BASE64_STANDARD};
+use base64::{
+    engine::general_purpose::URL_SAFE_NO_PAD,
+    prelude::{Engine as _, BASE64_STANDARD},
+};
 use serde::{Deserialize, Serialize};
 use std::{fs, str::FromStr};
 use url::form_urlencoded;
@@ -28,6 +31,15 @@ pub enum Provider {
     Azure,
     Auth0,
     Custom,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    aud: String,
+    sub: String,
+    name: String,
+    email: String,
+    exp: u64,
 }
 
 impl FromStr for Provider {
@@ -80,11 +92,11 @@ pub struct TokenResponse {
 /// Get the name of the provider config file
 /// from the OAUTH2_CONFIG_FILE environment variable or
 /// default to "oauth2.toml"
-/// 
+///
 /// # Returns
 /// The name of the provider config file
 pub fn get_provider_config_file() -> String {
-    std::env::var("OAUTH2_CONFIG_FILE").unwrap_or_else(|_| "oauth2.toml".to_string()) 
+    std::env::var("OAUTH2_CONFIG_FILE").unwrap_or_else(|_| "oauth2.toml".to_string())
 }
 
 /// Get the redirect url for the specified provider
@@ -151,12 +163,15 @@ pub fn get_authorization_header(provider_config: &ProviderConfig) -> String {
 /// * `callback_url` - The callback url
 ///
 /// # Returns
-/// The access token
+/// 
+/// * The access token
+/// * The username
+/// * The email
 pub async fn exchange_code(
     provider_config: &ProviderConfig,
     code: &str,
     callback_url: &str,
-) -> Result<String, Oauth2Error> {
+) -> Result<(String,String,String), Oauth2Error> {
     let code = form_urlencoded::byte_serialize(code.as_bytes()).collect::<String>();
     //let callback_url = form_urlencoded::byte_serialize(callback_url.as_bytes()).collect::<String>();
     let authorization_header = get_authorization_header(provider_config);
@@ -183,8 +198,35 @@ pub async fn exchange_code(
         .await
         .map_err(|_| Oauth2Error::ExchangeCodeError)?;
 
-    Ok(body.access_token)
+    if body.id_token.is_some() {
+        // Response contains an id_token which is a JWT token
+        let id_token = body.id_token.unwrap();
+        let resp = decode_id_token(&id_token);
+        if resp.is_err() {
+            return Err(Oauth2Error::DecodeIdTokenError);
+        }
+        let (name, email) = resp.unwrap();
+        return Ok((body.access_token, name, email));
+    }
+    Ok((body.access_token, "".to_string(), "".to_string()))
+}
 
+/// Decode the id token
+
+/// # Arguments
+/// * `id_token` - The jwt id token
+///
+/// # Returns
+/// the username and email
+
+pub fn decode_id_token(id_token: &str) -> Result<(String, String), Oauth2Error> {
+    let parts: Vec<&str> = id_token.split('.').collect();
+    let claims = URL_SAFE_NO_PAD
+        .decode(parts[1])
+        .map_err(|_| Oauth2Error::DecodeIdTokenError)?;
+    let claims: Claims =
+        serde_json::from_slice(&claims).map_err(|_| Oauth2Error::DecodeIdTokenError)?;
+    Ok((claims.name, claims.email))
 }
 
 /// Verify the access token
@@ -194,6 +236,7 @@ pub async fn exchange_code(
 /// * `access_token` - The access token
 ///
 /// # Returns
+/// (access_token, username, email)
 /// The access token if valid, otherwise an error
 pub async fn verify_access_token(
     provider_config: &ProviderConfig,
@@ -211,7 +254,7 @@ pub async fn verify_access_token(
                 Ok(response) if response.status().is_success() => Ok(access_token.to_string()),
                 _ => Err(Oauth2Error::VerifyTokenError),
             }
-        },
+        }
         Provider::Google => {
             let response = client
                 .get(&format!(
@@ -225,35 +268,34 @@ pub async fn verify_access_token(
                 Ok(response) if response.status().is_success() => Ok(access_token.to_string()),
                 _ => Err(Oauth2Error::VerifyTokenError),
             }
-        },
+        }
         Provider::Facebook => {
             let app_token = format!("{}|{}", provider_config.app_id, provider_config.app_secret);
             let response = client
                 .get(&format!(
                     "https://graph.facebook.com/debug_token?input_token={}&access_token={}",
-                    access_token,
-                    app_token
+                    access_token, app_token
                 ))
                 .send()
                 .await;
-        
+
             match response {
                 Ok(response) if response.status().is_success() => Ok(access_token.to_string()),
                 _ => Err(Oauth2Error::VerifyTokenError),
             }
-        },
+        }
         Provider::Gitlab => {
             let response = client
                 .post("https://gitlab.com/oauth/token/info")
                 .bearer_auth(access_token)
                 .send()
                 .await;
-        
+
             match response {
                 Ok(response) if response.status().is_success() => Ok(access_token.to_string()),
                 _ => Err(Oauth2Error::VerifyTokenError),
             }
-        },
+        }
         // TODO: Add other providers
         Provider::Custom => Ok(access_token.to_string()),
         _ => Err(Oauth2Error::VerifyTokenError),
@@ -261,10 +303,10 @@ pub async fn verify_access_token(
 }
 
 /// Decode the access token
-/// 
+///
 /// # Arguments
 /// * `access_token` - The access token
-/// 
+///
 /// # Returns
 /// The decoded access token
 pub fn decode_access_token(access_token: &str) -> Result<String, Oauth2Error> {
@@ -335,5 +377,12 @@ mod tests {
 
         let providers = get_provider_config(config_file.path().to_str().unwrap());
         assert_eq!(providers.len(), 2);
+    }
+
+    #[test]
+    fn test_decode_id_token() {
+        let id_token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjhiMjFkMTM0NjExZDQxNWJkMWU2MjUzOGE0ZGRjOTA4NmYxYTZiMjUifQ.eyJpc3MiOiJodHRwczovL2RleC1tb2NrLXNlcnZlci5OT05FL2RleCIsInN1YiI6IkNpUXdPR0U0TmpnMFlpMWtZamc0TFRSaU56TXRPVEJoT1MwelkyUXhOall4WmpVME5qWVNCV3h2WTJGcyIsImF1ZCI6InNjdGdkZXNrLWFwaS1zZXJ2ZXIiLCJleHAiOjE3MTU2NzEwODQsImlhdCI6MTcxNTU4NDY4NCwiYXRfaGFzaCI6IjVvZEdyU3VrMW9lejJkc1NaRXZFM0EiLCJjX2hhc2giOiJfdFZfZFNiU09qTVVmRVdMeVVNSTNnIiwiZW1haWwiOiJhZG1pbkBkZXNrLk5PTkUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmFtZSI6ImFkbWluIn0.AqOiwBKq2i_AoJcbfxuaVY54PN3GJjnHIn3E2FWoZY2IOu8qxvZevcUb4mjnoUZGf2QaabIcTAIxIg-mpFTRxheOPiQ1c9VSZ0vd-wNGrAG12vdraRq0-evqmFduR2G9k20QMIV8iHiGM7l93k8Fw5_bnTQId044BjepayS98bpUclS4RIIGoOLBM5IenfBCqLhHHv6oYUM6HDU4rCD02U9_Bu597wedeLdYYa7lzBDyb88ab83-eALsDpbFZ90rUnvAhpTQcl9_t51Etx-sP1yWSQ3UZ-QL61cKreqWlMbimM43R4boUWnpQTMF7ZO0EftVixEfaIQvWDRm-TLl8A";
+        let (name, email) = decode_id_token(id_token).unwrap();
+        assert_eq!(name, "admin");
     }
 }

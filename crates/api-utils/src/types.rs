@@ -527,6 +527,8 @@ pub struct OidcState {
     pub redirect_url: Option<String>,
     pub callback_url: Option<String>,
     pub provider_config: Option<oauth2::ProviderConfig>,
+    pub name: Option<String>,
+    pub email: Option<String>,
 }
 impl Default for OidcState {
     fn default() -> Self {
@@ -538,6 +540,8 @@ impl Default for OidcState {
             redirect_url: None,
             callback_url: None,
             provider_config: None,
+            name: None,
+            email: None,
         }
     }
 }

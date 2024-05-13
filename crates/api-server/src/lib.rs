@@ -472,6 +472,8 @@ async fn login_options(
 /// OIDC Auth request
 ///
 /// This entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses
+/// 
+/// For testing you can generate a valid uuid field with the following command: `uuidgen | base64`
 #[openapi(tag = "login")]
 #[post("/api/oidc/auth", format = "application/json", data = "<request>")]
 async fn oidc_auth(
@@ -484,8 +486,16 @@ async fn oidc_auth(
     let request = request.data;
 
     let uuid_code = Uuid::new_v4().to_string();
+    let uuid_decoded = BASE64_STANDARD.decode(request.uuid.clone());
+    if uuid_decoded.is_err() {
+        return Json(OidcAuthUrl {
+            url: "".to_string(),
+            code: "UUID_ERROR".to_string(),
+        });
+    }
+    let uuid_decoded = uuid_decoded.unwrap();
     let uuid_client =
-        String::from_utf8(BASE64_STANDARD.decode(request.uuid.clone()).unwrap()).unwrap();
+        String::from_utf8(uuid_decoded).unwrap();
     let callback_url = format!("{}/api/oidc/callback", get_host(headers.clone()));
     let providers_config = state
         .get_oauth2_config(oauth2::get_provider_config_file().as_str())
@@ -521,6 +531,8 @@ async fn oidc_auth(
                 redirect_url: Some(redirect_url.clone()),
                 callback_url: Some(callback_url),
                 provider_config: Some(provider.clone()),
+                name: None,
+                email: None
             },
         )
         .await;
@@ -1006,6 +1018,28 @@ async fn users_client(
 }
 
 /// Get the software download url
+/// 
+/// # Arguments
+/// 
+/// * `key` - The key to the software download link, it can be `osx`, `w64` or `ios`
+/// 
+/// # Usage
+/// 
+/// * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable
+/// 
+/// <pre>
+/// [s3config]
+/// Endpoint = "https://compat.objectstorage.eu-london-1.oraclecloud.com"
+/// Region = "eu-london-1"
+/// AccessKey = "c324ead11faa0d87337c07ddc4a1129fab76188d"
+/// SecretKey = "GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA="
+/// Bucket = "aezoz24elapn"
+/// Windows64Key = "master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe"
+/// Windows32Key = "master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe"
+/// OSXKey = "master/sctgdesk-releases/sctgdesk-1.2.4.dmg"
+/// OSXArm64Key = "master/sctgdesk-releases/sctgdesk-1.2.4.dmg"
+/// IOSKey = "master/sctgdesk-releases/sctgdesk-1.2.4.ipa"
+/// </pre>
 #[openapi(tag = "Software")]
 #[get("/api/software/client-download-link/<key>", format = "application/json")]
 async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<()>> {

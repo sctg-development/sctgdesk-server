@@ -550,6 +550,7 @@ impl Database {
     pub async fn get_user_for_oauth2(
         &self,
         id: String,
+        email: String,
         uuid: String,
     ) -> Option<(UserId, String, DatabaseUserInfo)> {
         let mut conn = DatabaseConnection {
@@ -558,6 +559,7 @@ impl Database {
         let status = { env::var("OAUTH2_CREATE_USER").unwrap_or("0".to_string()) == "1" };
         let uuid_vec: Vec<u8> = Vec::from(uuid.clone());
         let ab_guid = Uuid::new_v4().as_bytes().to_vec();
+        let user_guid = Uuid::new_v4().as_bytes().to_vec();
         let random_password = Uuid::new_v4().to_string();
         let hashed_random_password = UserPasswordInfo::hash_password(random_password.as_str());
         log::debug!(
@@ -568,20 +570,20 @@ impl Database {
         );
         let res = sqlx::query!(
             r#"
-            INSERT OR IGNORE INTO user(guid, grp, team, status, role, name, password)
-                VALUES ((SELECT guid FROM peer WHERE uuid = ? and id = ?),
+            INSERT OR IGNORE INTO user(guid, grp, team, status, role, name, email, password)
+                VALUES (?,
                     (SELECT guid FROM grp  WHERE name = 'Default'),
-                    (SELECT guid FROM team  WHERE name = 'Default'), ?, 0, ?, ?);
+                    (SELECT guid FROM team  WHERE name = 'Default'), ?, 0, ?, ?, ?);
             INSERT OR IGNORE INTO ab(guid, name, owner, personal, info)
                 VALUES (?,"Personal Address Book",?,1,'{}');
             "#,
-            uuid_vec,
-            id,
+            user_guid,
             status,
             id,
+            email,
             hashed_random_password,
             ab_guid,
-            uuid_vec
+            user_guid
         )
         .execute(&mut conn.conn)
         .await;
@@ -593,9 +595,8 @@ impl Database {
         }
         let res = sqlx::query!(
             r#"  
-            SELECT guid, status, role, name FROM user WHERE guid = (SELECT guid FROM peer WHERE uuid = ? and id = ?);
+            SELECT guid, status, role, name FROM user WHERE name = ?;
             "#,
-            uuid_vec,
             id
         ).fetch_one(&mut conn.conn).await;
 
@@ -645,12 +646,11 @@ impl Database {
             SELECT
                 a.guid
             FROM
-                ab as a, user as u, peer as p
+                ab as a, user as u
             WHERE
                 u.guid = ?
                 AND a.personal = 1
-                AND a.owner = p.uuid
-                AND p.guid = u.guid
+                AND a.owner = u.guid
                 AND u.status = 1
         "#,
             user_id

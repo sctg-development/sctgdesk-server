@@ -5,6 +5,7 @@ use std::error::Error;
 pub enum Oauth2Error {
     ExchangeCodeError,
     VerifyTokenError,
+    DecodeIdTokenError,
 }
 
 impl fmt::Display for Oauth2Error {
@@ -12,6 +13,7 @@ impl fmt::Display for Oauth2Error {
         match self {
             Oauth2Error::ExchangeCodeError => write!(f, "Exchange code error"),
             Oauth2Error::VerifyTokenError => write!(f, "Verify token error"),
+            Oauth2Error::DecodeIdTokenError => write!(f, "Decode id token error"),
         }
     }
 }
