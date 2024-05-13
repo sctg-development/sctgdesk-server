@@ -445,8 +445,10 @@ impl ApiState {
             .await;
             if exchange_result.is_ok() {
                 let access_token = exchange_result.unwrap();
+                let username = access_token.1.clone();
+
                 oidc_session.auth_token = Some(access_token.0.clone());
-                oidc_session.name = Some(access_token.1.clone());
+                oidc_session.name = Some(if username.len()>0 {username.clone()} else {oidc_session.id.clone()});
                 oidc_session.email = Some(access_token.2.clone());
                 log::debug!("oidc_session_exchange_code {:?}", oidc_session.auth_token);
                 return Some(access_token.0);

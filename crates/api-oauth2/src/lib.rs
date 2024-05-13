@@ -208,7 +208,7 @@ pub async fn exchange_code(
         let (name, email) = resp.unwrap();
         return Ok((body.access_token, name, email));
     }
-    Ok((body.access_token, "".to_string(), "".to_string()))
+    Ok((body.access_token, "".to_string(), "tobefilled@example.org".to_string()))
 }
 
 /// Decode the id token
