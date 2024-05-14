@@ -377,7 +377,7 @@ impl ApiState {
 
         if oauth2_providers.is_empty() {
             log::debug!("get providers from {}", config_file);
-            let config = oauth2::get_provider_config(config_file);
+            let config = oauth2::get_providers_config_from_file(config_file);
             if config.len() == 0 {
                 return None;
             }
@@ -433,25 +433,23 @@ impl ApiState {
         }
         let oidc_session = oidc_session.unwrap();
         oidc_session.code = Some(authorization_code.clone());
-        if oidc_session.provider_config.is_some()
+        if oidc_session.provider.is_some()
             && oidc_session.code.is_some()
             && oidc_session.callback_url.is_some()
         {
-            let exchange_result = oauth2::exchange_code(
-                &oidc_session.clone().provider_config.unwrap(),
-                &authorization_code,
-                &oidc_session.clone().callback_url.unwrap(),
-            )
-            .await;
+            let provider = oidc_session.clone().provider.unwrap();
+            let callback_url = oidc_session.clone().callback_url.unwrap();
+            let exchange_result = provider.exchange_code(authorization_code.as_str(), callback_url.as_str()).await;
+
             if exchange_result.is_ok() {
                 let access_token = exchange_result.unwrap();
-                let username = access_token.1.clone();
+                let username = access_token.username.clone();
 
-                oidc_session.auth_token = Some(access_token.0.clone());
+                oidc_session.auth_token = Some(access_token.access_token.clone());
                 oidc_session.name = Some(if username.len()>0 {username.clone()} else {oidc_session.id.clone()});
-                oidc_session.email = Some(access_token.2.clone());
+                oidc_session.email = Some(access_token.email.clone());
                 log::debug!("oidc_session_exchange_code {:?}", oidc_session.auth_token);
-                return Some(access_token.0);
+                return Some(access_token.access_token);
             }
         }
         None

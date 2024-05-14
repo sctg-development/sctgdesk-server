@@ -3,10 +3,12 @@ mod extended_json;
 
 use std::collections::HashMap;
 use std::env;
+use std::sync::Arc;
 
 use api::ActionResponse;
 use extended_json::ExtendedJson;
-
+use oauth2::oauth_provider::OAuthProvider;
+use oauth2::oauth_provider::OAuthProviderFactory;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::form::validate::Len;
 use rocket::http::Header;
@@ -29,7 +31,9 @@ use rocket::{
 };
 use state::{ApiState, UserPasswordInfo};
 use utils::{
-    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook, EnableUserRequest, OidcSettingsResponse, SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList
+    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook,
+    EnableUserRequest, OidcSettingsResponse, SoftwareResponse, SoftwareVersionResponse,
+    UpdateUserRequest, UserList,
 };
 use utils::{
     AbGetResponse, AbRequest, AuditRequest, CurrentUserRequest, CurrentUserResponse,
@@ -458,7 +462,7 @@ async fn login_options(
 ) -> Result<Json<Vec<String>>, status::Unauthorized<()>> {
     let mut providers: Vec<String> = Vec::new();
     let providers_config = state
-        .get_oauth2_config(oauth2::get_provider_config_file().as_str())
+        .get_oauth2_config(oauth2::get_providers_config_file().as_str())
         .await;
     if providers_config.is_none() {
         return Err(status::Unauthorized::<()>(()));
@@ -472,7 +476,7 @@ async fn login_options(
 /// OIDC Auth request
 ///
 /// This entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses
-/// 
+///
 /// For testing you can generate a valid uuid field with the following command: `uuidgen | base64`
 #[openapi(tag = "login")]
 #[post("/api/oidc/auth", format = "application/json", data = "<request>")]
@@ -494,11 +498,10 @@ async fn oidc_auth(
         });
     }
     let uuid_decoded = uuid_decoded.unwrap();
-    let uuid_client =
-        String::from_utf8(uuid_decoded).unwrap();
+    let uuid_client = String::from_utf8(uuid_decoded).unwrap();
     let callback_url = format!("{}/api/oidc/callback", get_host(headers.clone()));
     let providers_config = state
-        .get_oauth2_config(oauth2::get_provider_config_file().as_str())
+        .get_oauth2_config(oauth2::get_providers_config_file().as_str())
         .await;
     if providers_config.is_none() {
         return Json(OidcAuthUrl {
@@ -507,19 +510,32 @@ async fn oidc_auth(
         });
     }
     let providers_config = providers_config.unwrap();
-    let provider = providers_config
+    let provider_config = providers_config
         .iter()
         .find(|config| config.op == request.op);
 
-    if provider.is_none() {
+    if provider_config.is_none() {
         return Json(OidcAuthUrl {
             url: "".to_string(),
             code: "".to_string(),
         });
     }
-    let provider = provider.unwrap();
-    let redirect_url =
-        oauth2::get_redirect_url(provider, callback_url.as_str(), uuid_code.as_str());
+    let provider_config = provider_config.unwrap();
+    let provider_trait_object: Arc<dyn  OAuthProvider> = {
+        match provider_config.provider {
+            oauth2::Provider::Github => todo!(),
+            oauth2::Provider::Gitlab => todo!(),
+            oauth2::Provider::Google => todo!(),
+            oauth2::Provider::Apple => todo!(),
+            oauth2::Provider::Okta => todo!(),
+            oauth2::Provider::Facebook => todo!(),
+            oauth2::Provider::Azure => todo!(),
+            oauth2::Provider::Auth0 => todo!(),
+            oauth2::Provider::Custom => Arc::new(oauth2::dex_provider::DexProvider::new()),
+        }
+    };
+
+    let redirect_url = provider_trait_object.get_redirect_url(callback_url.as_str(), uuid_code.as_str());
     let _oidc_session = state
         .insert_oidc_session(
             uuid_code.clone(),
@@ -530,9 +546,9 @@ async fn oidc_auth(
                 auth_token: None,
                 redirect_url: Some(redirect_url.clone()),
                 callback_url: Some(callback_url),
-                provider_config: Some(provider.clone()),
+                provider: Some(provider_trait_object),
                 name: None,
-                email: None
+                email: None,
             },
         )
         .await;
@@ -1018,15 +1034,15 @@ async fn users_client(
 }
 
 /// Get the software download url
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `key` - The key to the software download link, it can be `osx`, `w64` or `ios`
-/// 
+///
 /// # Usage
-/// 
+///
 /// * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable
-/// 
+///
 /// <pre>
 /// [s3config]
 /// Endpoint = "https://compat.objectstorage.eu-london-1.oraclecloud.com"
@@ -1041,7 +1057,10 @@ async fn users_client(
 /// IOSKey = "master/sctgdesk-releases/sctgdesk-1.2.4.ipa"
 /// </pre>
 #[openapi(tag = "Software")]
-#[get("/api/software/client-download-link/<key>", format = "application/json")]
+#[get(
+    "/api/software/client-download-link/<key>",
+    format = "application/json"
+)]
 async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<()>> {
     log::debug!("software");
     let config = get_s3_config_file()
@@ -1051,7 +1070,7 @@ async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<
     let config = config.unwrap();
     match key {
         "osx" => {
-            let key =  config.clone().s3config.osxkey;
+            let key = config.clone().s3config.osxkey;
             let url = get_signed_release_url_with_config(config, key.as_str())
                 .await
                 .map_err(|e| status::NotFound(Box::new(e)));
@@ -1060,7 +1079,7 @@ async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<
             Ok(Json(response))
         }
         "w64" => {
-            let key =  config.clone().s3config.windows64_key;
+            let key = config.clone().s3config.windows64_key;
             let url = get_signed_release_url_with_config(config, key.as_str())
                 .await
                 .map_err(|e| status::NotFound(Box::new(e)));
@@ -1069,7 +1088,7 @@ async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<
             Ok(Json(response))
         }
         "ios" => {
-            let key =  config.clone().s3config.ioskey;
+            let key = config.clone().s3config.ioskey;
             let url = get_signed_release_url_with_config(config, key.as_str())
                 .await
                 .map_err(|e| status::NotFound(Box::new(e)));
@@ -1089,7 +1108,7 @@ async fn software_version() -> Json<SoftwareVersionResponse> {
     let version = env::var("MAIN_PKG_VERSION").unwrap();
     let response = SoftwareVersionResponse {
         server: Some(version),
-        client: None
+        client: None,
     };
     Json(response)
 }

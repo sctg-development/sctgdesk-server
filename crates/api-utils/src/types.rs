@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::fmt;
+use std::sync::Arc;
 
+use oauth2::oauth_provider::OAuthProvider;
 use rocket_okapi::okapi::schemars;
 use rocket_okapi::JsonSchema;
 use serde::de::Visitor;
@@ -518,7 +520,7 @@ pub struct OidcUserInfo {
     pub other: HashMap<String, String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Clone)]
 pub struct OidcState {
     pub id: String,           // is id of the Rustdesk client
     pub uuid: String,         // is uuid of the Rustdesk client
@@ -526,7 +528,7 @@ pub struct OidcState {
     pub auth_token: Option<String>,
     pub redirect_url: Option<String>,
     pub callback_url: Option<String>,
-    pub provider_config: Option<oauth2::ProviderConfig>,
+    pub provider: Option<Arc<dyn OAuthProvider>>,
     pub name: Option<String>,
     pub email: Option<String>,
 }
@@ -539,7 +541,7 @@ impl Default for OidcState {
             auth_token: None,
             redirect_url: None,
             callback_url: None,
-            provider_config: None,
+            provider: None,
             name: None,
             email: None,
         }
