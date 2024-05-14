@@ -523,7 +523,7 @@ async fn oidc_auth(
     let provider_config = provider_config.unwrap();
     let provider_trait_object: Arc<dyn  OAuthProvider> = {
         match provider_config.provider {
-            oauth2::Provider::Github => todo!(),
+            oauth2::Provider::Github => Arc::new(oauth2::github_provider::GithubProvider::new()),
             oauth2::Provider::Gitlab => todo!(),
             oauth2::Provider::Google => todo!(),
             oauth2::Provider::Apple => todo!(),

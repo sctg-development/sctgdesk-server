@@ -4,7 +4,7 @@
 # token_exchange_url = "https://github.com/login/oauth/access_token"
 # app_id = "your_github_app_id"
 # app_secret = "your_github_app_secret"
-# scope = "read:user"
+# scope = "read:user user:email"
 # op_auth_string = "oidc/github"
 # op = "github"
 

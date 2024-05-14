@@ -14,7 +14,7 @@ This server is distributed under the terms of the GNU Affero General Public Lice
 
 ## Authentication
 
-The server includes basic support for authentication with a username and password. Passwords are stored in the database after being hashed with bcrypt. Additionally, similar to Rustdesk-server-pro, it supports authentication with third-party providers compatible with OAuth2. Currently, the username is not retrieved from OAuth2 authentication; the Rustdesk ID is used as the username. This implies that the address book is linked to the Rustdesk ID rather than a username (with OAuth2). All testing has been performed with Dex.
+The server includes basic support for authentication with a username and password. Passwords are stored in the database after being hashed with bcrypt. Additionally, similar to Rustdesk-server-pro, it supports authentication with third-party providers compatible with OAuth2. Currently, only Github and Dex (as a custom provider) are available.
 
 ## Configuration
 

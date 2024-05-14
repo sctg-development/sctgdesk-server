@@ -1,5 +1,6 @@
-pub mod dex_provider;
 pub mod oauth_provider;
+pub mod dex_provider;
+pub mod github_provider;
 use serde::{Deserialize, Serialize};
 use std::{fs, str::FromStr};
 mod errors;
