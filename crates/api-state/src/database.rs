@@ -568,6 +568,7 @@ impl Database {
             id,
             random_password
         );
+        let name = format!("{}'s Personal Address Book", id);
         let res = sqlx::query!(
             r#"
             INSERT OR IGNORE INTO user(guid, grp, team, status, role, name, email, password)
@@ -575,7 +576,7 @@ impl Database {
                     (SELECT guid FROM grp  WHERE name = 'Default'),
                     (SELECT guid FROM team  WHERE name = 'Default'), ?, 0, ?, ?, ?);
             INSERT OR IGNORE INTO ab(guid, name, owner, personal, info)
-                VALUES (?,"Personal Address Book",?,1,'{}');
+                VALUES (?,?,?,1,'{}');
             "#,
             user_guid,
             status,
@@ -583,6 +584,7 @@ impl Database {
             email,
             hashed_random_password,
             ab_guid,
+            name,
             user_guid
         )
         .execute(&mut conn.conn)
@@ -598,7 +600,9 @@ impl Database {
             SELECT guid, status, role, name FROM user WHERE name = ?;
             "#,
             id
-        ).fetch_one(&mut conn.conn).await;
+        )
+        .fetch_one(&mut conn.conn)
+        .await;
 
         if res.is_err() {
             log::error!(

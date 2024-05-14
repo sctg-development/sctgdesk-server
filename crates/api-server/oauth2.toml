@@ -40,10 +40,10 @@
 
 [[provider]]
 provider = "Custom"
-authorization_url = "https://dex-mock-server.sctg.eu.org/dex/auth"
-token_exchange_url = "https://dex-mock-server.sctg.eu.org/dex/token"
+authorization_url = "https://dex-mock-server.example.org/dex/auth"
+token_exchange_url = "https://dex-mock-server.example.org/dex/token"
 app_id = "sctgdesk-api-server"
-app_secret = "SXNVYjdYU2NaVUJXdXpkbHFYbU0="
-op_auth_string = "common-oidc/[{\"name\":\"dex\"}]"
+app_secret = "appsecret"
+op_auth_string = "oidc/dex"
 op = "dex"
 scope = "openid email profile"
