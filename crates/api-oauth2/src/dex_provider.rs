@@ -32,7 +32,7 @@ fn get_authorization_header(provider_config: &ProviderConfig) -> String {
 
 impl OAuthProviderFactory for DexProvider {
     fn new() -> Self {
-        let provider_config = Self::get_provider_config(Provider::Custom);
+        let provider_config = Self::get_provider_config(Provider::Dex);
         Self { provider_config }
     }
 }
@@ -103,6 +103,6 @@ impl OAuthProvider for DexProvider {
     }
 
     fn get_provider_type(&self) -> crate::Provider {
-        Provider::Custom
+        Provider::Dex
     }
 }

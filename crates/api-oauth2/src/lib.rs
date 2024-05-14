@@ -27,7 +27,7 @@ pub enum Provider {
     Facebook,
     Azure,
     Auth0,
-    Custom,
+    Dex,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -51,7 +51,7 @@ impl FromStr for Provider {
             "facebook" => Ok(Provider::Facebook),
             "azure" => Ok(Provider::Azure),
             "auth0" => Ok(Provider::Auth0),
-            "custom" => Ok(Provider::Custom),
+            "custom" => Ok(Provider::Dex),
             _ => Err(()),
         }
     }
@@ -68,7 +68,7 @@ impl Into<String> for Provider {
             Provider::Facebook => "Facebook".to_string(),
             Provider::Azure => "Azure".to_string(),
             Provider::Auth0 => "Auth0".to_string(),
-            Provider::Custom => "Custom".to_string(),
+            Provider::Dex => "Dex".to_string(),
         }
     }
 }
