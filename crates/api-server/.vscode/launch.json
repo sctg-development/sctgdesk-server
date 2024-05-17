@@ -45,5 +45,26 @@
                 "RUST_LOG": "debug",
             },
         }
+        ,
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug tests 'oauth2'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--lib"
+                ],
+                "filter": {
+                    "name": "oauth2",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}/libs/oauth2",
+            "env": {
+                "RUST_LOG": "debug"
+            },
+        }
     ]
 }

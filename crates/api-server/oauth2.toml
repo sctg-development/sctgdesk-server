@@ -39,7 +39,7 @@
 # op = "facebook"
 
 [[provider]]
-provider = "Custom"
+provider = "Dex"
 authorization_url = "https://dex-mock-server.example.org/dex/auth"
 token_exchange_url = "https://dex-mock-server.example.org/dex/token"
 app_id = "sctgdesk-api-server"

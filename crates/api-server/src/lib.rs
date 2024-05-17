@@ -3,6 +3,8 @@ mod extended_json;
 
 use std::collections::HashMap;
 use std::env;
+use std::io::Cursor;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use api::ActionResponse;
@@ -11,8 +13,11 @@ use oauth2::oauth_provider::OAuthProvider;
 use oauth2::oauth_provider::OAuthProviderFactory;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::form::validate::Len;
-use rocket::http::Header;
-use rocket::{delete, put};
+use rocket::fs::relative;
+use rocket::fs::NamedFile;
+use rocket::http::{ContentType, Header};
+use rocket::response::Responder;
+use rocket::{async_trait, delete, options, put, routes};
 use rocket::{Request, Response};
 
 use s3software::{get_s3_config_file, get_signed_release_url_with_config};
@@ -43,8 +48,12 @@ use utils::{
 type AuthenticatedUser = state::AuthenticatedUser<BearerAuthToken>;
 type AuthenticatedAdmin = state::AuthenticatedAdmin<BearerAuthToken>;
 
-use rocket_okapi::{openapi, openapi_get_routes, rapidoc::*, settings::UrlObject};
+use rocket_okapi::{openapi, openapi_get_routes, rapidoc::*, settings::UrlObject, swagger_ui::*};
 use uuid::Uuid;
+
+use include_dir::{include_dir, Dir};
+
+const STATIC_DIR: Dir = include_dir!("webconsole/dist");
 
 pub struct CORS;
 
@@ -68,6 +77,14 @@ impl Fairing for CORS {
     }
 }
 
+/// Answers to OPTIONS requests
+/// This is required for the CORS preflight requests
+#[openapi]
+#[options("/<_path..>")]
+async fn options(_path: PathBuf) -> Result<(), std::io::Error> {
+    Ok(())
+}
+
 pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
     let state = ApiState::new_with_db("db_v2.sqlite3").await;
 
@@ -76,6 +93,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
         .mount(
             "/",
             openapi_get_routes![
+                options,
                 login,
                 login_options,
                 ab_get,
@@ -113,9 +131,15 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 ab_shared,
                 ab_settings,
                 software,
-                software_version
+                software_version,
+                webconsole_index,
+                webconsole_index_,
+                webconsole_assets,
             ],
         )
+        .mount("/",routes![
+            webconsole_vue
+        ])
         .mount(
             "/api/doc/",
             make_rapidoc(&RapiDocConfig {
@@ -521,7 +545,7 @@ async fn oidc_auth(
         });
     }
     let provider_config = provider_config.unwrap();
-    let provider_trait_object: Arc<dyn  OAuthProvider> = {
+    let provider_trait_object: Arc<dyn OAuthProvider> = {
         match provider_config.provider {
             oauth2::Provider::Github => Arc::new(oauth2::github_provider::GithubProvider::new()),
             oauth2::Provider::Gitlab => todo!(),
@@ -535,7 +559,8 @@ async fn oidc_auth(
         }
     };
 
-    let redirect_url = provider_trait_object.get_redirect_url(callback_url.as_str(), uuid_code.as_str());
+    let redirect_url =
+        provider_trait_object.get_redirect_url(callback_url.as_str(), uuid_code.as_str());
     let _oidc_session = state
         .insert_oidc_session(
             uuid_code.clone(),
@@ -1111,4 +1136,64 @@ async fn software_version() -> Json<SoftwareVersionResponse> {
         client: None,
     };
     Json(response)
+}
+
+#[openapi(tag = "Web console")]
+#[get("/assets/<path..>")]
+async fn webconsole_assets(path: PathBuf) -> Option<NamedFile> {
+    let mut path = Path::new(relative!("webconsole/dist/assets")).join(path);
+    if path.is_dir() {
+        path.push("index.html");
+    }
+    NamedFile::open(path).await.ok()
+}
+
+async fn webconsole_index_multi() -> Option<NamedFile> {
+    let path = Path::new(relative!("webconsole/dist/index.html"));
+    NamedFile::open(path).await.ok()
+}
+
+#[openapi(tag = "Web console")]
+#[get("/index.html")]
+async fn webconsole_index() -> Option<NamedFile> {
+    webconsole_index_multi().await
+}
+
+#[openapi(tag = "Web console")]
+#[get("/")]
+async fn webconsole_index_() -> Option<NamedFile> {
+    webconsole_index_multi().await
+}
+
+#[derive(Debug)]
+struct FileResponse(&'static [u8], ContentType);
+
+#[async_trait]
+impl<'r> Responder<'r, 'static> for FileResponse {
+    fn respond_to(self, _: &'r Request<'_>) -> rocket::response::Result<'static> {
+        Response::build()
+            .header(self.1)
+            .sized_body(self.0.len(), Cursor::new(self.0))
+            .ok()
+    }
+}
+
+#[get("/ui/<path..>")]
+async fn webconsole_vue(path: PathBuf) -> Option<FileResponse> {
+    //webconsole_index_multi().await
+    let path = path.to_str().unwrap_or("");
+    //let path = format!("/ui/{}", path);
+    let file = STATIC_DIR.get_file(path).map(|file| {
+        let content_type = ContentType::from_extension(file.path().extension().unwrap_or_default().to_str().unwrap()).unwrap_or(ContentType::Binary);
+        FileResponse(file.contents(), content_type)
+    });
+    if file.is_some() {
+        return file;
+    } else {
+        let file = STATIC_DIR.get_file("index.html").map(|file| {
+            let content_type = ContentType::from_extension(file.path().extension().unwrap_or_default().to_str().unwrap()).unwrap_or(ContentType::Binary);
+            FileResponse(file.contents(), content_type)
+        });
+        return file;
+    }
 }

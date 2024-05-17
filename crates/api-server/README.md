@@ -25,6 +25,12 @@ The server requires an `oauth2.toml` configuration file to function. By default,
 The server is designed to be fully documented using OpenAPI. The documentation is generated using `rocket_okapi`. The server serves the Rapidoc module at `/api/doc`, which allows visualizing and testing the various API routes.  
 Obviously without any test possible a Rapidoc server is deployed at [https://sctg-development.github.io/sctgdesk-api-server/](https://sctg-development.github.io/sctgdesk-api-server/)
 
+## Web console
+
+A web console is available at `/ui` it is a work in progress and is not yet ready for production use.  
+It is a stub for the future sctgdesk-api-server web console.  
+The choosen framework is Vue.js. The API is automatically generated from the OpenAPI with Swagger codegen for Axios Typescript. Note the codegen is not yet ready for production use and a few modifications. For example User.accessToken is not correctly generated from data.access_token . The problem might come from Rocket-Okapi or from Swagger-CodeGen. It can be fixed by modifying the generated code.
+
 ## Integration with Rustdesk-Server
 
 The server is designed to be integrated with the Rustdesk-server you can easily integrate it by modifying the main.rs:
