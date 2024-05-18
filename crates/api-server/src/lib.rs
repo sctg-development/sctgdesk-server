@@ -3,7 +3,7 @@ mod extended_json;
 
 use std::collections::HashMap;
 use std::env;
-use std::io::Cursor;
+use std::io::{Cursor, Read};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -15,7 +15,6 @@ use rocket::fairing::{Fairing, Info, Kind};
 use rocket::form::validate::Len;
 use rocket::fs::relative;
 use rocket::fs::NamedFile;
-use rocket::http::hyper::header::CACHE_CONTROL;
 use rocket::http::{ContentType, Header};
 use rocket::response::Responder;
 use rocket::{async_trait, delete, options, put, routes};
@@ -53,8 +52,6 @@ use rocket_okapi::{openapi, openapi_get_routes, rapidoc::*, settings::UrlObject}
 use uuid::Uuid;
 
 use include_dir::{include_dir, Dir};
-
-const STATIC_DIR: Dir = include_dir!("webconsole/dist");
 
 pub struct CORS;
 
@@ -1165,11 +1162,12 @@ async fn webconsole_assets(path: PathBuf) -> Option<NamedFile> {
 //     webconsole_index_multi().await
 // }
 
+const STATIC_DIR: Dir = include_dir!("webconsole/dist");
 #[derive(Debug)]
-struct StaticFileResponse(&'static [u8], ContentType);
+struct StaticFileResponse(Vec<u8>, ContentType);
 
 #[async_trait]
-impl<'r> Responder<'r, 'static> for StaticFileResponse {
+impl<'r> Responder<'r, 'r> for StaticFileResponse {
     fn respond_to(self, _: &'r Request<'_>) -> rocket::response::Result<'static> {
         Response::build()
             .header(self.1)
@@ -1184,19 +1182,28 @@ impl<'r> Responder<'r, 'static> for StaticFileResponse {
 
 #[get("/ui/<path..>")]
 async fn webconsole_vue(path: PathBuf) -> Option<StaticFileResponse> {
-    //webconsole_index_multi().await
+    if env::var("VITE_DEVELOPMENT").is_ok() {
+        let vite_base = env::var("VITE_DEVELOPMENT").unwrap_or("http://localhost:5173".to_string());
+        let url = format!("{}/ui/{}", vite_base, path.to_str().unwrap_or(""));
+        let response = reqwest::get(&url).await.unwrap();
+        let content_type = response.headers().get("content-type").unwrap().to_str().unwrap().parse::<ContentType>().unwrap();
+        let bytes = response.bytes().await.unwrap();
+        let response_content: Vec<u8> = bytes.iter().map(|byte| *byte).collect();
+        let content = StaticFileResponse(response_content, content_type);
+        return Some(content);
+    }
+
     let path = path.to_str().unwrap_or("");
-    //let path = format!("/ui/{}", path);
     let file = STATIC_DIR.get_file(path).map(|file| {
         let content_type = ContentType::from_extension(file.path().extension().unwrap_or_default().to_str().unwrap()).unwrap_or(ContentType::Binary);
-        StaticFileResponse(file.contents(), content_type)
+        StaticFileResponse(file.contents().to_vec(), content_type)
     });
     if file.is_some() {
         return file;
     } else {
         let file = STATIC_DIR.get_file("index.html").map(|file| {
             let content_type = ContentType::from_extension(file.path().extension().unwrap_or_default().to_str().unwrap()).unwrap_or(ContentType::Binary);
-            StaticFileResponse(file.contents(), content_type)
+            StaticFileResponse(file.contents().to_vec(), content_type)
         });
         return file;
     }

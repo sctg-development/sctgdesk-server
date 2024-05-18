@@ -32,6 +32,7 @@ export default defineConfig({
     },
   },
   server: {
+    hmr: true,
     https: fs.existsSync("./localhost.key")
       ? {
         key: fs.readFileSync("./localhost.key"),

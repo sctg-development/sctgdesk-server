@@ -31,6 +31,18 @@ A web console is available at `/ui` it is a work in progress and is not yet read
 It is a stub for the future sctgdesk-api-server web console.  
 The choosen framework is Vue.js. The API is automatically generated from the OpenAPI with Swagger codegen for Axios Typescript. Note the codegen is not yet ready for production use and a few modifications. For example User.accessToken is not correctly generated from data.access_token . The problem might come from Rocket-Okapi or from Swagger-CodeGen. It can be fixed by modifying the generated code.
 
+### Development
+
+To start the ui development server, run the following commands:
+
+```bash
+VITE_DEVELOPMENT="http://localhost:5173" sctgdesk-api-server
+```
+
+It will start a nodejs ui development server on port 5173. Sctgdesk-api-server will proxy the requests to ui development server rather than serving embedded static files. Access the development ui at `http://localhost:21114/ui` .
+
+Each time you modify the code, the server will automatically rebuild and reload the ui development server.
+
 ## Integration with Rustdesk-Server
 
 The server is designed to be integrated with the Rustdesk-server you can easily integrate it by modifying the main.rs:

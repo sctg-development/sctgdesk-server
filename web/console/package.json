@@ -6,6 +6,7 @@
   "scripts": {
     "create-cert": "openssl req -x509 -newkey rsa:4096 -keyout localhost.key -out localhost.pem -sha256 -nodes -days 365",
     "dev": "vite",
+    "devserver": "npx nodemon -V -w ./src -e js,vue,ts,css,html --exec 'npm run build && node devserver.js'",
     "build": "vite build && gulp licenses",
     "preview": "vite preview"
   },
@@ -26,9 +27,11 @@
     "@types/glob": "^8.1.0",
     "@vitejs/plugin-vue": "^5.0.4",
     "autoprefixer": "^10.4.19",
+    "express": "^4.19.2",
     "glob": "9.3.5",
     "gulp": "^5.0.0",
     "gulp-append-prepend": "^1.0.9",
+    "nodemon": "^3.1.0",
     "npm-check-updates": "^16.14.20",
     "postcss": "^8.4.38",
     "postcss-purgefonts": "^1.0.2",
