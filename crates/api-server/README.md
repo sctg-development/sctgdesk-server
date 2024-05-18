@@ -36,6 +36,7 @@ The choosen framework is Vue.js. The API is automatically generated from the Ope
 To start the ui development server, run the following commands:
 
 ```bash
+cd webconsole && npm i && npm run devserver &
 VITE_DEVELOPMENT="http://localhost:5173" sctgdesk-api-server
 ```
 
