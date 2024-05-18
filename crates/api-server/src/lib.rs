@@ -15,6 +15,7 @@ use rocket::fairing::{Fairing, Info, Kind};
 use rocket::form::validate::Len;
 use rocket::fs::relative;
 use rocket::fs::NamedFile;
+use rocket::http::hyper::header::CACHE_CONTROL;
 use rocket::http::{ContentType, Header};
 use rocket::response::Responder;
 use rocket::{async_trait, delete, options, put, routes};
@@ -48,7 +49,7 @@ use utils::{
 type AuthenticatedUser = state::AuthenticatedUser<BearerAuthToken>;
 type AuthenticatedAdmin = state::AuthenticatedAdmin<BearerAuthToken>;
 
-use rocket_okapi::{openapi, openapi_get_routes, rapidoc::*, settings::UrlObject, swagger_ui::*};
+use rocket_okapi::{openapi, openapi_get_routes, rapidoc::*, settings::UrlObject};
 use uuid::Uuid;
 
 use include_dir::{include_dir, Dir};
@@ -131,9 +132,9 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 ab_settings,
                 software,
                 software_version,
-                webconsole_index,
-                webconsole_index_,
-                webconsole_assets,
+                // webconsole_index,
+                // webconsole_index_,
+                // webconsole_assets,
             ],
         )
         .mount("/",routes![
@@ -1147,51 +1148,55 @@ async fn webconsole_assets(path: PathBuf) -> Option<NamedFile> {
     NamedFile::open(path).await.ok()
 }
 
-async fn webconsole_index_multi() -> Option<NamedFile> {
-    let path = Path::new(relative!("webconsole/dist/index.html"));
-    NamedFile::open(path).await.ok()
-}
+// async fn webconsole_index_multi() -> Option<NamedFile> {
+//     let path = Path::new(relative!("webconsole/dist/index.html"));
+//     NamedFile::open(path).await.ok()
+// }
 
-#[openapi(tag = "Web console")]
-#[get("/index.html")]
-async fn webconsole_index() -> Option<NamedFile> {
-    webconsole_index_multi().await
-}
+// #[openapi(tag = "Web console")]
+// #[get("/index.html")]
+// async fn webconsole_index() -> Option<NamedFile> {
+//     webconsole_index_multi().await
+// }
 
-#[openapi(tag = "Web console")]
-#[get("/")]
-async fn webconsole_index_() -> Option<NamedFile> {
-    webconsole_index_multi().await
-}
+// #[openapi(tag = "Web console")]
+// #[get("/")]
+// async fn webconsole_index_() -> Option<NamedFile> {
+//     webconsole_index_multi().await
+// }
 
 #[derive(Debug)]
-struct FileResponse(&'static [u8], ContentType);
+struct StaticFileResponse(&'static [u8], ContentType);
 
 #[async_trait]
-impl<'r> Responder<'r, 'static> for FileResponse {
+impl<'r> Responder<'r, 'static> for StaticFileResponse {
     fn respond_to(self, _: &'r Request<'_>) -> rocket::response::Result<'static> {
         Response::build()
             .header(self.1)
+            .header(Header{
+                name: "Cache-Control".into(),
+                value: "max-age=604800".into() // 1 week
+            })
             .sized_body(self.0.len(), Cursor::new(self.0))
             .ok()
     }
 }
 
 #[get("/ui/<path..>")]
-async fn webconsole_vue(path: PathBuf) -> Option<FileResponse> {
+async fn webconsole_vue(path: PathBuf) -> Option<StaticFileResponse> {
     //webconsole_index_multi().await
     let path = path.to_str().unwrap_or("");
     //let path = format!("/ui/{}", path);
     let file = STATIC_DIR.get_file(path).map(|file| {
         let content_type = ContentType::from_extension(file.path().extension().unwrap_or_default().to_str().unwrap()).unwrap_or(ContentType::Binary);
-        FileResponse(file.contents(), content_type)
+        StaticFileResponse(file.contents(), content_type)
     });
     if file.is_some() {
         return file;
     } else {
         let file = STATIC_DIR.get_file("index.html").map(|file| {
             let content_type = ContentType::from_extension(file.path().extension().unwrap_or_default().to_str().unwrap()).unwrap_or(ContentType::Binary);
-            FileResponse(file.contents(), content_type)
+            StaticFileResponse(file.contents(), content_type)
         });
         return file;
     }
