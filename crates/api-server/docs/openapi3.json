@@ -7,7 +7,10 @@
   "paths": {
     "/{_path}": {
       "options": {
-        "description": "Answers to OPTIONS requests This is required for the CORS preflight requests",
+        "tags": [
+          "Cors"
+        ],
+        "description": "Answers to OPTIONS requests",
         "operationId": "options",
         "parameters": [
           {
@@ -1484,101 +1487,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/index.html": {
-      "get": {
-        "tags": [
-          "Web console"
-        ],
-        "operationId": "webconsole_index",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "format": "uint8",
-                    "minimum": 0.0
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": ""
-          }
-        }
-      }
-    },
-    "/": {
-      "get": {
-        "tags": [
-          "Web console"
-        ],
-        "operationId": "webconsole_index_",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "format": "uint8",
-                    "minimum": 0.0
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": ""
-          }
-        }
-      }
-    },
-    "/assets/{path}": {
-      "get": {
-        "tags": [
-          "Web console"
-        ],
-        "operationId": "webconsole_assets",
-        "parameters": [
-          {
-            "name": "path",
-            "in": "path",
-            "required": true,
-            "allow_reserved": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "format": "uint8",
-                    "minimum": 0.0
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": ""
           }
         }
       }
