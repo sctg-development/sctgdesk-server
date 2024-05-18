@@ -135,12 +135,14 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
             ],
         )
         .mount("/",routes![
-            webconsole_vue
+            webconsole_vue,
+            openapi_snippet
         ])
         .mount(
             "/api/doc/",
             make_rapidoc(&RapiDocConfig {
                 title: Some("SCTGDesk API Doc".to_owned()),
+                custom_html: Some(include_str!("../rapidoc/index.html").to_owned()),
                 slots: SlotsConfig{
                     logo: Some(include_png_as_base64!("../assets/logo.png")),
                     footer: Some(r#"<p slot="footer" style="margin:0; padding:16px 36px; background-color:orangered; color:#fff; text-align:center;"> 
@@ -385,8 +387,7 @@ async fn users(
     state: &State<ApiState>,
     _user: AuthenticatedAdmin,
     current: u32,
-    #[allow(non_snake_case)]
-    pageSize: u32,
+    #[allow(non_snake_case)] pageSize: u32,
     email: Option<&str>,
     name: Option<&str>,
 ) -> Result<Json<UserList>, status::NotFound<()>> {
@@ -412,10 +413,8 @@ async fn users(
 async fn groups(
     state: &State<ApiState>,
     _user: AuthenticatedAdmin,
-    #[allow(unused_variables)]
-    current: u32,
-    #[allow(non_snake_case,unused_variables)]
-    pageSize: u32,
+    #[allow(unused_variables)] current: u32,
+    #[allow(non_snake_case, unused_variables)] pageSize: u32,
 ) -> Result<Json<UsersResponse>, status::NotFound<()>> {
     log::debug!("users");
     state.check_maintenance().await;
@@ -808,10 +807,8 @@ async fn ab_settings(
 async fn ab_peers(
     state: &State<ApiState>,
     _user: AuthenticatedUser,
-    #[allow(unused_variables)]
-    current: i32,
-    #[allow(non_snake_case,unused_variables)]
-    pageSize: i32,
+    #[allow(unused_variables)] current: i32,
+    #[allow(non_snake_case, unused_variables)] pageSize: i32,
     ab: &str,
 ) -> Result<Json<AbPeersResponse>, status::Unauthorized<()>> {
     state.check_maintenance().await;
@@ -1040,12 +1037,9 @@ async fn users_client(
     state: &State<ApiState>,
     _user: AuthenticatedUser,
     current: u32,
-    #[allow(non_snake_case,unused_variables)]
-    pageSize: u32,
-    #[allow(unused_variables)]
-    accessible: Option<bool>,
-    #[allow(unused_variables)]
-    status: Option<u32>,
+    #[allow(non_snake_case, unused_variables)] pageSize: u32,
+    #[allow(unused_variables)] accessible: Option<bool>,
+    #[allow(unused_variables)] status: Option<u32>,
 ) -> Result<Json<UserList>, status::NotFound<()>> {
     log::debug!("users");
     state.check_maintenance().await;
@@ -1179,22 +1173,37 @@ impl<'r> Responder<'r, 'r> for StaticFileResponse {
     fn respond_to(self, _: &'r Request<'_>) -> rocket::response::Result<'static> {
         Response::build()
             .header(self.1)
-            .header(Header{
+            .header(Header {
                 name: "Cache-Control".into(),
-                value: "max-age=604800".into() // 1 week
+                value: "max-age=604800".into(), // 1 week
             })
             .sized_body(self.0.len(), Cursor::new(self.0))
             .ok()
     }
 }
 
+#[get("/js/openapisnippet.min.js")]
+async fn openapi_snippet() -> Option<StaticFileResponse> {
+    let content = include_str!("../rapidoc/openapisnippet.min.js");
+    Some(StaticFileResponse(
+        content.as_bytes().to_vec(),
+        ContentType::JavaScript,
+    ))
+}
 #[get("/ui/<path..>")]
 async fn webconsole_vue(path: PathBuf) -> Option<StaticFileResponse> {
     if env::var("VITE_DEVELOPMENT").is_ok() {
         let vite_base = env::var("VITE_DEVELOPMENT").unwrap_or("http://localhost:5173".to_string());
         let url = format!("{}/ui/{}", vite_base, path.to_str().unwrap_or(""));
         let response = reqwest::get(&url).await.unwrap();
-        let content_type = response.headers().get("content-type").unwrap().to_str().unwrap().parse::<ContentType>().unwrap();
+        let content_type = response
+            .headers()
+            .get("content-type")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .parse::<ContentType>()
+            .unwrap();
         let bytes = response.bytes().await.unwrap();
         let response_content: Vec<u8> = bytes.iter().map(|byte| *byte).collect();
         let content = StaticFileResponse(response_content, content_type);
@@ -1203,14 +1212,28 @@ async fn webconsole_vue(path: PathBuf) -> Option<StaticFileResponse> {
 
     let path = path.to_str().unwrap_or("");
     let file = STATIC_DIR.get_file(path).map(|file| {
-        let content_type = ContentType::from_extension(file.path().extension().unwrap_or_default().to_str().unwrap()).unwrap_or(ContentType::Binary);
+        let content_type = ContentType::from_extension(
+            file.path()
+                .extension()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap(),
+        )
+        .unwrap_or(ContentType::Binary);
         StaticFileResponse(file.contents().to_vec(), content_type)
     });
     if file.is_some() {
         return file;
     } else {
         let file = STATIC_DIR.get_file("index.html").map(|file| {
-            let content_type = ContentType::from_extension(file.path().extension().unwrap_or_default().to_str().unwrap()).unwrap_or(ContentType::Binary);
+            let content_type = ContentType::from_extension(
+                file.path()
+                    .extension()
+                    .unwrap_or_default()
+                    .to_str()
+                    .unwrap(),
+            )
+            .unwrap_or(ContentType::Binary);
             StaticFileResponse(file.contents().to_vec(), content_type)
         });
         return file;
