@@ -78,8 +78,7 @@ impl Fairing for CORS {
 }
 
 /// Answers to OPTIONS requests
-/// This is required for the CORS preflight requests
-#[openapi]
+#[openapi(tag = "Cors")]
 #[options("/<_path..>")]
 async fn options(_path: PathBuf) -> Result<(), std::io::Error> {
     Ok(())
