@@ -1,6 +1,6 @@
-pub mod oauth_provider;
 pub mod dex_provider;
 pub mod github_provider;
+pub mod oauth_provider;
 use serde::{Deserialize, Serialize};
 use std::{fs, str::FromStr};
 mod errors;
@@ -91,6 +91,12 @@ pub struct TokenResponse {
 /// # Returns  
 /// The providers config
 pub fn get_providers_config_from_file(config_file: &str) -> Vec<ProviderConfig> {
+    // If file does not exist create it
+    if !std::path::Path::new(&config_file).exists() {
+        log::error!("oauth2 config file does not exist, creating it, we recommend you to fill it with your own values, you can change the file path by setting the OAUTH2_CONFIG_FILE environment variable.");
+        let oauth2_config = include_str!("../../../oauth2.toml");
+        fs::write(&config_file, oauth2_config).expect("Failed to write oauth2 config file");
+    }
     let config_file_content = fs::read_to_string(config_file).expect("Failed to read config file");
     let config: Config = toml::from_str(&config_file_content).expect("Failed to parse config file");
     config.provider
