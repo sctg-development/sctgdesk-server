@@ -1,4 +1,5 @@
 use std::process::Command;
+use std::str;
 
 fn main() {
     println!("cargo:rerun-if-changed=webconsole");
@@ -10,7 +11,9 @@ fn main() {
         .expect("Failed to execute command");
     assert!(
         output.status.success(),
-        "Failed to install npm dependencies"
+        "Failed to install npm dependencies: {}{}",
+        str::from_utf8(&output.stdout).unwrap_or(""),
+        str::from_utf8(&output.stderr).unwrap_or("")
     );
 
     let output = Command::new("npm")
@@ -19,5 +22,10 @@ fn main() {
         .arg("build")
         .output()
         .expect("Failed to execute command");
-    assert!(output.status.success(), "Failed to build webconsole");
+    assert!(
+        output.status.success(),
+        "Failed to build webconsole: {}{}",
+        str::from_utf8(&output.stdout).unwrap_or(""),
+        str::from_utf8(&output.stderr).unwrap_or("")
+    );
 }
