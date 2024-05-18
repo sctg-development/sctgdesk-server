@@ -12,6 +12,7 @@ async fn main() -> Result<(), rocket::Error> {
         .merge(("port", 21114))
         .merge(("log_level", LogLevel::Debug))
         .merge(("secret_key", "wJq+s/xvwZjmMX3ev0p4gQTs9Ej5wt0brsk3ZGhoBTg="))
+        .merge(("ident",  format!("SCTGDeskApiServer/{}", env!("CARGO_PKG_VERSION"))))
         // .merge(("tls.certs", "rustdesk.crt"))
         // .merge(("tls.key", "rustdesk.pem"))
         .merge(("limits", Limits::new().limit("json", 2.mebibytes())));
