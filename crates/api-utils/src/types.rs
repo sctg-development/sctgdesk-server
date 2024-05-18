@@ -447,6 +447,7 @@ impl Default for OidcDeviceInfo {
 }
 #[derive(Serialize, Deserialize, JsonSchema, Debug)]
 pub struct OidcAuthRequest {
+    #[allow(non_snake_case)]
     pub deviceInfo: OidcDeviceInfo,
     pub id: String,
     pub op: String,

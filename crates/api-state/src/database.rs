@@ -557,7 +557,6 @@ impl Database {
             conn: self.pool.acquire().await.unwrap(),
         };
         let status = { env::var("OAUTH2_CREATE_USER").unwrap_or("0".to_string()) == "1" };
-        let uuid_vec: Vec<u8> = Vec::from(uuid.clone());
         let ab_guid = Uuid::new_v4().as_bytes().to_vec();
         let user_guid = Uuid::new_v4().as_bytes().to_vec();
         let random_password = Uuid::new_v4().to_string();
@@ -1182,7 +1181,7 @@ impl Database {
         for param in query_params {
             res = res.bind(param);
         }
-        let res = res.bind(user_id).execute(&mut conn).await;
+        let _res = res.bind(user_id).execute(&mut conn).await;
 
         Some(())
     }

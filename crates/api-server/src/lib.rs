@@ -3,7 +3,7 @@ mod extended_json;
 
 use std::collections::HashMap;
 use std::env;
-use std::io::{Cursor, Read};
+use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -385,6 +385,7 @@ async fn users(
     state: &State<ApiState>,
     _user: AuthenticatedAdmin,
     current: u32,
+    #[allow(non_snake_case)]
     pageSize: u32,
     email: Option<&str>,
     name: Option<&str>,
@@ -411,7 +412,9 @@ async fn users(
 async fn groups(
     state: &State<ApiState>,
     _user: AuthenticatedAdmin,
+    #[allow(unused_variables)]
     current: u32,
+    #[allow(non_snake_case,unused_variables)]
     pageSize: u32,
 ) -> Result<Json<UsersResponse>, status::NotFound<()>> {
     log::debug!("users");
@@ -428,11 +431,11 @@ async fn groups(
 
 /// Add a group
 #[openapi(tag = "todo")]
-#[post("/api/group", format = "application/json", data = "<request>")]
+#[post("/api/group", format = "application/json", data = "<_request>")]
 async fn group_add(
     state: &State<ApiState>,
     _user: AuthenticatedAdmin,
-    request: Json<AddUserRequest>,
+    _request: Json<AddUserRequest>,
 ) -> Result<Json<UsersResponse>, status::Unauthorized<()>> {
     log::debug!("create_user");
     state.check_maintenance().await;
@@ -693,7 +696,7 @@ async fn ab_tags(
 )]
 async fn ab_tag_add(
     state: &State<ApiState>,
-    user: AuthenticatedUser,
+    _user: AuthenticatedUser,
     ab: &str,
     request: Json<AbTag>,
 ) -> Result<ActionResponse, status::Unauthorized<()>> {
@@ -713,7 +716,7 @@ async fn ab_tag_add(
 )]
 async fn ab_tag_update(
     state: &State<ApiState>,
-    user: AuthenticatedUser,
+    _user: AuthenticatedUser,
     ab: &str,
     request: Json<AbTag>,
 ) -> Result<ActionResponse, status::Unauthorized<()>> {
@@ -805,7 +808,9 @@ async fn ab_settings(
 async fn ab_peers(
     state: &State<ApiState>,
     _user: AuthenticatedUser,
+    #[allow(unused_variables)]
     current: i32,
+    #[allow(non_snake_case,unused_variables)]
     pageSize: i32,
     ab: &str,
 ) -> Result<Json<AbPeersResponse>, status::Unauthorized<()>> {
@@ -1001,11 +1006,11 @@ async fn user_update(
 }
 /// Add OIDC Provider
 #[openapi(tag = "todo")]
-#[put("/api/oidc/settings", format = "application/json", data = "<request>")]
+#[put("/api/oidc/settings", format = "application/json", data = "<_request>")]
 async fn oidc_add(
     state: &State<ApiState>,
     _user: AuthenticatedAdmin,
-    request: Json<EnableUserRequest>,
+    _request: Json<EnableUserRequest>,
 ) -> Result<Json<EnableUserRequest>, status::Unauthorized<()>> {
     log::debug!("Add OIDC Provider");
     state.check_maintenance().await;
@@ -1035,8 +1040,11 @@ async fn users_client(
     state: &State<ApiState>,
     _user: AuthenticatedUser,
     current: u32,
+    #[allow(non_snake_case,unused_variables)]
     pageSize: u32,
+    #[allow(unused_variables)]
     accessible: Option<bool>,
+    #[allow(unused_variables)]
     status: Option<u32>,
 ) -> Result<Json<UserList>, status::NotFound<()>> {
     log::debug!("users");
