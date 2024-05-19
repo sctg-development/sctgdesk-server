@@ -130,11 +130,13 @@ impl ApiState {
         password_info: UserPasswordInfo<'s>,
         admin_only: bool,
     ) -> Option<(utils::UserInfo, Token)> {
-        let (conn, user_id, db_user_info) = match self.db.find_user_by_name(username.as_str()).await
-        {
-            (conn, Some((user_id, db_user_info))) => (conn, user_id, db_user_info),
-            _ => return None,
-        };
+        let (conn, user_id, email, db_user_info) =
+            match self.db.find_user_by_name(username.as_str()).await {
+                (conn, Some((user_id, email, db_user_info))) => {
+                    (conn, user_id, email, db_user_info)
+                }
+                _ => return None,
+            };
         if !db_user_info.active {
             return None;
         }
@@ -167,6 +169,7 @@ impl ApiState {
         Some((
             utils::UserInfo {
                 name: username.to_string(),
+                email,
                 ..Default::default()
             },
             access_token,

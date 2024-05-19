@@ -100,7 +100,7 @@ impl Database {
     pub async fn find_user_by_name(
         &self,
         username: &str,
-    ) -> (DatabaseConnection, Option<(UserId, DatabaseUserInfo)>) {
+    ) -> (DatabaseConnection, Option<(UserId, Option<String>, DatabaseUserInfo)>) {
         let mut conn = DatabaseConnection {
             conn: self.pool.acquire().await.unwrap(),
         };
@@ -112,7 +112,8 @@ impl Database {
             SELECT
                 guid,
                 status,
-                role
+                role,
+                email
             FROM
                 user
             WHERE
@@ -126,12 +127,13 @@ impl Database {
         );
 
         let user_id: UserId = res.guid;
+        let email = res.email;
         let dbi = DatabaseUserInfo {
             active: res.status == 1,
             admin: res.role == 1,
         };
 
-        (conn, Some((user_id, dbi)))
+        (conn, Some((user_id, email, dbi)))
     }
 
     pub async fn get_user_hashed_password(

@@ -94,7 +94,7 @@ This website use:
             </button>
           </div>
           <div class="mt-3 space-y-1 px-2">
-            <DisclosureButton v-for="item in userNavigation" :key="item.name" as="a" :href="item.href"
+            <DisclosureButton v-for="item in userNavigation" :key="item.name" as="a" :href="item.href"  @click="item.action"
               class="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white">
               {{ item.name }}</DisclosureButton>
           </div>
@@ -128,7 +128,7 @@ const router = useRouter();
 
 const user = {
   name: userStore.user?.name || 'Unknown',
-  email: 'tom@example.com',
+  email: userStore.user?.email || '',
   imageUrl: generateAvatar(userStore.user?.name),
 }
 const navigation = [
@@ -139,7 +139,7 @@ const navigation = [
   { name: 'Reports', href: '#', current: false },
 ]
 const userNavigation = [
-  { name: `${userStore.user?.name}'s profile`, href: '#', action: '' },
+  { name: `${userStore.user?.name} ${userStore.user?.email}`, href: '#', action: '' },
   { name: 'Settings', href: '#', action: '' },
   { name: 'Sign out', href: '#', action: logout },
 ]
