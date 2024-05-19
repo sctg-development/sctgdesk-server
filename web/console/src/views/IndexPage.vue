@@ -17,7 +17,7 @@ This website use:
             </div>
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-4">
-                <a v-for="item in navigation" :key="item.name" :href="item.href"
+                <a v-for="item in navigation" :key="item.name" :href="item.href" @click="makePageCurrent(item.name)"
                   :class="[item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white', 'rounded-md px-3 py-2 text-sm font-medium']"
                   :aria-current="item.current ? 'page' : undefined">{{ item.name }}</a>
               </div>
@@ -74,6 +74,7 @@ This website use:
       <DisclosurePanel class="md:hidden">
         <div class="space-y-1 px-2 pb-3 pt-2 sm:px-3">
           <DisclosureButton v-for="item in navigation" :key="item.name" as="a" :href="item.href"
+            @click="makePageCurrent(item.name)"
             :class="[item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white', 'block rounded-md px-3 py-2 text-base font-medium']"
             :aria-current="item.current ? 'page' : undefined">{{ item.name }}</DisclosureButton>
         </div>
@@ -94,7 +95,8 @@ This website use:
             </button>
           </div>
           <div class="mt-3 space-y-1 px-2">
-            <DisclosureButton v-for="item in userNavigation" :key="item.name" as="a" :href="item.href"  @click="item.action"
+            <DisclosureButton v-for="item in userNavigation" :key="item.name" as="a" :href="item.href"
+              @click="item.action"
               class="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white">
               {{ item.name }}</DisclosureButton>
           </div>
@@ -104,12 +106,97 @@ This website use:
 
     <header class="bg-white shadow">
       <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+        <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ getCurrentPage() }}</h1>
       </div>
     </header>
     <main>
-      <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-        <!-- Your content -->
+      <div v-if="isCurrentPage('Dashboard')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+        Dashboard content
+      </div>
+      <div v-if="isCurrentPage('Devices')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+        Devices content
+      </div>
+      <div v-if="isCurrentPage('Users')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+        <!-- ====== Table Section Start -->
+        <section class="bg-white dark:bg-dark">
+          <div class="container mx-auto">
+            <div class="flex flex-wrap -mx-4">
+              <div class="w-full px-4">
+                <div class="max-w-full overflow-x-auto">
+                  <table class="w-full table-auto">
+                    <thead class="bg-slate-400">
+                      <tr class="text-center bg-primary">
+                        <th
+                          class="w-1/6 min-w-[160px] border-l border-transparent py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
+                          Guid
+                        </th>
+                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
+                          Name
+                        </th>
+                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
+                          Email
+                        </th>
+                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
+                          Status
+                        </th>
+                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
+                          Admin
+                        </th>
+                        <th
+                          class="w-1/6 min-w-[160px] border-r border-transparent py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
+                          Note
+                        </th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="user in users" :key="user.guid">
+                        <td
+                          class="text-dark border-b border-l border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
+                          {{ user.guid }}
+                        </td>
+                        <td
+                          class="text-dark border-b border-[#E8E8E8] bg-white dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
+                          {{ user.name }}
+                        </td>
+                        <td
+                          class="text-dark border-b border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
+                          {{ user.email }}
+                        </td>
+                        <td
+                          class="text-dark border-b border-[#E8E8E8] bg-white dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
+                          {{ user.status }}
+                        </td>
+                        <td
+                          class="text-dark border-b border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
+                          {{ user.isAdmin ? 'Yes' : 'No' }}
+                        </td>
+                        <td
+                          class="text-dark border-b border-[#E8E8E8] bg-white dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
+                          {{ user.note }}
+                        </td>
+                        <td
+                          class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
+                          <a href="javascript:void(0)"
+                            class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
+                            Edit
+                          </a>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- ====== Table Section End -->
+      </div>
+      <div v-if="isCurrentPage('Groups')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+        Groups content
+      </div>
+      <div v-if="isCurrentPage('Reports')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+        Reports content
       </div>
     </main>
   </div>
@@ -122,7 +209,8 @@ import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useRouter } from 'vue-router';
 import { generateAvatar } from '@/utilities/avatar'
 import { useUserStore } from '@/stores/sctgDeskStore';
-import { LoginApi, Configuration } from '@/api';
+import { LoginApi, Configuration, UserApi, UserListResponse } from '@/api';
+import { onMounted, ref } from 'vue';
 const userStore = useUserStore();
 const router = useRouter();
 
@@ -131,19 +219,57 @@ const user = {
   email: userStore.user?.email || '',
   imageUrl: generateAvatar(userStore.user?.name),
 }
-const navigation = [
+
+const users = ref([] as UserListResponse[]);
+
+const navigation = ref([
   { name: 'Dashboard', href: '#', current: true },
   { name: 'Devices', href: '#', current: false },
   { name: 'Users', href: '#', current: false },
   { name: 'Groups', href: '#', current: false },
   { name: 'Reports', href: '#', current: false },
-]
+])
 const userNavigation = [
-  { name: `${userStore.user?.name} ${userStore.user?.email}`, href: '#', action: '' },
-  { name: 'Settings', href: '#', action: '' },
+  { name: `${userStore.user?.name} ${userStore.user?.email}`, href: '#', action: nop },
+  { name: 'Settings', href: '#', action: nop },
   { name: 'Sign out', href: '#', action: logout },
 ]
-function logout() {
+
+/**
+ * Returns the name of the current page in the navigation menu.
+ *
+ * @return {string} The name of the current page, or 'Dashboard' if no page is currently selected.
+ */
+function getCurrentPage(): string {
+  return navigation.value.find((item) => item.current)?.name || 'Dashboard';
+}
+/**
+ * Checks if the given page is the current page.
+ *
+ * @param {string} page - The name of the page to check.
+ * @return {boolean} True if the page is the current page, false otherwise.
+ */
+function isCurrentPage(page: string): boolean {
+  return navigation.value.find((item) => item.name === page)?.current || false;
+}
+
+/**
+ * Updates the current page in the navigation menu based on the provided page name.
+ *
+ * @param {string} page - The name of the page to set as the current page.
+ * @return {void} This function does not return anything.
+ */
+function makePageCurrent(page: string): void {
+  navigation.value.forEach((item) => {
+    item.current = item.name === page;
+  });
+}
+/**
+ * Logs out the user by calling the logout API endpoint.
+ *
+ * @return {void} This function does not return anything.
+ */
+function logout(): void {
   const loginApi = new LoginApi(userStore.api_configuration);
   loginApi.logout({ id: userStore.user.name, uuid: "" }).then((response) => {
     if (response.status == 200) {
@@ -156,4 +282,43 @@ function logout() {
     alert("Unable to logout");
   });
 }
+
+/**
+ * Retrieves the list of users from the API.
+ *
+ * @return {Promise<UserListResponse[]>} A promise that resolves to the list of users.
+ */
+function getUsers(): Promise<UserListResponse[]> {
+  const userApi = new UserApi(userStore.api_configuration);
+  return new Promise<UserListResponse[]>((resolve, reject) => {
+    userApi.users(1, 2 ^ 32 - 1).then((response) => {
+      if (response.status == 200 && response.data.msg == "success") {
+        console.log(response.data);
+        resolve(response.data.data);
+      }
+      else {
+        resolve([] as UserListResponse[]);
+      }
+    }).catch((error) => {
+      console.error(error);
+      resolve([] as UserListResponse[]);
+    });
+  });
+}
+
+/**
+ * A no-operation function that does nothing.
+ *
+ * @return {void} This function does not return anything.
+ */
+function nop(): void {
+  // Do nothing
+}
+
+onMounted(() => {
+  getUsers().then((data) => {
+    users.value = data;
+  });
+});
+
 </script>
