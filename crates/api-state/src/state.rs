@@ -15,8 +15,10 @@ use std::{
 use oauth2::ProviderConfig;
 
 use tokio::sync::RwLock;
-use utils::{AbPeer, AbTag, AddUserRequest, AddressBook, OidcState, Token, UpdateUserRequest, UserListResponse};
-
+use utils::{
+    AbPeer, AbTag, AddUserRequest, AddressBook, OidcState, Token, UpdateUserRequest,
+    UserListResponse,
+};
 
 pub struct ApiState {
     last_maintenance_time: AtomicU64,
@@ -127,7 +129,7 @@ impl ApiState {
         username: &String,
         password_info: UserPasswordInfo<'s>,
         admin_only: bool,
-    ) -> Option<(String, Token)> {
+    ) -> Option<(utils::UserInfo, Token)> {
         let (conn, user_id, db_user_info) = match self.db.find_user_by_name(username.as_str()).await
         {
             (conn, Some((user_id, db_user_info))) => (conn, user_id, db_user_info),
@@ -162,7 +164,13 @@ impl ApiState {
             .get_access_token(user_id, username, db_user_info.admin)
             .await;
 
-        Some((username.to_string(), access_token))
+        Some((
+            utils::UserInfo {
+                name: username.to_string(),
+                ..Default::default()
+            },
+            access_token,
+        ))
     }
 
     async fn get_access_token(&self, user_id: Vec<u8>, username: &String, is_admin: bool) -> Token {
@@ -439,14 +447,20 @@ impl ApiState {
         {
             let provider = oidc_session.clone().provider.unwrap();
             let callback_url = oidc_session.clone().callback_url.unwrap();
-            let exchange_result = provider.exchange_code(authorization_code.as_str(), callback_url.as_str()).await;
+            let exchange_result = provider
+                .exchange_code(authorization_code.as_str(), callback_url.as_str())
+                .await;
 
             if exchange_result.is_ok() {
                 let access_token = exchange_result.unwrap();
                 let username = access_token.username.clone();
 
                 oidc_session.auth_token = Some(access_token.access_token.clone());
-                oidc_session.name = Some(if username.len()>0 {username.clone()} else {oidc_session.id.clone()});
+                oidc_session.name = Some(if username.len() > 0 {
+                    username.clone()
+                } else {
+                    oidc_session.id.clone()
+                });
                 oidc_session.email = Some(access_token.email.clone());
                 log::debug!("oidc_session_exchange_code {:?}", oidc_session.auth_token);
                 return Some(access_token.access_token);
@@ -577,23 +591,39 @@ impl ApiState {
     /// Add a user
     /// This function is used to add a user to the database
     pub async fn add_user(&self, user_parameters: AddUserRequest) -> Option<()> {
-        self.db.add_user(user_parameters.name, user_parameters.password, user_parameters.email, user_parameters.is_admin, user_parameters.group_name).await
+        self.db
+            .add_user(
+                user_parameters.name,
+                user_parameters.password,
+                user_parameters.email,
+                user_parameters.is_admin,
+                user_parameters.group_name,
+            )
+            .await
     }
 
     /// Change user status
-    pub async fn user_change_status(&self, user: &str, disable: bool)-> Option<()> {
+    pub async fn user_change_status(&self, user: &str, disable: bool) -> Option<()> {
         self.db.user_change_status(user, disable as u32).await
     }
 
     /// Get all users
-    pub async fn get_all_users(&self, name: Option<&str>, email: Option<&str>, current: u32, page_size: u32) -> Option<Vec<UserListResponse>> {
-        self.db.get_all_users(name,email,current,page_size).await
+    pub async fn get_all_users(
+        &self,
+        name: Option<&str>,
+        email: Option<&str>,
+        current: u32,
+        page_size: u32,
+    ) -> Option<Vec<UserListResponse>> {
+        self.db.get_all_users(name, email, current, page_size).await
     }
 
     /// Update a user
-    pub async fn user_update(&self, user_id: UserId, user_parameters: UpdateUserRequest) -> Option<()> {
+    pub async fn user_update(
+        &self,
+        user_id: UserId,
+        user_parameters: UpdateUserRequest,
+    ) -> Option<()> {
         self.db.user_update(user_id, user_parameters).await
     }
-
-
 }

@@ -108,9 +108,11 @@ pub struct LoginRequest {
     pub uuid: String,
 }
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema)]
+#[derive(Deserialize, Serialize, Debug, JsonSchema, Clone, Default)]
 pub struct UserInfo {
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
 }
 
 #[derive(Serialize, Debug, JsonSchema)]

@@ -17,7 +17,7 @@
 
                 <div>
                     <div class="flex items-center justify-between">
-                        <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password</label>
+                        <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password <span id="loginResult" class="text-red-700"></span></label>
                     </div>
                     <div class="mt-2">
                         <input v-model="password" id="password" name="password" type="password"
@@ -40,7 +40,7 @@ import { $require } from '@/utilities/viteHelper.js'
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { useRouter } from 'vue-router';
 import { ref } from 'vue';
-import { LoginApi, Configuration } from '@/api';
+import { LoginApi, Configuration, UserApi } from '@/api';
 const userStore = useUserStore();
 const router = useRouter();
 
@@ -50,20 +50,32 @@ const password = ref("");
 function handleLogin(e: SubmitEvent) {
     e.preventDefault();
     const configuration = new Configuration({
-        basePath: window.location.origin,
+       // basePath: window.location.origin,
+       basePath: "http://127.0.0.1:21114",
+       username: name.value,
+       password: password.value
     });
     const loginApi = new LoginApi(configuration);
     loginApi.login({ username: name.value, password: password.value, id: "", uuid: "" }).then((response) => {
         if (response.status == 200) {
             const data = response.data;
             userStore.user = data.user;
-            userStore.accessToken = data.access_token;
+            userStore.api_configuration = configuration;
+            userStore.api_configuration.accessToken = data.access_token as any;
+            const userApi = new UserApi(userStore.api_configuration);
+            userApi.currentUser({id:"",uuid:""}).then((response) => {
+                console.log(response.data);
+            }).catch((error) => {
+                console.log(error);
+            });
             router.push({ name: 'index' });
         } else {
             console.log(response.data);
+            document.getElementById("loginResult").innerText = "Wrong username or password !";
         }
     }).catch((error) => {
         console.log(error);
+        document.getElementById("loginResult").innerText = "Wrong username or password !";
     });
 
 }

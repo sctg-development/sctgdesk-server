@@ -191,7 +191,7 @@ async fn login(
 
     let reply = LoginReply {
         response_type: "access_token".to_string(),
-        user: UserInfo { name: user },
+        user: user,
         access_token,
     };
 
@@ -309,7 +309,10 @@ async fn current_user(
 
     let reply = CurrentUserResponse {
         error: false,
-        data: UserInfo { name: username },
+        data: UserInfo {
+            name: username,
+            ..Default::default()
+        },
     };
 
     log::debug!("current_user reply: {:?}", reply);
