@@ -13,10 +13,10 @@
  */
 export * from './apis/address-book-api';
 export * from './apis/address-book-legacy-api';
+export * from './apis/cors-api';
 export * from './apis/login-api';
 export * from './apis/peer-api';
 export * from './apis/software-api';
 export * from './apis/todo-api';
 export * from './apis/user-api';
-export * from './apis/web-console-api';
 

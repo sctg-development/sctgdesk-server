@@ -31,4 +31,10 @@ export interface CurrentUserResponse {
      * @memberof CurrentUserResponse
      */
     name: string;
+
+    /**
+     * @type {string}
+     * @memberof CurrentUserResponse
+     */
+    email?: string | null;
 }

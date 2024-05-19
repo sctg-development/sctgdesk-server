@@ -25,4 +25,10 @@ export interface UserInfo {
      * @memberof UserInfo
      */
     name: string;
+
+    /**
+     * @type {string}
+     * @memberof UserInfo
+     */
+    email?: string | null;
 }
