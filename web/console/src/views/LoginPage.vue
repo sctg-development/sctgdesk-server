@@ -50,8 +50,8 @@ const password = ref("");
 function handleLogin(e: SubmitEvent) {
     e.preventDefault();
     const configuration = new Configuration({
-       // basePath: window.location.origin,
-       basePath: "http://127.0.0.1:21114",
+       basePath: window.location.origin,
+       // basePath: "http://127.0.0.1:21114",
        username: name.value,
        password: password.value
     });
