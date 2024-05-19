@@ -7,7 +7,8 @@ if [ "$response" -eq 200 ]; then
     curl http://127.0.0.1:21114/openapi.json >webconsole/src/api/openapi.json &&
         docker run --rm -v ${PWD}:/local swaggerapi/swagger-codegen-cli-v3 generate -i file:///local/webconsole/src/api/openapi.json -l typescript-axios -o /local/webconsole/src/api &&
         sed -ibak 's/accessToken/access_token/' webconsole/src/api/models/login-reply.ts &&
-        rm webconsole/src/api/models/login-reply.tsbak
+        sed -ibak 's/isAdmin/is_admin/' webconsole/src/api/models/user-list-response.ts &&
+        rm webconsole/src/api/models/*tsbak
 else
     echo "Error: Server is not responding. you must start sctgdesk-api-server first."
     exit 1

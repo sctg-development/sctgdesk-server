@@ -169,7 +169,7 @@ This website use:
                         </td>
                         <td
                           class="text-dark border-b border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ user.isAdmin ? 'Yes' : 'No' }}
+                          {{ user.is_admin ? 'Yes' : 'No' }}
                         </td>
                         <td
                           class="text-dark border-b border-[#E8E8E8] bg-white dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
@@ -209,7 +209,7 @@ import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useRouter } from 'vue-router';
 import { generateAvatar } from '@/utilities/avatar'
 import { useUserStore } from '@/stores/sctgDeskStore';
-import { LoginApi, Configuration, UserApi, UserListResponse } from '@/api';
+import { LoginApi, Configuration, UserApi, UserListResponse, TodoApi } from '@/api';
 import { onMounted, ref } from 'vue';
 const userStore = useUserStore();
 const router = useRouter();
@@ -291,7 +291,8 @@ function logout(): void {
 function getUsers(): Promise<UserListResponse[]> {
   const userApi = new UserApi(userStore.api_configuration);
   return new Promise<UserListResponse[]>((resolve, reject) => {
-    userApi.users(1, 2 ^ 32 - 1).then((response) => {
+    //userApi.usersClient();
+    userApi.usersClient(1, 2 ^ 32 - 1).then((response) => {
       if (response.status == 200 && response.data.msg == "success") {
         console.log(response.data);
         resolve(response.data.data);

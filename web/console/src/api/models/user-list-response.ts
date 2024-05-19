@@ -60,5 +60,5 @@ export interface UserListResponse {
      * @type {boolean}
      * @memberof UserListResponse
      */
-    isAdmin: boolean;
+    is_admin: boolean;
 }
