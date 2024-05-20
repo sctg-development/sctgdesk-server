@@ -9,6 +9,7 @@ if [ "$response" -eq 200 ]; then
         sed -ibak 's/accessToken/access_token/' webconsole/src/api/models/login-reply.ts &&
         sed -ibak 's/isAdmin/is_admin/' webconsole/src/api/models/user-list-response.ts &&
         sed -ibak 's/lastOnline/last_online/' webconsole/src/api/models/peer.ts &&
+        sed -ibak -e 's/confirmPassword/\"confirm-password\"/' -e 's/isAdmin/is_admin/' -e 's/groupName/group_name/' webconsole/src/api/models/add-user-request.ts &&
         rm webconsole/src/api/models/*tsbak
 else
     echo "Error: Server is not responding. you must start sctgdesk-api-server first."

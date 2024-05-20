@@ -36,7 +36,7 @@ export interface AddUserRequest {
      * @type {string}
      * @memberof AddUserRequest
      */
-    confirmPassword: string;
+    "confirm-password": string;
 
     /**
      * @type {string}
@@ -48,11 +48,11 @@ export interface AddUserRequest {
      * @type {boolean}
      * @memberof AddUserRequest
      */
-    isAdmin: boolean;
+    is_admin: boolean;
 
     /**
      * @type {string}
      * @memberof AddUserRequest
      */
-    groupName: string;
+    group_name: string;
 }
