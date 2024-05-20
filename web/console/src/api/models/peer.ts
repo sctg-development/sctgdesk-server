@@ -49,7 +49,7 @@ export interface Peer {
      * @type {string}
      * @memberof Peer
      */
-    lastOnline: string;
+    last_online: string;
 
     /**
      * @type {PeerInfo}
