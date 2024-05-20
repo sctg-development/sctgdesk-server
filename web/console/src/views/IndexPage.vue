@@ -114,156 +114,10 @@ This website use:
         Dashboard content
       </div>
       <div v-if="isCurrentPage('Devices')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-        <!-- ====== Table Section Start -->
-        <section class="bg-white dark:bg-dark">
-          <div class="container mx-auto">
-            <div class="flex flex-wrap -mx-4">
-              <div class="w-full px-4">
-                <div class="max-w-full overflow-x-auto">
-                  <table class="w-full table-auto">
-                    <thead class="bg-slate-400">
-                      <tr class="text-center bg-primary">
-                        <th
-                          class="w-1/6 min-w-[160px] border-l border-transparent py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Id
-                        </th>
-                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Status
-                        </th>
-                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Username
-                        </th>
-                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Os
-                        </th>
-                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Ip
-                        </th>
-                        <th
-                          class="w-1/6 min-w-[160px] border-r border-transparent py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Cpu
-                        </th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="peer in peers" :key="peer.guid">
-                        <td
-                          class="text-dark border-b border-l border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ peer.id }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-[#E8E8E8] bg-white dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ peer.status }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ peer.info.username }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-[#E8E8E8] bg-white dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ peer.info.os }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ peer.info.ip }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-[#E8E8E8] bg-white dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ peer.info.cpu }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          <a href="javascript:void(0)"
-                            class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
-                            Delete
-                          </a>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-        <!-- ====== Table Section End -->
+        <DevicesCard />
       </div>
       <div v-if="isCurrentPage('Users')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-        <!-- ====== Table Section Start -->
-        <section class="bg-white dark:bg-dark">
-          <div class="container mx-auto">
-            <div class="flex flex-wrap -mx-4">
-              <div class="w-full px-4">
-                <div class="max-w-full overflow-x-auto">
-                  <table class="w-full table-auto">
-                    <thead class="bg-slate-400">
-                      <tr class="text-center bg-primary">
-                        <th
-                          class="w-1/6 min-w-[160px] border-l border-transparent py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Guid
-                        </th>
-                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Name
-                        </th>
-                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Email
-                        </th>
-                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Status
-                        </th>
-                        <th class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Admin
-                        </th>
-                        <th
-                          class="w-1/6 min-w-[160px] border-r border-transparent py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                          Note
-                        </th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="user in users" :key="user.guid">
-                        <td
-                          class="text-dark border-b border-l border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ user.guid }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-[#E8E8E8] bg-white dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ user.name }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ user.email }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-[#E8E8E8] bg-white dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ user.status }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ user.is_admin ? 'Yes' : 'No' }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-[#E8E8E8] bg-white dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          {{ user.note }}
-                        </td>
-                        <td
-                          class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          <a href="javascript:void(0)"
-                            class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
-                            Edit
-                          </a>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-        <!-- ====== Table Section End -->
+        <UsersCard />
       </div>
       <div v-if="isCurrentPage('Groups')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         Groups content
@@ -282,8 +136,10 @@ import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useRouter } from 'vue-router';
 import { generateAvatar } from '@/utilities/avatar'
 import { useUserStore } from '@/stores/sctgDeskStore';
-import { LoginApi, UserApi, UserListResponse, PeersResponse, PeerApi, Peer } from '@/api';
-import { onMounted, ref } from 'vue';
+import { LoginApi } from '@/api';
+import DevicesCard from '@/components/DevicesCard.vue';
+import UsersCard from '@/components/UsersCard.vue';
+import { ref } from 'vue';
 const userStore = useUserStore();
 const router = useRouter();
 
@@ -292,9 +148,6 @@ const user = {
   email: userStore.user?.email || '',
   imageUrl: generateAvatar(userStore.user?.name),
 }
-
-const users = ref([] as UserListResponse[]);
-const peers = ref([] as Peer[]);
 
 const navigation = ref([
   { name: 'Dashboard', href: '#', current: true },
@@ -357,47 +210,7 @@ function logout(): void {
   });
 }
 
-/**
- * Retrieves the list of users from the API.
- *
- * @return {Promise<UserListResponse[]>} A promise that resolves to the list of users.
- */
-function getUsers(): Promise<UserListResponse[]> {
-  const userApi = new UserApi(userStore.api_configuration);
-  return new Promise<UserListResponse[]>((resolve, reject) => {
-    //userApi.usersClient();
-    userApi.usersClient(1, 2 ^ 32 - 1).then((response) => {
-      if (response.status == 200 && response.data.msg == "success") {
-        console.log(response.data);
-        resolve(response.data.data);
-      }
-      else {
-        resolve([] as UserListResponse[]);
-      }
-    }).catch((error) => {
-      console.error(error);
-      resolve([] as UserListResponse[]);
-    });
-  });
-}
 
-function getPeers(): Promise<Peer[]> {
-  const peerApi = new PeerApi(userStore.api_configuration);
-  return new Promise<Peer[]>((resolve, reject) => {
-    peerApi.peers().then((response) => {
-      if (response.status == 200 && response.data.msg == "success") {
-        console.log(response.data);
-        resolve(response.data.data);
-      }
-      else {
-        resolve([] as Peer[]);
-      }
-    }).catch((error) => {
-      console.error(error);
-      resolve([] as Peer[]);
-    });
-  });
-}
 
 /**
  * A no-operation function that does nothing.
@@ -407,14 +220,5 @@ function getPeers(): Promise<Peer[]> {
 function nop(): void {
   // Do nothing
 }
-
-onMounted(() => {
-  getUsers().then((data) => {
-    users.value = data;
-  });
-  getPeers().then((data) => {
-    peers.value = data;
-  });
-});
 
 </script>
