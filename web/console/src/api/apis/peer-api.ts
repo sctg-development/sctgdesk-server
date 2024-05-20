@@ -18,6 +18,7 @@ import { Configuration } from '../configuration';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
 import { HeartbeatRequest } from '../models';
+import { PeersResponse } from '../models';
 import { SystemInfo } from '../models';
 /**
  * PeerApi - axios parameter creator
@@ -61,6 +62,48 @@ export const PeerApiAxiosParamCreator = function (configuration?: Configuration)
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Get the list of peers
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        peers: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/peers`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
                 url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
@@ -132,6 +175,18 @@ export const PeerApiFp = function(configuration?: Configuration) {
             };
         },
         /**
+         * Get the list of peers
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async peers(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<PeersResponse>>> {
+            const localVarAxiosArgs = await PeerApiAxiosParamCreator(configuration).peers(options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
          * Set the system info
          * @param {SystemInfo} body 
          * @param {*} [options] Override http request option.
@@ -163,6 +218,14 @@ export const PeerApiFactory = function (configuration?: Configuration, basePath?
             return PeerApiFp(configuration).heartbeat(body, options).then((request) => request(axios, basePath));
         },
         /**
+         * Get the list of peers
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async peers(options?: AxiosRequestConfig): Promise<AxiosResponse<PeersResponse>> {
+            return PeerApiFp(configuration).peers(options).then((request) => request(axios, basePath));
+        },
+        /**
          * Set the system info
          * @param {SystemInfo} body 
          * @param {*} [options] Override http request option.
@@ -190,6 +253,15 @@ export class PeerApi extends BaseAPI {
      */
     public async heartbeat(body: HeartbeatRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<string>> {
         return PeerApiFp(this.configuration).heartbeat(body, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Get the list of peers
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PeerApi
+     */
+    public async peers(options?: AxiosRequestConfig) : Promise<AxiosResponse<PeersResponse>> {
+        return PeerApiFp(this.configuration).peers(options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Set the system info

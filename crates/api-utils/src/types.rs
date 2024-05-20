@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
+use chrono::NaiveDateTime;
 use oauth2::oauth_provider::OAuthProvider;
 use rocket_okapi::okapi::schemars;
 use rocket_okapi::JsonSchema;
@@ -635,4 +636,34 @@ pub struct SoftwareVersionResponse {
     pub server: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct PeersResponse {
+    pub msg: String,
+    pub total: u32,
+    pub data: Vec<Peer>,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema, Debug, Default)]
+pub struct PeerInfo {
+    pub cpu: Option<String>,
+    pub hostname: Option<String>,
+    pub id: Option<String>,
+    pub memory: Option<String>,
+    pub os: Option<String>,
+    pub username: Option<String>,
+    pub uuid: Option<String>,
+    pub version: Option<String>,
+    pub ip: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct Peer{
+    pub guid: String,
+    pub id: String,
+    pub status: i32,
+    pub strategy_name: String,
+    pub last_online: String,
+    pub info: PeerInfo,
 }

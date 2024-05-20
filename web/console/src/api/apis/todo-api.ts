@@ -275,48 +275,6 @@ export const TodoApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * Get the list of peers
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        peers: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/peers`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication authorization required
-            // http bearer authentication required
-            if (configuration && configuration.accessToken) {
-                const accessToken = typeof configuration.accessToken === 'function'
-                    ? await configuration.accessToken()
-                    : await configuration.accessToken;
-                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
-            }
-
-            const query = new URLSearchParams(localVarUrlObj.search);
-            for (const key in localVarQueryParameter) {
-                query.set(key, localVarQueryParameter[key]);
-            }
-            for (const key in options.params) {
-                query.set(key, options.params[key]);
-            }
-            localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
          * List strategies
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -433,18 +391,6 @@ export const TodoApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Get the list of peers
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async peers(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<UsersResponse>>> {
-            const localVarAxiosArgs = await TodoApiAxiosParamCreator(configuration).peers(options);
-            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
-                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
-                return axios.request(axiosRequestArgs);
-            };
-        },
-        /**
          * List strategies
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -509,14 +455,6 @@ export const TodoApiFactory = function (configuration?: Configuration, basePath?
          */
         async oidcGet(options?: AxiosRequestConfig): Promise<AxiosResponse<OidcSettingsResponse>> {
             return TodoApiFp(configuration).oidcGet(options).then((request) => request(axios, basePath));
-        },
-        /**
-         * Get the list of peers
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async peers(options?: AxiosRequestConfig): Promise<AxiosResponse<UsersResponse>> {
-            return TodoApiFp(configuration).peers(options).then((request) => request(axios, basePath));
         },
         /**
          * List strategies
@@ -585,15 +523,6 @@ export class TodoApi extends BaseAPI {
      */
     public async oidcGet(options?: AxiosRequestConfig) : Promise<AxiosResponse<OidcSettingsResponse>> {
         return TodoApiFp(this.configuration).oidcGet(options).then((request) => request(this.axios, this.basePath));
-    }
-    /**
-     * Get the list of peers
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TodoApi
-     */
-    public async peers(options?: AxiosRequestConfig) : Promise<AxiosResponse<UsersResponse>> {
-        return TodoApiFp(this.configuration).peers(options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * List strategies

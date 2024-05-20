@@ -7,3 +7,4 @@ db_v2.sqlite3-*
 test
 test.rs
 .vscode/tasks.json
+id_ed25519*

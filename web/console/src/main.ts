@@ -61,7 +61,7 @@ const router = createRouter({
 
 router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
     const store = useUserStore();
-    if (to.name !== 'login' && !store.user && !store.accessToken) {
+    if (to.name !== 'login' && !store.user && !store.api_configuration) {
         next({ name: 'login' });
     } else {
         next();

@@ -16,8 +16,8 @@ use rocket::form::validate::Len;
 use rocket::fs::relative;
 use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Header};
-use rocket::response::Responder;
-use rocket::{async_trait, delete, options, put, routes};
+use rocket::response::{Redirect, Responder};
+use rocket::{async_trait, delete, options, put, routes, uri};
 use rocket::{Request, Response};
 
 use s3software::{get_s3_config_file, get_signed_release_url_with_config};
@@ -36,9 +36,7 @@ use rocket::{
 };
 use state::{ApiState, UserPasswordInfo};
 use utils::{
-    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook,
-    EnableUserRequest, OidcSettingsResponse, SoftwareResponse, SoftwareVersionResponse,
-    UpdateUserRequest, UserList,
+    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook, EnableUserRequest, OidcSettingsResponse, PeersResponse, SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList
 };
 use utils::{
     AbGetResponse, AbRequest, AuditRequest, CurrentUserRequest, CurrentUserResponse,
@@ -129,8 +127,8 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 ab_settings,
                 software,
                 software_version,
-                // webconsole_index,
-                // webconsole_index_,
+                webconsole_index,
+                webconsole_index_html,
                 // webconsole_assets,
             ],
         )
@@ -293,7 +291,7 @@ async fn ab(
 }
 
 /// Get the current user
-#[openapi(tag = "User")]
+#[openapi(tag = "user")]
 #[post("/api/currentUser", format = "application/json", data = "<request>")]
 async fn current_user(
     state: &State<ApiState>,
@@ -381,7 +379,7 @@ async fn sysinfo(state: &State<ApiState>, request: Json<utils::SystemInfo>) -> S
 }
 
 /// Get the list of users
-#[openapi(tag = "User")]
+#[openapi(tag = "user")]
 #[get(
     "/api/user-list?<current>&<pageSize>&<email>&<name>",
     format = "application/json"
@@ -452,22 +450,24 @@ async fn group_add(
 }
 
 /// Get the list of peers
-#[openapi(tag = "todo")]
+#[openapi(tag = "peer")]
 #[get("/api/peers", format = "application/json")]
 async fn peers(
     state: &State<ApiState>,
     _user: AuthenticatedUser,
-) -> Result<Json<UsersResponse>, status::NotFound<()>> {
+) -> Result<Json<PeersResponse>, status::NotFound<()>> {
     log::debug!("peers");
     state.check_maintenance().await;
+    let peers = state.get_all_peers().await;
 
-    let response = UsersResponse {
+    if peers.is_none() {
+        return Err(status::NotFound::<()>(()));
+    }
+    Ok(Json(PeersResponse {
         msg: "success".to_string(),
-        total: 1,
-        data: "[{\"id\":\"test\",\"info\":\"{\\\"username\\\":\\\"\\\",\\\"os\\\":\\\"\\\",\\\"device_name\\\":\\\"\\\"}\",\"user\":\"ff\",\"user_name\":\"Occupancy\",\"node\":\"tt\",\"is_admin\":true}]".to_string(),
-    };
-
-    Ok(Json(response))
+        total: peers.len() as u32,
+        data: peers.unwrap(),
+    }))
 }
 
 /// Login options
@@ -923,7 +923,7 @@ async fn strategies(
 }
 
 /// Add user
-#[openapi(tag = "User")]
+#[openapi(tag = "user")]
 #[post("/api/user", format = "application/json", data = "<request>")]
 async fn user_add(
     state: &State<ApiState>,
@@ -955,7 +955,7 @@ async fn user_add(
 }
 
 /// Enable users
-#[openapi(tag = "User")]
+#[openapi(tag = "user")]
 #[post("/api/enable-users", format = "application/json", data = "<request>")]
 async fn user_enable(
     state: &State<ApiState>,
@@ -986,7 +986,7 @@ async fn user_enable(
 }
 
 /// Update current user password
-#[openapi(tag = "User")]
+#[openapi(tag = "user")]
 #[put("/api/user", format = "application/json", data = "<request>")]
 async fn user_update(
     state: &State<ApiState>,
@@ -1031,7 +1031,7 @@ async fn oidc_get(
 }
 
 /// Get Users for client
-#[openapi(tag = "User")]
+#[openapi(tag = "user")]
 #[get(
     "/api/users?<current>&<pageSize>&<accessible>&<status>",
     format = "application/json"
@@ -1083,7 +1083,7 @@ async fn users_client(
 /// OSXArm64Key = "master/sctgdesk-releases/sctgdesk-1.2.4.dmg"
 /// IOSKey = "master/sctgdesk-releases/sctgdesk-1.2.4.ipa"
 /// </pre>
-#[openapi(tag = "Software")]
+#[openapi(tag = "software")]
 #[get(
     "/api/software/client-download-link/<key>",
     format = "application/json"
@@ -1128,7 +1128,7 @@ async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<
 }
 
 /// Retrieve the server version
-#[openapi(tag = "Software")]
+#[openapi(tag = "software")]
 #[get("/api/software/version/server", format = "application/json")]
 async fn software_version() -> Json<SoftwareVersionResponse> {
     log::debug!("software_version");
@@ -1140,32 +1140,21 @@ async fn software_version() -> Json<SoftwareVersionResponse> {
     Json(response)
 }
 
-#[openapi(tag = "Web console")]
-#[get("/assets/<path..>")]
-async fn webconsole_assets(path: PathBuf) -> Option<NamedFile> {
-    let mut path = Path::new(relative!("webconsole/dist/assets")).join(path);
-    if path.is_dir() {
-        path.push("index.html");
-    }
-    NamedFile::open(path).await.ok()
+async fn webconsole_index_multi() -> Redirect {
+    Redirect::to(uri!("/ui/"))
 }
 
-// async fn webconsole_index_multi() -> Option<NamedFile> {
-//     let path = Path::new(relative!("webconsole/dist/index.html"));
-//     NamedFile::open(path).await.ok()
-// }
+#[openapi(tag = "webconsole")]
+#[get("/index.html")]
+async fn webconsole_index_html() -> Redirect {
+    webconsole_index_multi().await
+}
 
-// #[openapi(tag = "Web console")]
-// #[get("/index.html")]
-// async fn webconsole_index() -> Option<NamedFile> {
-//     webconsole_index_multi().await
-// }
-
-// #[openapi(tag = "Web console")]
-// #[get("/")]
-// async fn webconsole_index_() -> Option<NamedFile> {
-//     webconsole_index_multi().await
-// }
+#[openapi(tag = "webconsole")]
+#[get("/")]
+async fn webconsole_index() -> Redirect {
+    webconsole_index_multi().await
+}
 
 const STATIC_DIR: Dir = include_dir!("webconsole/dist");
 #[derive(Debug)]

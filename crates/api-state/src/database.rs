@@ -7,6 +7,7 @@ use sqlx::{
     sqlite::{Sqlite, SqliteConnectOptions, SqliteJournalMode, SqlitePool},
     QueryBuilder,
 };
+use utils::Peer;
 use std::env;
 use std::path::Path;
 use utils::types::AddressBook;
@@ -1187,4 +1188,55 @@ impl Database {
 
         Some(())
     }
+
+    pub async fn  get_all_peers(&self) -> Option<Vec<Peer>> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let res = sqlx::query!(
+            r#"
+            SELECT
+                guid,
+                id,
+                uuid,
+                status,
+                info as "info!: String",
+                last_online  as "last_online!: String"
+            FROM
+                peer
+        "#
+        )
+        .fetch_all(&mut conn)
+        .await
+        .ok()?;
+
+        let mut peers:Vec<Peer> = Vec::new();
+        for row in res {
+            let uuid = guid_into_uuid(row.guid).unwrap_or("".to_string());
+            let peer_info = serde_json::from_str::<utils::PeerInfo>(&row.info);
+            if peer_info.is_err() {
+                log::error!("get_all_peers error: {:?}", peer_info);
+                return None;
+            }
+            let peer_info = peer_info.unwrap();
+            peers.push(Peer{
+                id: row.id,
+                guid: uuid,
+                info: peer_info,
+                last_online: row.last_online.into(),
+                status: row.status as i32,
+                strategy_name: "-".to_string(),
+            });
+        }
+        Some(peers)
+    }
+}
+
+fn guid_into_uuid(guid: Vec<u8>) -> Option<String> {
+    let guid_u8: Result<[u8; 16], _> = guid.try_into();
+    if guid_u8.is_err() {
+        log::error!("get_ab_personal_guid error: {:?}", guid_u8);
+        return None;
+    }
+    let guid_u8: [u8; 16] = guid_u8.unwrap();
+    let guid = Uuid::from_bytes(guid_u8).to_string();
+    Some(guid)
 }

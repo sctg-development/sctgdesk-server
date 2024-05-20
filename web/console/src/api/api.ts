@@ -19,4 +19,5 @@ export * from './apis/peer-api';
 export * from './apis/software-api';
 export * from './apis/todo-api';
 export * from './apis/user-api';
+export * from './apis/webconsole-api';
 
