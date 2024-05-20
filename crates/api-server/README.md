@@ -44,6 +44,13 @@ The server use Rocket as the web framework. The server is designed to be modular
 
 The server includes basic support for authentication with a username and password. Passwords are stored in the database after being hashed with bcrypt. Additionally, similar to Rustdesk-server-pro, it supports authentication with third-party providers compatible with OAuth2. Currently, only Github and Dex (as a custom provider) are available. For adding a new provider you must implement the `OAuthProvider` and `OAuthProviderFactory` traits. You can look at the [github_provider.rs](https://github.com/sctg-development/sctgdesk-api-server/blob/main/libs/oauth2/src/github_provider.rs) and [dex_provider.rs](https://github.com/sctg-development/sctgdesk-api-server/blob/main/libs/oauth2/src/dex_provider.rs) files for examples.
 
+## S3 url generation
+
+Our custom clients are stored in a S3 bucket. The S3 configuration is stored in the `s3config.toml` file. The server generates a signed URL for the client download. The URL is valid for 5 minutes. The server generates download links at:
+
+* `/api/software/client-download-link/<key>` for the client download
+  * key can be one of osx w64 or ios
+
 ## Configuration
 
 The server requires an `oauth2.toml` configuration file to function. By default, it is expected at `./oauth2.toml`, although this location can be modified using the `OAUTH2_CONFIG_FILE` environment variable. Setting the `OAUTH2_CREATE_USER` variable to `1` enables the automatic creation of a user upon the first OAuth2 login. The user is created with the Rustdesk ID and a random password, which is displayed in the server logs.  
