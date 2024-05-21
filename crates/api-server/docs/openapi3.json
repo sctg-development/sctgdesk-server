@@ -349,7 +349,7 @@
     "/api/groups": {
       "get": {
         "tags": [
-          "todo"
+          "group"
         ],
         "description": "Get the list of groups",
         "operationId": "groups",
@@ -381,7 +381,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UsersResponse"
+                  "$ref": "#/components/schemas/GroupsResponse"
                 }
               }
             }
@@ -400,7 +400,7 @@
     "/api/group": {
       "post": {
         "tags": [
-          "todo"
+          "group"
         ],
         "description": "Add a group",
         "operationId": "group_add",
@@ -1754,6 +1754,75 @@
           "ip": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "GroupsResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "msg",
+          "total"
+        ],
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          }
+        }
+      },
+      "Group": {
+        "type": "object",
+        "required": [
+          "access_to",
+          "accessed_from",
+          "created_at",
+          "guid",
+          "info",
+          "name",
+          "team"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "team": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "access_to": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accessed_from": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "info": {
+            "type": "string"
           }
         }
       },
