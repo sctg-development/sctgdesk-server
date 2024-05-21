@@ -62,12 +62,6 @@ function handleLogin(e: SubmitEvent) {
             userStore.user = data.user;
             userStore.api_configuration = configuration;
             userStore.api_configuration.accessToken = data.access_token as any;
-            const userApi = new UserApi(userStore.api_configuration);
-            userApi.currentUser({id:"",uuid:""}).then((response) => {
-                console.log(response.data);
-            }).catch((error) => {
-                console.log(error);
-            });
             router.push({ name: 'index' });
         } else {
             console.log(response.data);

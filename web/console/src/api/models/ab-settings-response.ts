@@ -30,5 +30,5 @@ export interface AbSettingsResponse {
      * @type {number}
      * @memberof AbSettingsResponse
      */
-    maxPeerOneAb: number;
+    max_peer_one_ab: number;
 }

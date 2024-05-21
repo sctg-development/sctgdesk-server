@@ -36,7 +36,7 @@ export interface UpdateUserRequest {
      * @type {string}
      * @memberof UpdateUserRequest
      */
-    confirmPassword?: string | null;
+    confirm_password?: string | null;
 
     /**
      * @type {string}
@@ -48,13 +48,13 @@ export interface UpdateUserRequest {
      * @type {boolean}
      * @memberof UpdateUserRequest
      */
-    isAdmin?: boolean | null;
+    is_admin?: boolean | null;
 
     /**
      * @type {string}
      * @memberof UpdateUserRequest
      */
-    groupName?: string | null;
+    group_name?: string | null;
 
     /**
      * @type {string}

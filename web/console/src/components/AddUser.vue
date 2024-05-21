@@ -62,8 +62,12 @@
                                     <label for="grp"
                                         class="block text-sm font-medium leading-6 text-gray-900">Group</label>
                                     <div class="mt-2">
-                                        <input v-model="grp" id="grp" name="grp" type="text" required value="Default"
-                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                                        <select v-model="grp" id="grp" name="grp" required
+                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                            <option v-for="group in groups" :key="group.guid" :value="group.name">
+                                                {{ group.name }}
+                                            </option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -90,9 +94,9 @@ import {
     DialogPanel,
     DialogTitle,
 } from '@headlessui/vue'
-import { defineEmits } from 'vue';
+import { defineEmits, onMounted } from 'vue';
 import { ref } from 'vue';
-import { AddUserRequest, UserApi } from '@/api';
+import { AddUserRequest, UserApi, GroupApi, Group } from '@/api';
 import { useUserStore } from '@/stores/sctgDeskStore';
 
 const userStore = useUserStore();
@@ -101,10 +105,18 @@ const password = ref("");
 const confirm_password = ref("");
 const email = ref("");
 const is_admin = ref(false);
-const grp = ref("Default");
+const grp = ref("");
+const groups = ref([] as Group[]);
+const groupApi = new GroupApi(userStore.api_configuration);
 
 const emit = defineEmits(['add_user_close', 'user_added'])
 
+onMounted(() => {
+    groupApi.groups(1,4294967295).then((response) => {
+        groups.value = response.data.data;
+        grp.value = groups.value[0].name;
+    });
+});
 function addUser() {
     if (name.value == "" || password.value == "" || confirm_password.value == "" || email.value == "") {
         alert("Please fill all fields");

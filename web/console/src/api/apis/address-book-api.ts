@@ -205,19 +205,19 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
         /**
          * List peers
          * @param {number} current 
-         * @param {number} pageSize 
+         * @param {number} page_size 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        abPeers: async (current: number, pageSize: number, ab: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        abPeers: async (current: number, page_size: number, ab: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'current' is not null or undefined
             if (current === null || current === undefined) {
                 throw new RequiredError('current','Required parameter current was null or undefined when calling abPeers.');
             }
-            // verify required parameter 'pageSize' is not null or undefined
-            if (pageSize === null || pageSize === undefined) {
-                throw new RequiredError('pageSize','Required parameter pageSize was null or undefined when calling abPeers.');
+            // verify required parameter 'page_size' is not null or undefined
+            if (page_size === null || page_size === undefined) {
+                throw new RequiredError('page_size','Required parameter page_size was null or undefined when calling abPeers.');
             }
             // verify required parameter 'ab' is not null or undefined
             if (ab === null || ab === undefined) {
@@ -247,8 +247,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
                 localVarQueryParameter['current'] = current;
             }
 
-            if (pageSize !== undefined) {
-                localVarQueryParameter['pageSize'] = pageSize;
+            if (page_size !== undefined) {
+                localVarQueryParameter['pageSize'] = page_size;
             }
 
             if (ab !== undefined) {
@@ -769,13 +769,13 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
         /**
          * List peers
          * @param {number} current 
-         * @param {number} pageSize 
+         * @param {number} page_size 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async abPeers(current: number, pageSize: number, ab: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<AbPeersResponse>>> {
-            const localVarAxiosArgs = await AddressBookApiAxiosParamCreator(configuration).abPeers(current, pageSize, ab, options);
+        async abPeers(current: number, page_size: number, ab: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<AbPeersResponse>>> {
+            const localVarAxiosArgs = await AddressBookApiAxiosParamCreator(configuration).abPeers(current, page_size, ab, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -940,13 +940,13 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
         /**
          * List peers
          * @param {number} current 
-         * @param {number} pageSize 
+         * @param {number} page_size 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async abPeers(current: number, pageSize: number, ab: string, options?: AxiosRequestConfig): Promise<AxiosResponse<AbPeersResponse>> {
-            return AddressBookApiFp(configuration).abPeers(current, pageSize, ab, options).then((request) => request(axios, basePath));
+        async abPeers(current: number, page_size: number, ab: string, options?: AxiosRequestConfig): Promise<AxiosResponse<AbPeersResponse>> {
+            return AddressBookApiFp(configuration).abPeers(current, page_size, ab, options).then((request) => request(axios, basePath));
         },
         /**
          * Address book
@@ -1075,14 +1075,14 @@ export class AddressBookApi extends BaseAPI {
     /**
      * List peers
      * @param {number} current 
-     * @param {number} pageSize 
+     * @param {number} page_size 
      * @param {string} ab 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AddressBookApi
      */
-    public async abPeers(current: number, pageSize: number, ab: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<AbPeersResponse>> {
-        return AddressBookApiFp(this.configuration).abPeers(current, pageSize, ab, options).then((request) => request(this.axios, this.basePath));
+    public async abPeers(current: number, page_size: number, ab: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<AbPeersResponse>> {
+        return AddressBookApiFp(this.configuration).abPeers(current, page_size, ab, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Address book

@@ -120,7 +120,7 @@ This website use:
         <UsersCard />
       </div>
       <div v-if="isCurrentPage('Groups')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-        Groups content
+        <GroupsCard />
       </div>
       <div v-if="isCurrentPage('Reports')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         Reports content
@@ -140,6 +140,7 @@ import { LoginApi } from '@/api';
 import DevicesCard from '@/components/DevicesCard.vue';
 import UsersCard from '@/components/UsersCard.vue';
 import { ref } from 'vue';
+import GroupsCard from '@/components/GroupsCard.vue';
 const userStore = useUserStore();
 const router = useRouter();
 

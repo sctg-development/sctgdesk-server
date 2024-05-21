@@ -144,7 +144,7 @@ function getUsers(): Promise<UserListResponse[]> {
     const userApi = new UserApi(userStore.api_configuration);
     return new Promise<UserListResponse[]>((resolve, reject) => {
         //userApi.usersClient();
-        userApi.usersClient(1, 2 ^ 32 - 1).then((response) => {
+        userApi.usersClient(1, 4294967295).then((response) => {
             if (response.status == 200 && response.data.msg == "success") {
                 resolve(response.data.data);
             }

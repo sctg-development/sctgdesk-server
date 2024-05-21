@@ -43,7 +43,7 @@ export interface Peer {
      * @type {string}
      * @memberof Peer
      */
-    strategyName: string;
+    strategy_name: string;
 
     /**
      * @type {string}

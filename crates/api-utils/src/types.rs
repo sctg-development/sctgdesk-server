@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
-use chrono::NaiveDateTime;
 use oauth2::oauth_provider::OAuthProvider;
 use rocket_okapi::okapi::schemars;
 use rocket_okapi::JsonSchema;
@@ -450,8 +449,8 @@ impl Default for OidcDeviceInfo {
 }
 #[derive(Serialize, Deserialize, JsonSchema, Debug)]
 pub struct OidcAuthRequest {
-    #[allow(non_snake_case)]
-    pub deviceInfo: OidcDeviceInfo,
+    #[serde(rename = "deviceInfo")]
+    pub device_info: OidcDeviceInfo,
     pub id: String,
     pub op: String,
     pub uuid: String,
@@ -666,4 +665,24 @@ pub struct Peer{
     pub strategy_name: String,
     pub last_online: String,
     pub info: PeerInfo,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct GroupsResponse {
+    pub msg: String,
+    pub total: u32,
+    pub data: Vec<Group>,
+}
+
+pub type GroupInfo = String;
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct Group {
+    pub guid: String,
+    pub name: String,
+    pub team: String,
+    pub created_at: String,
+    pub access_to: Vec<String>,
+    pub accessed_from: Vec<String>,
+    pub note: Option<String>,
+    pub info: GroupInfo,
 }

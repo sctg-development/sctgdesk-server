@@ -24,19 +24,19 @@ export interface OidcUserInfo {
      * @type {boolean}
      * @memberof OidcUserInfo
      */
-    emailVerification: boolean;
+    email_verification: boolean;
 
     /**
      * @type {boolean}
      * @memberof OidcUserInfo
      */
-    emailAlarmNotification: boolean;
+    email_alarm_notification: boolean;
 
     /**
      * @type {Array<string>}
      * @memberof OidcUserInfo
      */
-    loginDeviceWhitelist: Array<string>;
+    login_device_whitelist: Array<string>;
 
     /**
      * @type {{ [key: string]: string; }}

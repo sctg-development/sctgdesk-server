@@ -36,7 +36,9 @@ use rocket::{
 };
 use state::{ApiState, UserPasswordInfo};
 use utils::{
-    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook, EnableUserRequest, OidcSettingsResponse, PeersResponse, SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList
+    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook,
+    EnableUserRequest, Group, GroupsResponse, OidcSettingsResponse, PeersResponse,
+    SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList,
 };
 use utils::{
     AbGetResponse, AbRequest, AuditRequest, CurrentUserRequest, CurrentUserResponse,
@@ -409,35 +411,45 @@ async fn users(
 }
 
 /// Get the list of groups
-#[openapi(tag = "todo")]
+#[openapi(tag = "group")]
 #[get("/api/groups?<current>&<pageSize>", format = "application/json")]
 async fn groups(
     state: &State<ApiState>,
     _user: AuthenticatedAdmin,
     #[allow(unused_variables)] current: u32,
     #[allow(non_snake_case, unused_variables)] pageSize: u32,
-) -> Result<Json<UsersResponse>, status::NotFound<()>> {
-    log::debug!("users");
+) -> Result<Json<GroupsResponse>, status::NotFound<()>> {
+    log::debug!("groups");
     state.check_maintenance().await;
-
-    let response = UsersResponse {
+    let offset = if current < 1 { 0 } else { current - 1 };
+    let page_size = if pageSize < 1 {
+        u32::max_value()
+    } else {
+        pageSize
+    };
+    let groups = state.get_groups(offset, page_size).await;
+    if groups.is_none() {
+        return Err(status::NotFound::<()>(()));
+    }
+    let groups = groups.unwrap();
+    let response = GroupsResponse {
         msg: "success".to_string(),
-        total: 1,
-        data: "[{}]".to_string(),
+        total: groups.len() as u32,
+        data: groups,
     };
 
     Ok(Json(response))
 }
 
 /// Add a group
-#[openapi(tag = "todo")]
+#[openapi(tag = "group")]
 #[post("/api/group", format = "application/json", data = "<_request>")]
 async fn group_add(
     state: &State<ApiState>,
     _user: AuthenticatedAdmin,
     _request: Json<AddUserRequest>,
 ) -> Result<Json<UsersResponse>, status::Unauthorized<()>> {
-    log::debug!("create_user");
+    log::debug!("create_group");
     state.check_maintenance().await;
 
     let response = UsersResponse {
@@ -1004,6 +1016,7 @@ async fn user_update(
     state.user_update(user.info.user_id, user_update).await;
     Ok(Json(response))
 }
+
 /// Add OIDC Provider
 #[openapi(tag = "todo")]
 #[put("/api/oidc/settings", format = "application/json", data = "<_request>")]

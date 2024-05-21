@@ -25,7 +25,7 @@ export interface OidcResponse {
      * @type {string}
      * @memberof OidcResponse
      */
-    accessToken: string;
+    access_token: string;
 
     /**
      * @type {string}
@@ -37,7 +37,7 @@ export interface OidcResponse {
      * @type {string}
      * @memberof OidcResponse
      */
-    tfaType: string;
+    tfa_type: string;
 
     /**
      * @type {string}

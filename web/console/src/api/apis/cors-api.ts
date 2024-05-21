@@ -25,17 +25,17 @@ export const CorsApiAxiosParamCreator = function (configuration?: Configuration)
     return {
         /**
          * Answers to OPTIONS requests
-         * @param {string} path 
+         * @param {string} _path 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        options: async (path: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'path' is not null or undefined
-            if (path === null || path === undefined) {
-                throw new RequiredError('path','Required parameter path was null or undefined when calling options.');
+        options: async (_path: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter '_path' is not null or undefined
+            if (_path === null || _path === undefined) {
+                throw new RequiredError('_path','Required parameter _path was null or undefined when calling options.');
             }
             const localVarPath = `/{_path}`
-                .replace(`{${"_path"}}`, encodeURIComponent(String(path)));
+                .replace(`{${"_path"}}`, encodeURIComponent(String(_path)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
             let baseOptions;
@@ -73,12 +73,12 @@ export const CorsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * Answers to OPTIONS requests
-         * @param {string} path 
+         * @param {string} _path 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async options(path: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<void>>> {
-            const localVarAxiosArgs = await CorsApiAxiosParamCreator(configuration).options(path, options);
+        async options(_path: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<void>>> {
+            const localVarAxiosArgs = await CorsApiAxiosParamCreator(configuration).options(_path, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -95,12 +95,12 @@ export const CorsApiFactory = function (configuration?: Configuration, basePath?
     return {
         /**
          * Answers to OPTIONS requests
-         * @param {string} path 
+         * @param {string} _path 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async options(path: string, options?: AxiosRequestConfig): Promise<AxiosResponse<void>> {
-            return CorsApiFp(configuration).options(path, options).then((request) => request(axios, basePath));
+        async options(_path: string, options?: AxiosRequestConfig): Promise<AxiosResponse<void>> {
+            return CorsApiFp(configuration).options(_path, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -114,12 +114,12 @@ export const CorsApiFactory = function (configuration?: Configuration, basePath?
 export class CorsApi extends BaseAPI {
     /**
      * Answers to OPTIONS requests
-     * @param {string} path 
+     * @param {string} _path 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CorsApi
      */
-    public async options(path: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<void>> {
-        return CorsApiFp(this.configuration).options(path, options).then((request) => request(this.axios, this.basePath));
+    public async options(_path: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<void>> {
+        return CorsApiFp(this.configuration).options(_path, options).then((request) => request(this.axios, this.basePath));
     }
 }

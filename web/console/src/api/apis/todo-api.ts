@@ -17,7 +17,6 @@ import { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
-import { AddUserRequest } from '../models';
 import { AuditRequest } from '../models';
 import { EnableUserRequest } from '../models';
 import { OidcSettingsResponse } from '../models';
@@ -64,117 +63,6 @@ export const TodoApiAxiosParamCreator = function (configuration?: Configuration)
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
-
-            return {
-                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * Add a group
-         * @param {AddUserRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        groupAdd: async (body: AddUserRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling groupAdd.');
-            }
-            const localVarPath = `/api/group`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-            const localVarRequestOptions :AxiosRequestConfig = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication authorization_admin required
-            // http bearer authentication required
-            if (configuration && configuration.accessToken) {
-                const accessToken = typeof configuration.accessToken === 'function'
-                    ? await configuration.accessToken()
-                    : await configuration.accessToken;
-                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            const query = new URLSearchParams(localVarUrlObj.search);
-            for (const key in localVarQueryParameter) {
-                query.set(key, localVarQueryParameter[key]);
-            }
-            for (const key in options.params) {
-                query.set(key, options.params[key]);
-            }
-            localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
-
-            return {
-                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * Get the list of groups
-         * @param {number} current 
-         * @param {number} pageSize 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        groups: async (current: number, pageSize: number, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'current' is not null or undefined
-            if (current === null || current === undefined) {
-                throw new RequiredError('current','Required parameter current was null or undefined when calling groups.');
-            }
-            // verify required parameter 'pageSize' is not null or undefined
-            if (pageSize === null || pageSize === undefined) {
-                throw new RequiredError('pageSize','Required parameter pageSize was null or undefined when calling groups.');
-            }
-            const localVarPath = `/api/groups`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication authorization_admin required
-            // http bearer authentication required
-            if (configuration && configuration.accessToken) {
-                const accessToken = typeof configuration.accessToken === 'function'
-                    ? await configuration.accessToken()
-                    : await configuration.accessToken;
-                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
-            }
-
-            if (current !== undefined) {
-                localVarQueryParameter['current'] = current;
-            }
-
-            if (pageSize !== undefined) {
-                localVarQueryParameter['pageSize'] = pageSize;
-            }
-
-            const query = new URLSearchParams(localVarUrlObj.search);
-            for (const key in localVarQueryParameter) {
-                query.set(key, localVarQueryParameter[key]);
-            }
-            for (const key in options.params) {
-                query.set(key, options.params[key]);
-            }
-            localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
 
             return {
                 url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
@@ -339,33 +227,6 @@ export const TodoApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Add a group
-         * @param {AddUserRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async groupAdd(body: AddUserRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<UsersResponse>>> {
-            const localVarAxiosArgs = await TodoApiAxiosParamCreator(configuration).groupAdd(body, options);
-            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
-                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
-                return axios.request(axiosRequestArgs);
-            };
-        },
-        /**
-         * Get the list of groups
-         * @param {number} current 
-         * @param {number} pageSize 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async groups(current: number, pageSize: number, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<UsersResponse>>> {
-            const localVarAxiosArgs = await TodoApiAxiosParamCreator(configuration).groups(current, pageSize, options);
-            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
-                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
-                return axios.request(axiosRequestArgs);
-            };
-        },
-        /**
          * Add OIDC Provider
          * @param {EnableUserRequest} body 
          * @param {*} [options] Override http request option.
@@ -421,25 +282,6 @@ export const TodoApiFactory = function (configuration?: Configuration, basePath?
             return TodoApiFp(configuration).audit(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Add a group
-         * @param {AddUserRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async groupAdd(body: AddUserRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<UsersResponse>> {
-            return TodoApiFp(configuration).groupAdd(body, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * Get the list of groups
-         * @param {number} current 
-         * @param {number} pageSize 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async groups(current: number, pageSize: number, options?: AxiosRequestConfig): Promise<AxiosResponse<UsersResponse>> {
-            return TodoApiFp(configuration).groups(current, pageSize, options).then((request) => request(axios, basePath));
-        },
-        /**
          * Add OIDC Provider
          * @param {EnableUserRequest} body 
          * @param {*} [options] Override http request option.
@@ -483,27 +325,6 @@ export class TodoApi extends BaseAPI {
      */
     public async audit(body: AuditRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<void>> {
         return TodoApiFp(this.configuration).audit(body, options).then((request) => request(this.axios, this.basePath));
-    }
-    /**
-     * Add a group
-     * @param {AddUserRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TodoApi
-     */
-    public async groupAdd(body: AddUserRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<UsersResponse>> {
-        return TodoApiFp(this.configuration).groupAdd(body, options).then((request) => request(this.axios, this.basePath));
-    }
-    /**
-     * Get the list of groups
-     * @param {number} current 
-     * @param {number} pageSize 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TodoApi
-     */
-    public async groups(current: number, pageSize: number, options?: AxiosRequestConfig) : Promise<AxiosResponse<UsersResponse>> {
-        return TodoApiFp(this.configuration).groups(current, pageSize, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Add OIDC Provider

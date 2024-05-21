@@ -16,7 +16,7 @@ use oauth2::ProviderConfig;
 
 use tokio::sync::RwLock;
 use utils::{
-    AbPeer, AbTag, AddUserRequest, AddressBook, OidcState, Peer, PeerInfo, Token, UpdateUserRequest, UserListResponse
+    AbPeer, AbTag, AddUserRequest, AddressBook, Group, OidcState, Peer, PeerInfo, Token, UpdateUserRequest, UserListResponse
 };
 
 pub struct ApiState {
@@ -632,5 +632,10 @@ impl ApiState {
     /// Get all peers
     pub async fn get_all_peers(&self) -> Option<Vec<Peer>> {
         self.db.get_all_peers().await
+    }
+
+    /// Get groups
+    pub async fn get_groups(&self, offset:u32, page_size: u32) -> Option<Vec<Group>> {
+        self.db.get_groups(offset, page_size).await
     }
 }

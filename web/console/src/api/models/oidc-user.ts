@@ -55,11 +55,11 @@ export interface OidcUser {
      * @type {boolean}
      * @memberof OidcUser
      */
-    isAdmin: boolean;
+    is_admin: boolean;
 
     /**
      * @type {string}
      * @memberof OidcUser
      */
-    thirdAuthType: string;
+    third_auth_type: string;
 }

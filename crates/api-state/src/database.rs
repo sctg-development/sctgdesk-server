@@ -7,6 +7,7 @@ use sqlx::{
     sqlite::{Sqlite, SqliteConnectOptions, SqliteJournalMode, SqlitePool},
     QueryBuilder,
 };
+use utils::Group;
 use utils::Peer;
 use std::env;
 use std::path::Path;
@@ -1227,6 +1228,47 @@ impl Database {
             });
         }
         Some(peers)
+    }
+
+    pub async fn get_groups(&self, offset: u32, page_size: u32)->Option<Vec<Group>>{
+        let mut conn = self.pool.acquire().await.unwrap();
+        let res = sqlx::query!(
+            r#"
+            SELECT
+                guid,
+                team,
+                name,
+                note,
+                created_at as "created_at!: String",
+                info as "info!: String"
+            FROM
+                grp
+            LIMIT ?
+            OFFSET ?
+        "#,
+            page_size,
+            offset
+        )
+        .fetch_all(&mut conn)
+        .await
+        .ok()?;
+        let mut groups:Vec<Group> = Vec::new();
+        for row in res {
+            let guid = guid_into_uuid(row.guid).unwrap_or("".to_string());
+            let team  = guid_into_uuid(row.team).unwrap_or("".to_string());
+            groups.push(Group{
+                guid: guid,
+                name: row.name,
+                team: team,
+                note: row.note,
+                created_at: row.created_at.into(),
+                access_to: Vec::<String>::new(),
+                accessed_from: Vec::<String>::new(),
+                info: row.info
+            });
+        }
+        Some(groups)
+    
     }
 }
 

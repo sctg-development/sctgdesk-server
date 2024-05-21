@@ -30,7 +30,7 @@ export interface AbGetResponse {
      * @type {string}
      * @memberof AbGetResponse
      */
-    updatedAt?: string | null;
+    updated_at?: string | null;
 
     /**
      * @type {string}

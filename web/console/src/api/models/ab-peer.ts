@@ -72,29 +72,29 @@ export interface AbPeer {
      * @type {boolean}
      * @memberof AbPeer
      */
-    forceAlwaysRelay?: boolean | null;
+    force_always_relay?: boolean | null;
 
     /**
      * @type {string}
      * @memberof AbPeer
      */
-    rdpPort?: string | null;
+    rdp_port?: string | null;
 
     /**
      * @type {string}
      * @memberof AbPeer
      */
-    rdpUsername?: string | null;
+    rdp_username?: string | null;
 
     /**
      * @type {string}
      * @memberof AbPeer
      */
-    loginName?: string | null;
+    login_name?: string | null;
 
     /**
      * @type {boolean}
      * @memberof AbPeer
      */
-    sameServer?: boolean | null;
+    same_server?: boolean | null;
 }

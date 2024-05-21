@@ -54,7 +54,7 @@ export interface UserListResponse {
      * @type {string}
      * @memberof UserListResponse
      */
-    groupName: string;
+    group_name: string;
 
     /**
      * @type {boolean}

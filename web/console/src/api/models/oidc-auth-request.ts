@@ -25,7 +25,7 @@ export interface OidcAuthRequest {
      * @type {OidcDeviceInfo}
      * @memberof OidcAuthRequest
      */
-    deviceInfo: OidcDeviceInfo;
+    "deviceInfo": OidcDeviceInfo;
 
     /**
      * @type {string}

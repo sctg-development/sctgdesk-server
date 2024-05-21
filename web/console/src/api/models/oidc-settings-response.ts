@@ -25,13 +25,13 @@ export interface OidcSettingsResponse {
      * @type {number}
      * @memberof OidcSettingsResponse
      */
-    maxAuthCount: number;
+    max_auth_count: number;
 
     /**
      * @type {string}
      * @memberof OidcSettingsResponse
      */
-    callbackUrl: string;
+    callback_url: string;
 
     /**
      * @type {Array<Provider>}

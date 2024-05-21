@@ -237,20 +237,20 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * Get the list of users
          * @param {number} current 
-         * @param {number} pageSize 
+         * @param {number} page_size 
          * @param {string} [email] 
          * @param {string} [name] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        users: async (current: number, pageSize: number, email?: string, name?: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        users: async (current: number, page_size: number, email?: string, name?: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'current' is not null or undefined
             if (current === null || current === undefined) {
                 throw new RequiredError('current','Required parameter current was null or undefined when calling users.');
             }
-            // verify required parameter 'pageSize' is not null or undefined
-            if (pageSize === null || pageSize === undefined) {
-                throw new RequiredError('pageSize','Required parameter pageSize was null or undefined when calling users.');
+            // verify required parameter 'page_size' is not null or undefined
+            if (page_size === null || page_size === undefined) {
+                throw new RequiredError('page_size','Required parameter page_size was null or undefined when calling users.');
             }
             const localVarPath = `/api/user-list`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -276,8 +276,8 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
                 localVarQueryParameter['current'] = current;
             }
 
-            if (pageSize !== undefined) {
-                localVarQueryParameter['pageSize'] = pageSize;
+            if (page_size !== undefined) {
+                localVarQueryParameter['pageSize'] = page_size;
             }
 
             if (email !== undefined) {
@@ -307,20 +307,20 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
         /**
          * Get Users for client
          * @param {number} current 
-         * @param {number} pageSize 
+         * @param {number} page_size 
          * @param {boolean} [accessible] 
          * @param {number} [status] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        usersClient: async (current: number, pageSize: number, accessible?: boolean, status?: number, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        usersClient: async (current: number, page_size: number, accessible?: boolean, status?: number, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'current' is not null or undefined
             if (current === null || current === undefined) {
                 throw new RequiredError('current','Required parameter current was null or undefined when calling usersClient.');
             }
-            // verify required parameter 'pageSize' is not null or undefined
-            if (pageSize === null || pageSize === undefined) {
-                throw new RequiredError('pageSize','Required parameter pageSize was null or undefined when calling usersClient.');
+            // verify required parameter 'page_size' is not null or undefined
+            if (page_size === null || page_size === undefined) {
+                throw new RequiredError('page_size','Required parameter page_size was null or undefined when calling usersClient.');
             }
             const localVarPath = `/api/users`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -346,8 +346,8 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
                 localVarQueryParameter['current'] = current;
             }
 
-            if (pageSize !== undefined) {
-                localVarQueryParameter['pageSize'] = pageSize;
+            if (page_size !== undefined) {
+                localVarQueryParameter['pageSize'] = page_size;
             }
 
             if (accessible !== undefined) {
@@ -438,14 +438,14 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * Get the list of users
          * @param {number} current 
-         * @param {number} pageSize 
+         * @param {number} page_size 
          * @param {string} [email] 
          * @param {string} [name] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async users(current: number, pageSize: number, email?: string, name?: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<UserList>>> {
-            const localVarAxiosArgs = await UserApiAxiosParamCreator(configuration).users(current, pageSize, email, name, options);
+        async users(current: number, page_size: number, email?: string, name?: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<UserList>>> {
+            const localVarAxiosArgs = await UserApiAxiosParamCreator(configuration).users(current, page_size, email, name, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -454,14 +454,14 @@ export const UserApiFp = function(configuration?: Configuration) {
         /**
          * Get Users for client
          * @param {number} current 
-         * @param {number} pageSize 
+         * @param {number} page_size 
          * @param {boolean} [accessible] 
          * @param {number} [status] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async usersClient(current: number, pageSize: number, accessible?: boolean, status?: number, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<UserList>>> {
-            const localVarAxiosArgs = await UserApiAxiosParamCreator(configuration).usersClient(current, pageSize, accessible, status, options);
+        async usersClient(current: number, page_size: number, accessible?: boolean, status?: number, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<UserList>>> {
+            const localVarAxiosArgs = await UserApiAxiosParamCreator(configuration).usersClient(current, page_size, accessible, status, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -515,26 +515,26 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
         /**
          * Get the list of users
          * @param {number} current 
-         * @param {number} pageSize 
+         * @param {number} page_size 
          * @param {string} [email] 
          * @param {string} [name] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async users(current: number, pageSize: number, email?: string, name?: string, options?: AxiosRequestConfig): Promise<AxiosResponse<UserList>> {
-            return UserApiFp(configuration).users(current, pageSize, email, name, options).then((request) => request(axios, basePath));
+        async users(current: number, page_size: number, email?: string, name?: string, options?: AxiosRequestConfig): Promise<AxiosResponse<UserList>> {
+            return UserApiFp(configuration).users(current, page_size, email, name, options).then((request) => request(axios, basePath));
         },
         /**
          * Get Users for client
          * @param {number} current 
-         * @param {number} pageSize 
+         * @param {number} page_size 
          * @param {boolean} [accessible] 
          * @param {number} [status] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async usersClient(current: number, pageSize: number, accessible?: boolean, status?: number, options?: AxiosRequestConfig): Promise<AxiosResponse<UserList>> {
-            return UserApiFp(configuration).usersClient(current, pageSize, accessible, status, options).then((request) => request(axios, basePath));
+        async usersClient(current: number, page_size: number, accessible?: boolean, status?: number, options?: AxiosRequestConfig): Promise<AxiosResponse<UserList>> {
+            return UserApiFp(configuration).usersClient(current, page_size, accessible, status, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -589,27 +589,27 @@ export class UserApi extends BaseAPI {
     /**
      * Get the list of users
      * @param {number} current 
-     * @param {number} pageSize 
+     * @param {number} page_size 
      * @param {string} [email] 
      * @param {string} [name] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UserApi
      */
-    public async users(current: number, pageSize: number, email?: string, name?: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<UserList>> {
-        return UserApiFp(this.configuration).users(current, pageSize, email, name, options).then((request) => request(this.axios, this.basePath));
+    public async users(current: number, page_size: number, email?: string, name?: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<UserList>> {
+        return UserApiFp(this.configuration).users(current, page_size, email, name, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Get Users for client
      * @param {number} current 
-     * @param {number} pageSize 
+     * @param {number} page_size 
      * @param {boolean} [accessible] 
      * @param {number} [status] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UserApi
      */
-    public async usersClient(current: number, pageSize: number, accessible?: boolean, status?: number, options?: AxiosRequestConfig) : Promise<AxiosResponse<UserList>> {
-        return UserApiFp(this.configuration).usersClient(current, pageSize, accessible, status, options).then((request) => request(this.axios, this.basePath));
+    public async usersClient(current: number, page_size: number, accessible?: boolean, status?: number, options?: AxiosRequestConfig) : Promise<AxiosResponse<UserList>> {
+        return UserApiFp(this.configuration).usersClient(current, page_size, accessible, status, options).then((request) => request(this.axios, this.basePath));
     }
 }

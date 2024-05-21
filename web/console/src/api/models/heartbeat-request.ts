@@ -30,7 +30,7 @@ export interface HeartbeatRequest {
      * @type {number}
      * @memberof HeartbeatRequest
      */
-    modifiedAt: number;
+    modified_at: number;
 
     /**
      * @type {string}

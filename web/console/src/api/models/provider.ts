@@ -30,7 +30,7 @@ export interface Provider {
      * @type {number}
      * @memberof Provider
      */
-    orderIndex: number;
+    order_index: number;
 
     /**
      * @type {boolean}
@@ -42,29 +42,29 @@ export interface Provider {
      * @type {string}
      * @memberof Provider
      */
-    clientId: string;
+    client_id: string;
 
     /**
      * @type {string}
      * @memberof Provider
      */
-    clientSecret: string;
+    client_secret: string;
 
     /**
      * @type {string}
      * @memberof Provider
      */
-    authorizationEndpoint: string;
+    authorization_endpoint: string;
 
     /**
      * @type {string}
      * @memberof Provider
      */
-    tokenEndpoint: string;
+    token_endpoint: string;
 
     /**
      * @type {string}
      * @memberof Provider
      */
-    userinfoEndpoint: string;
+    userinfo_endpoint: string;
 }
