@@ -36,9 +36,7 @@ use rocket::{
 };
 use state::{ApiState, UserPasswordInfo};
 use utils::{
-    include_png_as_base64, unwrap_or_return, AbTagRenameRequest, AddUserRequest, AddressBook,
-    EnableUserRequest, Group, GroupsResponse, OidcSettingsResponse, PeersResponse,
-    SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList,
+    include_png_as_base64, unwrap_or_return, uuid_into_guid, AbTagRenameRequest, AddUserRequest, AddressBook, EnableUserRequest, Group, GroupsResponse, OidcSettingsResponse, PeersResponse, SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList
 };
 use utils::{
     AbGetResponse, AbRequest, AuditRequest, CurrentUserRequest, CurrentUserResponse,
@@ -397,6 +395,11 @@ async fn users(
     log::debug!("users");
     state.check_maintenance().await;
 
+    let email = if email.is_some() && email.unwrap().is_empty() {
+        None
+    } else {
+        email
+    };
     let res = state.get_all_users(name, email, current, pageSize).await;
     if res.is_none() {
         return Err(status::NotFound::<()>(()));
@@ -1001,19 +1004,30 @@ async fn user_enable(
 #[openapi(tag = "user")]
 #[put("/api/user", format = "application/json", data = "<request>")]
 async fn user_update(
-    state: &State<ApiState>,
+    state: &State<ApiState>,    
     user: AuthenticatedUser,
     request: Json<UpdateUserRequest>,
 ) -> Result<Json<UsersResponse>, status::Unauthorized<()>> {
     log::debug!("update_user");
     state.check_maintenance().await;
+    let mut guid = uuid_into_guid(request.0.uuid.as_str());
+    if guid.is_none() {
+        guid = Some(user.info.user_id.clone());
+    }
+    
+    let guid = guid.unwrap();
+    let is_admin = state.is_current_user_admin(&user.info).await.unwrap_or(false);
+
+    if !is_admin && user.info.user_id != guid {
+        return Err(status::Unauthorized::<()>(()));
+    }
     let response = UsersResponse {
         msg: "success".to_string(),
         total: 1,
         data: "[{}]".to_string(),
     };
     let user_update = request.0;
-    state.user_update(user.info.user_id, user_update).await;
+    state.user_update(guid, user_update).await;
     Ok(Json(response))
 }
 

@@ -7,13 +7,14 @@ use sqlx::{
     sqlite::{Sqlite, SqliteConnectOptions, SqliteJournalMode, SqlitePool},
     QueryBuilder,
 };
-use utils::Group;
-use utils::Peer;
 use std::env;
 use std::path::Path;
+use utils::guid_into_uuid;
 use utils::types::AddressBook;
 use utils::AbPeer;
 use utils::AbTag;
+use utils::Group;
+use utils::Peer;
 use utils::UpdateUserRequest;
 use utils::UserListResponse;
 
@@ -102,7 +103,10 @@ impl Database {
     pub async fn find_user_by_name(
         &self,
         username: &str,
-    ) -> (DatabaseConnection, Option<(UserId, Option<String>, DatabaseUserInfo)>) {
+    ) -> (
+        DatabaseConnection,
+        Option<(UserId, Option<String>, DatabaseUserInfo)>,
+    ) {
         let mut conn = DatabaseConnection {
             conn: self.pool.acquire().await.unwrap(),
         };
@@ -1146,19 +1150,23 @@ impl Database {
         let mut conn = self.pool.acquire().await.unwrap();
         let mut query = "UPDATE user SET ".to_string();
         let mut query_params = Vec::new();
-        if user_parameters.name.is_some() {
+        if user_parameters.name.is_some() && user_parameters.name.clone().unwrap().len() > 0 {
             query.push_str("name = ?, ");
             query_params.push(user_parameters.name.unwrap());
         }
-        if user_parameters.email.is_some() {
+        if user_parameters.email.is_some() && user_parameters.email.clone().unwrap().len() > 0 {
             query.push_str("email = ?, ");
             query_params.push(user_parameters.email.unwrap());
         }
-        if user_parameters.note.is_some() {
+        if user_parameters.note.is_some() && user_parameters.note.clone().unwrap().len() > 0 {
             query.push_str("note = ?, ");
             query_params.push(user_parameters.note.unwrap());
         }
-        if user_parameters.password.is_some() && user_parameters.confirm_password.is_some() {
+        if user_parameters.password.is_some()
+            && user_parameters.confirm_password.is_some()
+            && user_parameters.password.clone().unwrap().len() > 0
+            && user_parameters.confirm_password.clone().unwrap().len() > 0
+        {
             let password = user_parameters.password.unwrap();
             let confirm_password = user_parameters.confirm_password.unwrap();
             if password == confirm_password {
@@ -1173,7 +1181,7 @@ impl Database {
         }
         if let Some(is_admin) = user_parameters.is_admin {
             query.push_str("role = ?, ");
-            query_params.push(is_admin.to_string());
+            query_params.push(if is_admin { "1" } else { "0" }.to_string());
         }
         query.pop();
         query.pop();
@@ -1185,12 +1193,15 @@ impl Database {
         for param in query_params {
             res = res.bind(param);
         }
-        let _res = res.bind(user_id).execute(&mut conn).await;
-
+        let res = res.bind(user_id).execute(&mut conn).await;
+        if res.is_err() {
+            log::error!("user_update error: {:?}", res);
+            return None;
+        }
         Some(())
     }
 
-    pub async fn  get_all_peers(&self) -> Option<Vec<Peer>> {
+    pub async fn get_all_peers(&self) -> Option<Vec<Peer>> {
         let mut conn = self.pool.acquire().await.unwrap();
         let res = sqlx::query!(
             r#"
@@ -1209,7 +1220,7 @@ impl Database {
         .await
         .ok()?;
 
-        let mut peers:Vec<Peer> = Vec::new();
+        let mut peers: Vec<Peer> = Vec::new();
         for row in res {
             let uuid = guid_into_uuid(row.guid).unwrap_or("".to_string());
             let peer_info = serde_json::from_str::<utils::PeerInfo>(&row.info);
@@ -1218,7 +1229,7 @@ impl Database {
                 return None;
             }
             let peer_info = peer_info.unwrap();
-            peers.push(Peer{
+            peers.push(Peer {
                 id: row.id,
                 guid: uuid,
                 info: peer_info,
@@ -1230,7 +1241,7 @@ impl Database {
         Some(peers)
     }
 
-    pub async fn get_groups(&self, offset: u32, page_size: u32)->Option<Vec<Group>>{
+    pub async fn get_groups(&self, offset: u32, page_size: u32) -> Option<Vec<Group>> {
         let mut conn = self.pool.acquire().await.unwrap();
         let res = sqlx::query!(
             r#"
@@ -1252,11 +1263,11 @@ impl Database {
         .fetch_all(&mut conn)
         .await
         .ok()?;
-        let mut groups:Vec<Group> = Vec::new();
+        let mut groups: Vec<Group> = Vec::new();
         for row in res {
             let guid = guid_into_uuid(row.guid).unwrap_or("".to_string());
-            let team  = guid_into_uuid(row.team).unwrap_or("".to_string());
-            groups.push(Group{
+            let team = guid_into_uuid(row.team).unwrap_or("".to_string());
+            groups.push(Group {
                 guid: guid,
                 name: row.name,
                 team: team,
@@ -1264,21 +1275,9 @@ impl Database {
                 created_at: row.created_at.into(),
                 access_to: Vec::<String>::new(),
                 accessed_from: Vec::<String>::new(),
-                info: row.info
+                info: row.info,
             });
         }
         Some(groups)
-    
     }
-}
-
-fn guid_into_uuid(guid: Vec<u8>) -> Option<String> {
-    let guid_u8: Result<[u8; 16], _> = guid.try_into();
-    if guid_u8.is_err() {
-        log::error!("get_ab_personal_guid error: {:?}", guid_u8);
-        return None;
-    }
-    let guid_u8: [u8; 16] = guid_u8.unwrap();
-    let guid = Uuid::from_bytes(guid_u8).to_string();
-    Some(guid)
 }

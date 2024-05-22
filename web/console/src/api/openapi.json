@@ -1542,6 +1542,7 @@
       "UserInfo": {
         "type": "object",
         "required": [
+          "admin",
           "name"
         ],
         "properties": {
@@ -1551,6 +1552,9 @@
           "email": {
             "type": "string",
             "nullable": true
+          },
+          "admin": {
+            "type": "boolean"
           }
         }
       },
@@ -1620,6 +1624,7 @@
       "CurrentUserResponse": {
         "type": "object",
         "required": [
+          "admin",
           "error",
           "name"
         ],
@@ -1633,6 +1638,9 @@
           "email": {
             "type": "string",
             "nullable": true
+          },
+          "admin": {
+            "type": "boolean"
           }
         }
       },
@@ -1958,7 +1966,13 @@
       },
       "UpdateUserRequest": {
         "type": "object",
+        "required": [
+          "uuid"
+        ],
         "properties": {
+          "uuid": {
+            "type": "string"
+          },
           "name": {
             "type": "string",
             "nullable": true

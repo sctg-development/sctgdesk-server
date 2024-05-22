@@ -93,7 +93,7 @@
                                     </td>
                                     <td
                                         class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                                        <a
+                                        <a @click="toggle_edit_user(user.name, user.guid)"
                                             class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
                                             Edit
                                         </a>
@@ -107,7 +107,9 @@
         </div>
     </section>
     <!-- ====== Table Section End -->
-    <AddUser @add_user_close="toggle_add_user" @user_added="refresh_users" v-if="bModalAddUser"/>
+    <AddUser @add_user_close="toggle_add_user" @user_added="refresh_users" v-if="bModalAddUser" />
+    <EditUser v-if="bModalEditUser" @update_user_close="toggle_edit_user" :username="editUserName"
+        :uuid="editUserUuid" />
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
@@ -115,10 +117,14 @@ import { UserApi, UserListResponse } from '@/api';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { onMounted, ref } from 'vue';
 import AddUser from '@/components/AddUser.vue';
+import EditUser from '@/components/EditUser.vue';
 
 const userStore = useUserStore();
 const users = ref([] as UserListResponse[]);
 const bModalAddUser = ref(false);
+const bModalEditUser = ref(false);
+const editUserName = ref("");
+const editUserUuid = ref("");
 
 onMounted(() => {
     getUsers().then((data) => {
@@ -135,6 +141,17 @@ function toggle_add_user() {
     bModalAddUser.value = !bModalAddUser.value;
 }
 
+/**
+ * Toggles the value of `bModalEditUser` between `true` and `false`.
+ *
+ * @return {void} This function does not return anything.
+ */
+function toggle_edit_user(username?: string, uuid?: string): void {
+    editUserName.value = username || "";
+    editUserUuid.value = uuid || "";
+    console.log(`Edit user: ${editUserName.value} (${editUserUuid.value})`)
+    bModalEditUser.value = !bModalEditUser.value;
+}
 /**
  * Retrieves the list of users from the API.
  *

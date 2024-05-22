@@ -37,4 +37,10 @@ export interface CurrentUserResponse {
      * @memberof CurrentUserResponse
      */
     email?: string | null;
+
+    /**
+     * @type {boolean}
+     * @memberof CurrentUserResponse
+     */
+    admin: boolean;
 }

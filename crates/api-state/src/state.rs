@@ -16,7 +16,7 @@ use oauth2::ProviderConfig;
 
 use tokio::sync::RwLock;
 use utils::{
-    AbPeer, AbTag, AddUserRequest, AddressBook, Group, OidcState, Peer, PeerInfo, Token, UpdateUserRequest, UserListResponse
+    AbPeer, AbTag, AddUserRequest, AddressBook, Group, OidcState, Peer, Token, UpdateUserRequest, UserListResponse
 };
 
 pub struct ApiState {
@@ -169,6 +169,7 @@ impl ApiState {
             utils::UserInfo {
                 name: username.to_string(),
                 email,
+                admin: db_user_info.admin,
                 ..Default::default()
             },
             access_token,
@@ -317,6 +318,11 @@ impl ApiState {
     pub async fn get_current_user_name(&self, user: &AuthenticatedUserInfo) -> Option<String> {
         let state_users = self.users.read().await;
         state_users.get(&user.user_id).map(|ui| ui.username.clone())
+    }
+
+    pub async fn is_current_user_admin(&self, user: &AuthenticatedUserInfo) -> Option<bool> {
+        let state_users = self.users.read().await;
+        state_users.get(&user.user_id).map(|ui| ui.admin)
     }
 
     pub async fn with_user_info<R>(

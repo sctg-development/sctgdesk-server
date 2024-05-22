@@ -31,4 +31,10 @@ export interface UserInfo {
      * @memberof UserInfo
      */
     email?: string | null;
+
+    /**
+     * @type {boolean}
+     * @memberof UserInfo
+     */
+    admin: boolean;
 }

@@ -122,8 +122,8 @@ This website use:
       <div v-if="isCurrentPage('Groups')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <GroupsCard />
       </div>
-      <div v-if="isCurrentPage('Reports')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-        Reports content
+      <div v-if="isCurrentPage('Address books')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+        <AddressBook />
       </div>
     </main>
   </div>
@@ -141,6 +141,7 @@ import DevicesCard from '@/components/DevicesCard.vue';
 import UsersCard from '@/components/UsersCard.vue';
 import { ref } from 'vue';
 import GroupsCard from '@/components/GroupsCard.vue';
+import AddressBook from '@/components/AddressBook.vue';
 const userStore = useUserStore();
 const router = useRouter();
 
@@ -155,7 +156,7 @@ const navigation = ref([
   { name: 'Devices', href: '#', current: false },
   { name: 'Users', href: '#', current: false },
   { name: 'Groups', href: '#', current: false },
-  { name: 'Reports', href: '#', current: false },
+  { name: 'Address books', href: '#', current: false },
 ])
 const userNavigation = [
   { name: `${userStore.user?.name} ${userStore.user?.email}`, href: '#', action: nop },

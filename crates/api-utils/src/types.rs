@@ -113,6 +113,7 @@ pub struct UserInfo {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
+    pub admin: bool
 }
 
 #[derive(Serialize, Debug, JsonSchema)]
@@ -400,6 +401,7 @@ pub struct User {
 
 #[derive(Serialize, Deserialize, Debug, JsonSchema)]
 pub struct UpdateUserRequest {
+    pub uuid: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -420,6 +422,7 @@ pub struct UpdateUserRequest {
 impl Default for UpdateUserRequest {
     fn default() -> Self {
         UpdateUserRequest {
+            uuid: uuid::Uuid::new_v4().to_string(),
             name: None,
             password: None,
             confirm_password: None,

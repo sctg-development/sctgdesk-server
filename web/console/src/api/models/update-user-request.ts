@@ -24,6 +24,12 @@ export interface UpdateUserRequest {
      * @type {string}
      * @memberof UpdateUserRequest
      */
+    uuid: string;
+
+    /**
+     * @type {string}
+     * @memberof UpdateUserRequest
+     */
     name?: string | null;
 
     /**
@@ -36,7 +42,7 @@ export interface UpdateUserRequest {
      * @type {string}
      * @memberof UpdateUserRequest
      */
-    confirm_password?: string | null;
+    "confirm-password"?: string | null;
 
     /**
      * @type {string}
