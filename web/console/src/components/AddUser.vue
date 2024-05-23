@@ -94,7 +94,7 @@ import {
     DialogPanel,
     DialogTitle,
 } from '@headlessui/vue'
-import { defineEmits, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { ref } from 'vue';
 import { AddUserRequest, UserApi, GroupApi, Group } from '@/api';
 import { useUserStore } from '@/stores/sctgDeskStore';
