@@ -81,7 +81,7 @@
                                     </td>
                                     <td
                                         class="text-dark border-b border-[#E8E8E8] bg-white dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                                        {{ user.status }}
+                                        {{ user.status ==  1 ? 'Active' : 'Inactive'  }}
                                     </td>
                                     <td
                                         class="text-dark border-b border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
@@ -96,6 +96,10 @@
                                         <a @click="toggle_edit_user(user.name, user.guid)"
                                             class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
                                             Edit
+                                        </a>
+                                        <a @click="toggle_user(user.name, user.guid, user.status == 1 ? false : true)"
+                                            class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
+                                            {{ user.status == 1 ? 'Deactivate' : 'Activate' }}
                                         </a>
                                     </td>
                                 </tr>
@@ -113,7 +117,7 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { UserApi, UserListResponse } from '@/api';
+import { UserApi, UserListResponse,EnableUserRequest } from '@/api';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { onMounted, ref } from 'vue';
 import AddUser from '@/components/AddUser.vue';
@@ -137,7 +141,7 @@ onMounted(() => {
  *
  * @return {void} This function does not return anything.
  */
-function toggle_add_user() {
+function toggle_add_user(): void {
     bModalAddUser.value = !bModalAddUser.value;
 }
 
@@ -172,6 +176,20 @@ function getUsers(): Promise<UserListResponse[]> {
             console.error(error);
             resolve([] as UserListResponse[]);
         });
+    });
+}
+
+function toggle_user(username: string, uuid: string, activate:boolean): void {
+    const userApi = new UserApi(userStore.api_configuration);
+    const enableUserRequest =  {rows:[uuid],disable: activate}  as EnableUserRequest;
+    userApi.userEnable(enableUserRequest).then((response) => {
+        if (response.status == 200 && response.data.msg == "success") {
+            alert(`${activate ? 'Activated' : 'Deactivated'} user ${username}`);
+            refresh_users();
+        }
+        else {
+            alert(`Failed to ${activate ? 'activate' : 'deactivate'} user ${username}`);
+        }
     });
 }
 

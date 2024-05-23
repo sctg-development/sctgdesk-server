@@ -1038,8 +1038,14 @@ impl Database {
     /// Change user status
     /// if status is 1, the user is active
     /// if status is 0, the user is inactive
-    pub async fn user_change_status(&self, name: &str, status: u32) -> Option<()> {
+    pub async fn user_change_status(&self, uuid: &str, status: u32) -> Option<()> {
         let mut conn = self.pool.acquire().await.unwrap();
+        let guid = Uuid::parse_str(uuid);
+        if guid.is_err() {
+            log::error!("change_user_status error: {:?}", guid);
+            return None;
+        }
+        let guid = guid.unwrap().as_bytes().to_vec();
         let res = sqlx::query!(
             r#"
             UPDATE
@@ -1047,10 +1053,10 @@ impl Database {
             SET
                 status = ?
             WHERE
-                name = ?
+                guid = ?
         "#,
             status,
-            name
+            guid
         )
         .execute(&mut conn)
         .await;

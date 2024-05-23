@@ -983,9 +983,9 @@ async fn user_enable(
     let enable_users = request.0;
 
     let mut count = 0;
-    for user in enable_users.rows {
+    for uuid in enable_users.rows {
         let res = state
-            .user_change_status(user.as_str(), enable_users.disable)
+            .user_change_status(uuid.as_str(), enable_users.disable)
             .await;
         if res.is_some() {
             count += 1;
