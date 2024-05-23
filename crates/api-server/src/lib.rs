@@ -133,6 +133,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
             ],
         )
         .mount("/",routes![
+            favicon,
             webconsole_vue,
             openapi_snippet
         ])
@@ -1209,6 +1210,22 @@ async fn openapi_snippet() -> Option<StaticFileResponse> {
         ContentType::JavaScript,
     ))
 }
+
+#[get("/favicon.ico")]
+async fn favicon() -> Redirect {
+    Redirect::to(uri!("/ui/favicon.ico"))
+}
+
+/// Retrieves a static file from the webconsole/dist directory
+///
+/// # Arguments
+///
+/// * `path` - the path to the file relative to the webconsole/dist directory
+///
+/// # Returns
+///
+/// * `Some(StaticFileResponse)` if the file exists, containing the file data and content type
+/// * `None` if the file does not exist
 #[get("/ui/<path..>")]
 async fn webconsole_vue(path: PathBuf) -> Option<StaticFileResponse> {
     if env::var("VITE_DEVELOPMENT").is_ok() {
