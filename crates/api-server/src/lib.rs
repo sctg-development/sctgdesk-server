@@ -826,8 +826,8 @@ async fn ab_settings(
 async fn ab_peers(
     state: &State<ApiState>,
     _user: AuthenticatedUser,
-    #[allow(unused_variables)] current: i32,
-    #[allow(non_snake_case, unused_variables)] pageSize: i32,
+    #[allow(unused_variables)] current: u32,
+    #[allow(non_snake_case, unused_variables)] pageSize: u32,
     ab: &str,
 ) -> Result<Json<AbPeersResponse>, status::Unauthorized<()>> {
     state.check_maintenance().await;
