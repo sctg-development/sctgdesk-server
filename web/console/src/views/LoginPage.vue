@@ -17,7 +17,8 @@
 
                 <div>
                     <div class="flex items-center justify-between">
-                        <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password <span id="loginResult" class="text-red-700"></span></label>
+                        <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password <span
+                                id="loginResult" class="text-red-700"></span></label>
                     </div>
                     <div class="mt-2">
                         <input v-model="password" id="password" name="password" type="password"
@@ -32,28 +33,45 @@
                         in</button>
                 </div>
             </form>
+            <div>
+                <a ref="oidc_link" href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-500"></a>
+                <div v-for="oauthprovider in oauthproviders" class="pt-1.5">
+                    <button @click="oidcAuth_step1(oauthprovider)"
+                        class="flex w-full h-12 items-center justify-center rounded-md bg-gray-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Sign
+                        in with {{ oauthprovider.name }}</button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
 <script setup lang="ts">
-import { $require } from '@/utilities/viteHelper.js'
+import { $require, generateUUIDBase64Encoded } from '@/utilities/viteHelper.js'
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { useRouter } from 'vue-router';
-import { ref } from 'vue';
-import { LoginApi, Configuration, UserApi } from '@/api';
+import { onMounted, ref } from 'vue';
+import { LoginApi, Configuration } from '@/api';
 const userStore = useUserStore();
 const router = useRouter();
 
 const name = ref("");
 const password = ref("");
+const basePath = window.location.origin == "http://localhost:5173" ? "http://127.0.0.1:21114" : window.location.origin;
+const oidc_link = ref(null as HTMLAnchorElement | null);
+
+type OauthProvider = {
+    name: string;
+    rustdesk_name: string;
+};
+
+const oauthproviders = ref([] as OauthProvider[]);
 
 function handleLogin(e: SubmitEvent) {
     e.preventDefault();
     const configuration = new Configuration({
-       // Workaround for development environment
-       basePath: window.location.origin == "http://localhost:5173" ? "http://127.0.0.1:21114" : window.location.origin,
-       username: name.value,
-       password: password.value
+        // Workaround for development environment
+        basePath: basePath,
+        username: name.value,
+        password: password.value
     });
     const loginApi = new LoginApi(configuration);
     loginApi.login({ username: name.value, password: password.value, id: "", uuid: "" }).then((response) => {
@@ -69,8 +87,101 @@ function handleLogin(e: SubmitEvent) {
         }
     }).catch((error) => {
         console.log(error);
-        document.getElementById("loginResult").innerText = "Wrong username or password !";
+        setLoginResult("Wrong username or password !");
     });
 
 }
+
+function setLoginResult(message: string) {
+    document.getElementById("loginResult").innerText = message;
+}
+function oidcAuth_step1(provider: OauthProvider) {
+    const configuration = new Configuration({
+        basePath: basePath,
+        username: name.value,
+        password: password.value
+    });
+    const loginApi = new LoginApi(configuration);
+    const oidcAuthRequest = {
+        deviceInfo: {
+            name: navigator.appName,
+            os: navigator.platform,
+            type: "oidc",
+        },
+        id: userStore.id,
+        op: provider.rustdesk_name,
+        uuid: userStore.uuid_base64
+    }
+    userStore.oidc_provider = provider.name;
+    loginApi.oidcAuth(oidcAuthRequest).then(async (response) => {
+        console.log(response);
+        userStore.oidc_code = response.data.code;
+        
+        oidc_link.value.href = response.data.url;
+        oidc_link.value.innerText = `Please authenticate with ${userStore.oidc_provider}...`;
+        oidc_link.value.target = "_blank";
+
+        const timeout = new Date().getTime() + 30000; // 30s en millisecondes
+        while (new Date().getTime() < timeout) {
+            const result = await oidcAuth_step2();
+            if (result) {
+                router.push({ name: 'index' });
+                return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+    }).catch((error) => {
+        console.log(error);
+    });
+}
+
+function oidcAuth_step2() {
+    const configuration = new Configuration({
+        basePath: basePath,
+        username: name.value,
+        password: password.value
+    });
+    const loginApi = new LoginApi(configuration);
+    return new Promise((resolve, reject) => {
+        loginApi.oidcState(userStore.oidc_code, userStore.id, userStore.uuid_base64).then((response) => {
+            console.log(response);
+            if (response.data.access_token !== undefined) {
+                userStore.user = {
+                    name: response.data.user.name,
+                    admin: response.data.user.is_admin,
+                    email: response.data.user.email,
+                };
+                userStore.api_configuration = configuration;
+                userStore.api_configuration.accessToken = response.data.access_token;
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        }).catch((error) => {
+            console.log(error);
+            resolve(false);
+        });
+    });
+}
+
+onMounted(() => {
+    userStore.uuid_base64 = generateUUIDBase64Encoded();
+    userStore.id = Math.random().toString(36).substring(2, 15);
+    const configuration = new Configuration({
+        basePath: basePath,
+        username: name.value,
+        password: password.value
+    });
+    const loginApi = new LoginApi(configuration);
+    loginApi.loginOptions().then((_providers) => {
+        for (const _provider of _providers.data) {
+            oauthproviders.value.push({
+                name: _provider.split("/")[1],
+                rustdesk_name: _provider.split("/")[1]
+            });
+        }
+    }).catch((error) => {
+        console.log(error);
+    });
+})
 </script>
