@@ -1385,7 +1385,7 @@
         "tags": [
           "address book"
         ],
-        "description": "Shared profile",
+        "description": "Shared profile\n\n# Example\n\nrule: 1: read, 2: write, 3: full control {\"data\":[{\"guid\":\"018fab24-0ae5-731c-be23-88aa4518ea26\",\"name\":\"shared profile\",\"owner\":\"admin\",\"rule\":3}],\"total\":2}",
         "operationId": "ab_shared",
         "responses": {
           "200": {
@@ -1405,6 +1405,45 @@
         "security": [
           {
             "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/shared/add": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "description": "Shared profile",
+        "operationId": "ab_shared_add",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbSharedAddRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbSharedProfilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
           }
         ]
       }
@@ -2504,6 +2543,21 @@
             "type": "integer",
             "format": "uint32",
             "minimum": 0.0
+          }
+        }
+      },
+      "AbSharedAddRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
