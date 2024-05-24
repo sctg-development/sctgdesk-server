@@ -35,7 +35,7 @@
             </form>
             <div>
                 <a ref="oidc_link" href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-500"></a>
-                <div v-for="oauthprovider in oauthproviders" class="pt-1.5">
+                <div class="pt-1.5" v-for="oauthprovider in oauthproviders">
                     <button @click="oidcAuth_step1(oauthprovider)"
                         class="flex w-full h-12 items-center justify-center rounded-md bg-gray-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Sign
                         in with {{ oauthprovider.name }}</button>

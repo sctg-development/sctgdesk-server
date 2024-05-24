@@ -20,7 +20,7 @@ export default {
         const contentWithoutStyleBlocks = content.replace(/<style[^]+?<\/style>/gi, '')
         return contentWithoutStyleBlocks.match(/[A-Za-z0-9-_/:]*[A-Za-z0-9-_/]+/g) || []
       },
-      safelist: [/-(leave|enter|appear)(|-(to|from|active))$/, /^(?!(|.*?:)cursor-move).+-move$/, /^router-link(|-exact)-active$/, /data-v-.*/,/tick.*/],
+      safelist: [/-(leave|enter|appear)(|-(to|from|active))$/, /^(?!(|.*?:)cursor-move).+-move$/, /^router-link(|-exact)-active$/, /data-v-.*/,/tick.*/,/pt-1\.5/],
       fontFace: true
     }) : ()=>{},
   ]
