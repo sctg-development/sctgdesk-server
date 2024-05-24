@@ -95,6 +95,31 @@ The server can be run as a standalone server. To run the server, execute the fol
 ```bash
 DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo run --release
 ```
+## Screenshots
+
+### Webconsole
+
+<img width="1085" alt="Capture d’écran 2024-05-24 à 11 48 13" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/fe72a374-8a98-4606-8632-3d919f9317c9">
+
+<img width="1085" alt="Capture d’écran 2024-05-24 à 11 48 34" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/6ae55861-f65c-4950-a068-f22eef3ad81a">
+
+<img width="1084" alt="Capture d’écran 2024-05-24 à 11 48 44" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/8d225841-43f5-44f4-8d41-5b6ca3324096">
+
+<img width="1087" alt="Capture d’écran 2024-05-24 à 11 48 56" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/d84ce3d3-1d19-4765-883f-001f313a4a1e">
+
+<img width="1089" alt="Capture d’écran 2024-05-24 à 11 49 13" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/db13010b-077a-4e14-943b-9d8de3266f82">
+
+### Api documentation
+
+<img width="1502" alt="apidoc" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/88fe7910-fe62-43e5-a16c-70dc1201e040">
+
+### Use in Rustdesk client
+
+<img width="913" alt="Capture d’écran 2024-05-24 à 12 14 34" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/1b253577-dce2-4163-9a49-ba4b3da37812">
+
+<img width="923" alt="Capture d’écran 2024-05-24 à 12 07 21" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/c49b3aba-b13f-4b15-a69c-d492a90e774a">
+
+<img width="927" alt="Capture d’écran 2024-05-24 à 12 07 32" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/f447f5fa-bc77-4bc6-858a-c6cadf9b7f6c">
 
 ## Integration with Rustdesk-Server
 
