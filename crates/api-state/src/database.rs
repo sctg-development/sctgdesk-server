@@ -1307,15 +1307,18 @@ impl Database {
         let res = sqlx::query!(
             r#"
             SELECT
-                guid,
-                name,
-                owner,
-                3 as rule
+                ab.guid,
+                ab.name,
+                ab.owner,
+                ab_rule.rule as rule
             FROM
-                ab
+                ab, ab_rule
             WHERE
                 personal = 0
-        "#
+            AND ab.guid = ab_rule.ab
+            AND (ab_rule.user = ? OR ab_rule.grp IN (SELECT grp FROM user WHERE guid = ?))
+        "#,
+            user_id, user_id
         )
         .fetch_all(&mut conn)
         .await

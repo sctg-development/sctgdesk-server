@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS ab (
                                     info text not null
 ) without rowid;
 INSERT OR IGNORE INTO ab VALUES(X'018f255623117efa9d25470a9160c6d5','admin''s Personal Address Book',X'018f2556230179eb91a2cffe5ced4236',1,NULL,'2024-04-28 15:32:33','{}');
-INSERT OR IGNORE INTO ab VALUES(X'018f255623117efa9d25470a9160c6d7','admin''s Shared Address Book',X'018f2556230179eb91a2cffe5ced4236',0,NULL,'2024-04-28 15:32:33','{}');
+INSERT OR IGNORE INTO ab VALUES(X'018f255623117efa9d25470a9160c6d7','Default''s Shared Address Book',X'018f2556230179eb91a2cffe5ced4236',0,NULL,'2024-04-28 15:32:33','{}');
 CREATE TABLE IF NOT EXISTS ab_peer (
                                     guid blob primary key not null,
                                     ab blob not null,
