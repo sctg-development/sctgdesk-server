@@ -29,6 +29,11 @@ This server is distributed under the terms of the GNU Affero General Public Lice
 
 * API server for Rustdesk
 * New address book API
+  * Support for personal address book
+  * Support for shared address book at group level
+    * read-only, read-write, admin (currently rules need to be set manually in the database)
+  * Support for shared address book at user level
+    * read-only, read-write, admin (currently rules need to be set manually in the database)
 * OpenAPI documentation
 * Web console (work in progress)
 

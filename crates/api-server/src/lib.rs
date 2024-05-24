@@ -812,11 +812,11 @@ async fn ab_tag_delete(
     Ok(ActionResponse::Empty)
 }
 
-/// Shared profile
+/// Get shared profiles
 /// 
 /// # Example
 /// 
-/// rule: 1: read, 2: write, 3: full control
+/// rule: 1: read, 2: write, 3: full control  
 /// {"data":[{"guid":"018fab24-0ae5-731c-be23-88aa4518ea26","name":"shared profile","owner":"admin","rule":3}],"total":2}
 #[openapi(tag = "address book")]
 #[post("/api/ab/shared/profiles")]
@@ -841,7 +841,7 @@ async fn ab_shared(
     Ok(Json(ab_shared_profiles))
 }
 
-/// Shared profile
+/// Add shared profile
 #[openapi(tag = "address book")]
 #[post("/api/ab/shared/add", format = "application/json", data = "<request>")]
 async fn ab_shared_add(
