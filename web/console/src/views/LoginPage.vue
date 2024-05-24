@@ -65,6 +65,12 @@ type OauthProvider = {
 
 const oauthproviders = ref([] as OauthProvider[]);
 
+/**
+ * Handles the login form submission event.
+ *
+ * @param {SubmitEvent} e - The submit event object.
+ * @return {void} This function does not return a value.
+ */
 function handleLogin(e: SubmitEvent) {
     e.preventDefault();
     const configuration = new Configuration({
@@ -92,9 +98,22 @@ function handleLogin(e: SubmitEvent) {
 
 }
 
-function setLoginResult(message: string) {
+/**
+ * Sets the inner text of the element with the ID "loginResult" to the specified message.
+ *
+ * @param {string} message - The message to be displayed.
+ * @return {void} This function does not return a value.
+ */
+function setLoginResult(message: string): void {
     document.getElementById("loginResult").innerText = message;
 }
+
+/**
+ * Performs the first step of the OIDC authentication process.
+ *
+ * @param {OauthProvider} provider - The OauthProvider object representing the chosen provider.
+ * @return {Promise<void>} - A promise that resolves when the authentication process is complete.
+ */
 function oidcAuth_step1(provider: OauthProvider) {
     const configuration = new Configuration({
         basePath: basePath,
@@ -112,7 +131,7 @@ function oidcAuth_step1(provider: OauthProvider) {
         op: provider.rustdesk_name,
         uuid: userStore.uuid_base64
     }
-    userStore.oidc_provider = provider.name;
+    userStore.oidc_provider = capitalizeFirstLetter(provider.name);
     loginApi.oidcAuth(oidcAuthRequest).then(async (response) => {
         console.log(response);
         userStore.oidc_code = response.data.code;
@@ -135,7 +154,13 @@ function oidcAuth_step1(provider: OauthProvider) {
     });
 }
 
-function oidcAuth_step2() {
+/**
+ * Performs the second step of the OIDC authentication process.
+ *
+ * @return {Promise<boolean>} A promise that resolves to true if the authentication is successful,
+ *                           or false otherwise.
+ */
+function oidcAuth_step2():Promise<boolean> {
     const configuration = new Configuration({
         basePath: basePath,
         username: name.value,
@@ -162,6 +187,16 @@ function oidcAuth_step2() {
             resolve(false);
         });
     });
+}
+
+/**
+ * Capitalizes the first letter of a given string.
+ *
+ * @param {string} string - The string to capitalize.
+ * @return {string} The capitalized string.
+ */
+function capitalizeFirstLetter(string: string): string{
+    return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 onMounted(() => {
