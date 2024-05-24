@@ -169,7 +169,8 @@ CREATE TABLE IF NOT EXISTS ab (
                                     created_at datetime not null default(current_timestamp),
                                     info text not null
 ) without rowid;
-INSERT OR IGNORE INTO ab VALUES(X'018f255623117efa9d25470a9160c6d5','018f2556-2301-79eb-91a2-cffe5ced4236',X'018f2556230179eb91a2cffe5ced4236',1,NULL,'2024-04-28 15:32:33','{}');
+INSERT OR IGNORE INTO ab VALUES(X'018f255623117efa9d25470a9160c6d5','admin''s Personal Address Book',X'018f2556230179eb91a2cffe5ced4236',1,NULL,'2024-04-28 15:32:33','{}');
+INSERT OR IGNORE INTO ab VALUES(X'018f255623117efa9d25470a9160c6d7','admin''s Shared Address Book',X'018f2556230179eb91a2cffe5ced4236',0,NULL,'2024-04-28 15:32:33','{}');
 CREATE TABLE IF NOT EXISTS ab_peer (
                                     guid blob primary key not null,
                                     ab blob not null,
@@ -194,6 +195,7 @@ CREATE TABLE IF NOT EXISTS ab_rule (
                                     rule tinyint not null,
                                     created_at datetime not null default(current_timestamp)
 ) without rowid;
+INSERT OR IGNORE INTO ab_rule VALUES(X'018f255623117efa9d25470a9160c6d9',X'018f255623117efa9d25470a9160c6d7',NULL,X'018f255622fb73ee9afdbbcdc0cc387b',3,current_timestamp);
 CREATE UNIQUE INDEX IF NOT EXISTS index_team_name on team (name);
 CREATE INDEX IF NOT EXISTS index_session_user on session ("user");
 CREATE INDEX IF NOT EXISTS index_session_expiry_at on session (expiry_at);

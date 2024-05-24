@@ -89,15 +89,24 @@ where
         None => serializer.serialize_none(),
     }
 }
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default, JsonSchema)]
 pub struct AddressBook {
     pub ab: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub owner: Option<Vec<u8>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rule: Option<u32>,
 }
 
 impl AddressBook {
     pub fn empty() -> Self {
         Self {
             ab: "{}".to_string(),
+            name: None,
+            owner: None,
+            rule: None,
         }
     }
 }
@@ -703,4 +712,10 @@ pub struct Group {
     pub accessed_from: Vec<String>,
     pub note: Option<String>,
     pub info: GroupInfo,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct AbSharedAddRequest {
+    pub name: String,
+    pub note: Option<String>,
 }

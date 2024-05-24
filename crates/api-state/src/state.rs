@@ -659,4 +659,9 @@ impl ApiState {
     pub async fn get_groups(&self, offset:u32, page_size: u32) -> Option<Vec<Group>> {
         self.db.get_groups(offset, page_size).await
     }
+
+    /// Get shared address books
+    pub async fn get_shared_address_books(&self, user_id: UserId) -> Option<Vec<AddressBook>> {
+        self.db.get_shared_address_books(user_id).await
+    }
 }

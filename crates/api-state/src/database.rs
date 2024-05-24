@@ -252,7 +252,7 @@ impl Database {
         .await
         .ok()?;
 
-        let ab = AddressBook { ab: res.ab };
+        let ab = AddressBook { ab: res.ab, ..Default::default() };
 
         Some(ab)
     }
@@ -1300,5 +1300,36 @@ impl Database {
             });
         }
         Some(groups)
+    }
+
+    pub async fn get_shared_address_books(&self, user_id: UserId) -> Option<Vec<AddressBook>> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let res = sqlx::query!(
+            r#"
+            SELECT
+                guid,
+                name,
+                owner,
+                3 as rule
+            FROM
+                ab
+            WHERE
+                personal = 0
+        "#
+        )
+        .fetch_all(&mut conn)
+        .await
+        .ok()?;
+        let mut address_books: Vec<AddressBook> = Vec::new();
+        for row in res {
+            address_books.push(AddressBook {
+                ab: guid_into_uuid(row.guid).unwrap_or("".to_string()),
+                name: Some(row.name),
+                owner: Some(row.owner),
+                rule: Some(row.rule as u32),
+                ..Default::default()
+            });
+        }
+        Some(address_books)
     }
 }

@@ -19,7 +19,7 @@ mod extended_json;
 use std::collections::HashMap;
 use std::env;
 use std::io::Cursor;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use api::ActionResponse;
@@ -28,8 +28,7 @@ use oauth2::oauth_provider::OAuthProvider;
 use oauth2::oauth_provider::OAuthProviderFactory;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::form::validate::Len;
-use rocket::fs::relative;
-use rocket::fs::NamedFile;
+use rocket::http::hyper::request;
 use rocket::http::{ContentType, Header};
 use rocket::response::{Redirect, Responder};
 use rocket::{async_trait, delete, options, put, routes, uri};
@@ -39,6 +38,9 @@ use s3software::{get_s3_config_file, get_signed_release_url_with_config};
 use state::{self};
 #[cfg(feature = "ui")]
 use ui;
+use utils::guid_into_uuid;
+use utils::AbProfile;
+use utils::AbSharedAddRequest;
 use utils::{
     self, get_host::get_host, AbPeer, AbPeersResponse, AbPersonal, AbSettingsResponse,
     AbSharedProfilesResponse, AbTag, BearerAuthToken, OidcAuthRequest, OidcAuthUrl, OidcResponse,
@@ -51,7 +53,9 @@ use rocket::{
 };
 use state::{ApiState, UserPasswordInfo};
 use utils::{
-    include_png_as_base64, unwrap_or_return, uuid_into_guid, AbTagRenameRequest, AddUserRequest, AddressBook, EnableUserRequest, Group, GroupsResponse, OidcSettingsResponse, PeersResponse, SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList
+    include_png_as_base64, unwrap_or_return, uuid_into_guid, AbTagRenameRequest, AddUserRequest,
+    AddressBook, EnableUserRequest, Group, GroupsResponse, OidcSettingsResponse, PeersResponse,
+    SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList,
 };
 use utils::{
     AbGetResponse, AbRequest, AuditRequest, CurrentUserRequest, CurrentUserResponse,
@@ -139,6 +143,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 ab_tag_rename,
                 ab_tag_delete,
                 ab_shared,
+                ab_shared_add,
                 ab_settings,
                 software,
                 software_version,
@@ -294,7 +299,7 @@ async fn ab(
 
     log::debug!("new ab: {:?}", &ab);
 
-    let ab = AddressBook { ab };
+    let ab = AddressBook { ab, ..Default::default() };
 
     let _ = unwrap_or_return!(state
         .set_user_address_book(user.info.user_id, ab)
@@ -808,11 +813,41 @@ async fn ab_tag_delete(
 }
 
 /// Shared profile
+/// 
+/// # Example
+/// 
+/// rule: 1: read, 2: write, 3: full control
+/// {"data":[{"guid":"018fab24-0ae5-731c-be23-88aa4518ea26","name":"shared profile","owner":"admin","rule":3}],"total":2}
 #[openapi(tag = "address book")]
 #[post("/api/ab/shared/profiles")]
 async fn ab_shared(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
+) -> Result<Json<AbSharedProfilesResponse>, status::Unauthorized<()>> {
+    state.check_maintenance().await;
+    let shared_address_books = state.get_shared_address_books(user.info.user_id).await;
+    let mut ab_shared_profiles = AbSharedProfilesResponse::default();
+    for ab in shared_address_books.expect("shared_address_books is None") {
+        let address_book = AbProfile {
+            guid: ab.ab,
+            name: ab.name.unwrap_or("".to_string()),
+            owner: guid_into_uuid(ab.owner.expect("Invalid owner")).expect("Invalid GUID"),
+            rule: 3,
+            ..Default::default()
+        };
+        ab_shared_profiles.data.push(address_book);
+    }
+    ab_shared_profiles.total = ab_shared_profiles.data.len() as u32;
+    Ok(Json(ab_shared_profiles))
+}
+
+/// Shared profile
+#[openapi(tag = "address book")]
+#[post("/api/ab/shared/add", format = "application/json", data = "<request>")]
+async fn ab_shared_add(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<AbSharedAddRequest>,
 ) -> Result<Json<AbSharedProfilesResponse>, status::Unauthorized<()>> {
     state.check_maintenance().await;
     let ab_shared_profiles = AbSharedProfilesResponse::default();
@@ -1020,7 +1055,7 @@ async fn user_enable(
 #[openapi(tag = "user")]
 #[put("/api/user", format = "application/json", data = "<request>")]
 async fn user_update(
-    state: &State<ApiState>,    
+    state: &State<ApiState>,
     user: AuthenticatedUser,
     request: Json<UpdateUserRequest>,
 ) -> Result<Json<UsersResponse>, status::Unauthorized<()>> {
@@ -1030,9 +1065,12 @@ async fn user_update(
     if guid.is_none() {
         guid = Some(user.info.user_id.clone());
     }
-    
+
     let guid = guid.unwrap();
-    let is_admin = state.is_current_user_admin(&user.info).await.unwrap_or(false);
+    let is_admin = state
+        .is_current_user_admin(&user.info)
+        .await
+        .unwrap_or(false);
 
     if !is_admin && user.info.user_id != guid {
         return Err(status::Unauthorized::<()>(()));
