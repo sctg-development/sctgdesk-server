@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright 2024 Ronan LE MEILLAT for SCTG Development
 response=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:21114/openapi.json)
 
 if [ "$response" -eq 200 ]; then
