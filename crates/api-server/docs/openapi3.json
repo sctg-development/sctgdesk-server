@@ -1385,7 +1385,7 @@
         "tags": [
           "address book"
         ],
-        "description": "Shared profile\n\n# Example\n\nrule: 1: read, 2: write, 3: full control {\"data\":[{\"guid\":\"018fab24-0ae5-731c-be23-88aa4518ea26\",\"name\":\"shared profile\",\"owner\":\"admin\",\"rule\":3}],\"total\":2}",
+        "description": "Get shared profiles\n\n# Example\n\nrule: 1: read, 2: write, 3: full control {\"data\":[{\"guid\":\"018fab24-0ae5-731c-be23-88aa4518ea26\",\"name\":\"shared profile\",\"owner\":\"admin\",\"rule\":3}],\"total\":2}",
         "operationId": "ab_shared",
         "responses": {
           "200": {
@@ -1414,7 +1414,7 @@
         "tags": [
           "address book"
         ],
-        "description": "Shared profile",
+        "description": "Add shared profile",
         "operationId": "ab_shared_add",
         "requestBody": {
           "content": {
