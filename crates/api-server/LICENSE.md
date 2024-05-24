@@ -620,7 +620,7 @@ state the exclusion of warranty; and each file should have at least
 the “copyright” line and a pointer to where the full notice is found.
 
     sctgdesk-api-server an api server for rustdesk
-    Copyright (C) 2024 - SCTG Ronan Le Meillat
+    Copyright (C) 2024 - SCTG Ronan LE MEILLAT
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published by

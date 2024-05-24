@@ -1,3 +1,11 @@
+<!--
+=========================================================
+* © 2024 Ronan LE MEILLAT for SCTG Development
+=========================================================
+This website use:
+- Vite, Vue3, FontAwesome 6, TailwindCss 3
+- And many others
+-->
 <template>
     <div class="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-sm">

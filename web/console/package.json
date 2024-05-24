@@ -31,6 +31,7 @@
     "glob": "9.3.5",
     "gulp": "^5.0.0",
     "gulp-append-prepend": "^1.0.9",
+    "gulp-if": "^3.0.0",
     "nodemon": "^3.1.0",
     "npm-check-updates": "^16.14.20",
     "postcss": "^8.4.38",
