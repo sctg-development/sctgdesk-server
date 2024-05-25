@@ -15,6 +15,8 @@
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::env;
+use std::path::PathBuf;
 use std::process::Command;
 use std::str;
 use std::fs;
@@ -54,7 +56,14 @@ fn main() {
     let data = fs::read_to_string("./webconsole/package.json").unwrap();
     let mut package: PackageJson = serde_json::from_str(&data).unwrap();
 
-    package.set_version(std::env::var("MAIN_PKG_VERSION").unwrap_or(std::env::var("CARGO_PKG_VERSION").unwrap()).as_str());
+    // Construit le chemin du fichier dans le répertoire temporaire
+    let tmp_dir = env::var("TMP").or_else(|_| env::var("TEMP")).or_else(|_| env::var("TMPDIR")).unwrap_or_else(|_| "/tmp".to_string());
+    let mut path = PathBuf::from(tmp_dir);
+    path.push("version.txt");
+    // Lit la version à partir du fichier
+    let version = fs::read_to_string(&path).unwrap_or_else(|_| env::var("CARGO_PKG_VERSION").unwrap());
+
+    package.set_version(&version);
 
     let serialized = serde_json::to_string_pretty(&package).unwrap();
     fs::write("./webconsole/package.json", serialized).unwrap();
