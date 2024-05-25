@@ -1310,13 +1310,17 @@ impl Database {
                 ab.guid,
                 ab.name,
                 ab.owner,
-                ab_rule.rule as rule
+                COALESCE(MaxRule.rule, 0) as rule
             FROM
-                ab, ab_rule
+                ab
+            JOIN
+                (SELECT ab, MAX(rule) as rule
+                FROM ab_rule
+                WHERE user = ? OR grp IN (SELECT grp FROM user WHERE guid = ?)
+                GROUP BY ab) as MaxRule
+            ON ab.guid = MaxRule.ab
             WHERE
                 personal = 0
-            AND ab.guid = ab_rule.ab
-            AND (ab_rule.user = ? OR ab_rule.grp IN (SELECT grp FROM user WHERE guid = ?))
         "#,
             user_id, user_id
         )
@@ -1325,11 +1329,12 @@ impl Database {
         .ok()?;
         let mut address_books: Vec<AddressBook> = Vec::new();
         for row in res {
+            let access_level = row.rule.unwrap_or(0) as u32;
             address_books.push(AddressBook {
                 ab: guid_into_uuid(row.guid).unwrap_or("".to_string()),
                 name: Some(row.name),
                 owner: Some(row.owner),
-                rule: Some(row.rule as u32),
+                rule: Some(access_level),
                 ..Default::default()
             });
         }
