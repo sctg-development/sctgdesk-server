@@ -10,7 +10,7 @@
         "tags": [
           "Cors"
         ],
-        "description": "Answers to OPTIONS requests",
+        "summary": "Answers to OPTIONS requests",
         "operationId": "options",
         "parameters": [
           {
@@ -38,7 +38,8 @@
         "tags": [
           "login"
         ],
-        "description": "Login",
+        "summary": "User Login",
+        "description": "This function is an API endpoint that allows a user to log in without oauth. It is tagged with \"login\" for OpenAPI documentation. <br>\n\n## Parameters\n\n- `request`: The request data, which includes the user's username and password.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<LoginReply>` object, which includes the user's information and access token.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the user is not authorized or if the system is in maintenance mode.",
         "operationId": "login",
         "requestBody": {
           "content": {
@@ -72,7 +73,8 @@
         "tags": [
           "login"
         ],
-        "description": "Login options\n\nThis is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable\n\n# Limitations\n\nCurrently it uses the client id as the user id the limitation is that the client cannot retrieve its address book if the client uses a different client. For having a `real` user name. We need to add a step after the Oauth2 authorization code is exchanged for an access token.",
+        "summary": "Login Options",
+        "description": "This is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable\n\nThis function is an API endpoint that is called by the client to get the list of available OAuth2 providers. The list of providers is defined in the `oauth2.toml` config file, which can be overridden by the `OAUTH2_CONFIG_FILE` environment variable. It is tagged with \"login\" for OpenAPI documentation.\n\n## Limitations\n\nIt needs to be completed for mapping the username and email from the OAuth2 provider to the SCTGDesk user.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<Vec<String>>` object, which includes the list of available OAuth2 providers.  <br> If the config file is not found or cannot be read, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the config file is not found or cannot be read.\n\n# Example\n\nGET /api/login-options",
         "operationId": "login_options",
         "responses": {
           "200": {
@@ -99,7 +101,8 @@
         "tags": [
           "address book legacy"
         ],
-        "description": "Get the user's legacy address book",
+        "summary": "Get the User's Legacy Address Book",
+        "description": "This function is an API endpoint that allows an authenticated user to retrieve their legacy address book. <br> The Legacy Address Book is the address book that was used in the previous version of SCTGDesk. <br> Rustdesk client uses the legacy address book if it cannot find the new one <br> It is tagged with \"address book legacy\" for OpenAPI documentation.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<AbGetResponse>` object, which includes the legacy address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the user is not authorized.",
         "operationId": "ab_get",
         "responses": {
           "200": {
@@ -158,7 +161,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Get the user's address book",
+        "summary": "Get the User's Address Book",
+        "description": "This function is an API endpoint that allows an authenticated user to retrieve their address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<AbGetResponse>` object, which includes the address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the user is not authorized.\n\n# Example\n\nPOST /api/ab/get",
         "operationId": "ab_post",
         "responses": {
           "200": {
@@ -187,7 +191,8 @@
         "tags": [
           "user"
         ],
-        "description": "Get the current user",
+        "summary": "Get the Current User",
+        "description": "This function is an API endpoint that allows an authenticated user to retrieve their current user information. It is tagged with \"user\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the current user information.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<CurrentUserResponse>` object, which includes the current user information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the user is not authorized.",
         "operationId": "current_user",
         "requestBody": {
           "content": {
@@ -250,7 +255,8 @@
         "tags": [
           "login"
         ],
-        "description": "Log the user out",
+        "summary": "Log the User Out",
+        "description": "This function is an API endpoint that allows an authenticated user to log out. It is tagged with \"login\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the current user information.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<LogoutReply>` object, which includes a success message.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the user is not authorized.",
         "operationId": "logout",
         "requestBody": {
           "content": {
@@ -289,7 +295,8 @@
         "tags": [
           "peer"
         ],
-        "description": "Heartbeat\n\nFrequently the client hits the /api/heartbeat endpoint. It updates the last_online field of the peer.",
+        "summary": "Heartbeat",
+        "description": "This function is an API endpoint that is frequently hit by the client at the /api/heartbeat endpoint. It updates the `last_online` field of the peer. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the heartbeat information.\n\n## Returns\n\nThis function always returns a `String` with the message \"OK\".  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode.",
         "operationId": "heartbeat",
         "requestBody": {
           "content": {
@@ -320,7 +327,8 @@
         "tags": [
           "peer"
         ],
-        "description": "Set the system info",
+        "summary": "Set the System Info",
+        "description": "This function is an API endpoint that allows a connected client to update its system information. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the system information.\n\n## Returns\n\nIf successful, this function returns a `String` with the message \"SYSINFO_UPDATED\".  <br> If the system info is not found, this function returns a `String` with the message \"ID_NOT_FOUND\".  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the system info is not found.",
         "operationId": "sysinfo",
         "requestBody": {
           "content": {
@@ -351,7 +359,8 @@
         "tags": [
           "group"
         ],
-        "description": "Get the list of groups",
+        "summary": "Get the List of Groups",
+        "description": "This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of groups. It is tagged with \"group\" for OpenAPI documentation.\n\n## Parameters\n\n- `current`: The current page number.\n\n- `pageSize`: The number of groups per page.\n\n## Returns\n\nIf successful, this function returns a `Json<GroupsResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If no groups are found, this function returns a `status::NotFound` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if no groups are found.\n\n# Example\n\nGET /api/groups?current=1&pageSize=10",
         "operationId": "groups",
         "parameters": [
           {
@@ -402,7 +411,8 @@
         "tags": [
           "group"
         ],
-        "description": "Add a group",
+        "summary": "Add a Group (todo)",
+        "description": "This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the details of the group to be added.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the admin is not authorized.\n\n# Example\n\nPOST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}",
         "operationId": "group_add",
         "requestBody": {
           "content": {
@@ -441,7 +451,8 @@
         "tags": [
           "user"
         ],
-        "description": "Get the list of users",
+        "summary": "Get the List of Users",
+        "description": "This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of users. It is tagged with \"user\" for OpenAPI documentation.\n\n## Parameters\n\n- `current`: The current page number.\n\n- `pageSize`: The number of users per page.\n\n- `email`: The email to filter the users by.\n\n- `name`: The name to filter the users by.\n\n## Returns\n\nIf successful, this function returns a `Json<UserList>` object, which includes a success message, the total number of users, and the list of users.  <br> If no users are found, this function returns a `status::NotFound` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if no users are found.\n\n# Example\n\nGET /api/user-list?current=1&pageSize=10&email=test@test.com&name=Test",
         "operationId": "users",
         "parameters": [
           {
@@ -692,7 +703,8 @@
         "tags": [
           "peer"
         ],
-        "description": "Get the list of peers",
+        "summary": "Get Peers",
+        "description": "This function is an API endpoint that retrieves the list of all peers in the network. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<PeersResponse>` object, which includes a success message, the total number of peers, and the list of peers.  <br> If no peers are found, this function returns a `status::NotFound` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if no peers are found.\n\n# Example\n\nGET /api/peers",
         "operationId": "peers",
         "responses": {
           "200": {
@@ -750,7 +762,7 @@
         "tags": [
           "login"
         ],
-        "description": "OIDC Auth request\n\nThis entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses\n\nFor testing you can generate a valid uuid field with the following command: `uuidgen | base64`",
+        "description": "OIDC Auth request\n\nThis entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses\n\nFor testing you can generate a valid uuid field with the following command: `uuidgen | base64` # OIDC Auth Request\n\nThis function is an API endpoint that is called by the client to get the authorization URL for the chosen OAuth2 provider. It is tagged with \"login\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the chosen OAuth2 provider and a UUID.  <br> For testing you can generate a valid uuid field with the following command: `uuidgen | base64`\n\n## Returns\n\nIf successful, this function returns a `Json<OidcAuthUrl>` object, which includes the authorization URL and a session code.  <br> If the UUID is invalid or the OAuth2 provider is not found, this function returns an `OidcAuthUrl` object with an empty URL and an error code.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the UUID is invalid or the OAuth2 provider is not found.\n\n# Example\n\nPOST /api/oidc/auth { \"op\": \"github\", \"uuid\": \"generated_uuid_base64_encoded\" }",
         "operationId": "oidc_auth",
         "requestBody": {
           "content": {
@@ -781,7 +793,8 @@
         "tags": [
           "login"
         ],
-        "description": "OIDC State request\n\nThis entrypoint is called by the client for getting the status of the OIDC session it returns an empty json object if the session is not found it returns an access token if the session is found",
+        "summary": "OIDC State",
+        "description": "This function is an API endpoint that checks the state of an OpenID Connect (OIDC) session. It is tagged with \"login\" for OpenAPI documentation.\n\n## Parameters\n\n- `code`: The authorization code received from the OIDC provider.\n\n- `id`: The identifier of the OIDC session.\n\n- `uuid`: The UUID of the OIDC session.\n\n## Returns\n\nIf successful, this function returns a `Json<Option<OidcResponse>>` object.  <br> If the session does not exist, this function returns `Json(None)`.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the session does not exist.\n\n# Example\n\nGET /api/oidc/auth-query?code=authorization_code&id=session_id&uuid=session_uuid",
         "operationId": "oidc_state",
         "parameters": [
           {
@@ -829,7 +842,8 @@
         "tags": [
           "login"
         ],
-        "description": "OIDC Auth callback\n\nThis entrypoint is the OAuth2 callback. It exchanges the code for an access token and stores it in the state",
+        "summary": "OIDC Auth Callback",
+        "description": "This function is an API endpoint that serves as the OAuth2 callback. It exchanges the authorization code for an access token and stores it in the state. It is tagged with \"login\" for OpenAPI documentation.\n\n## Parameters\n\n- `code`: The authorization code received from the OIDC provider.\n\n- `state`: The state parameter received from the OIDC provider. This is the session code.\n\n## Returns\n\nIf successful, this function returns \"OK\".  <br> If the session does not exist or the code exchange fails, this function returns \"ERROR\".  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the session does not exist or the code exchange fails.\n\n# Example\n\nGET /api/oidc/callback?code=authorization_code&state=session_code",
         "operationId": "oidc_callback",
         "parameters": [
           {
@@ -1072,7 +1086,8 @@
         "tags": [
           "address book"
         ],
-        "description": "List peers",
+        "summary": "List peers",
+        "description": "This function is an API endpoint that lists the peers in an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `current`: The current page number for pagination. This parameter is currently unused.\n\n- `pageSize`: The number of items per page for pagination. This parameter is currently unused.\n\n- `ab`: The identifier of the address book.\n\n## Returns\n\nIf successful, this function returns a `Json<AbPeersResponse>` object containing the peers in the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.",
         "operationId": "ab_peers",
         "parameters": [
           {
@@ -1131,7 +1146,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Address book",
+        "summary": "Get Personal Address Book",
+        "description": "This function is an API endpoint that retrieves the personal address book of the authenticated user. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<AbPersonal>` object.  <br> If the user is not authorized to access their personal address book, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the user is not authorized to access their personal address book.\n\n# Example\n\nPOST /api/ab/personal",
         "operationId": "ab_personal",
         "responses": {
           "200": {
@@ -1160,7 +1176,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Get the tags",
+        "summary": "Get the Tags",
+        "description": "This function is an API endpoint that retrieves all tags from an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n## Returns\n\nIf successful, this function returns a JSON array of `AbTag` objects.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::NotFound` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.\n\n# Example\n\nPOST /api/ab/tags/018fab24-0ae5-731c-be23-88aa4518ea26",
         "operationId": "ab_tags",
         "parameters": [
           {
@@ -1202,7 +1219,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Add a tag",
+        "summary": "Add a Tag",
+        "description": "This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the new tag to be added.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.\n\n# Example\n\nPOST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json\n\n{\"name\": \"tag1\", \"color\": \"#FF0000\"}",
         "operationId": "ab_tag_add",
         "parameters": [
           {
@@ -1247,7 +1265,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Update a tag",
+        "summary": "Update a Tag",
+        "description": "This function is an API endpoint that updates a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the updated tag.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to update it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to update it.\n\n# Example\n\nPUT /api/ab/tag/update/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json\n\n{\"name\": \"tag1\", \"color\": \"#FF0000\"}",
         "operationId": "ab_tag_update",
         "parameters": [
           {
@@ -1292,7 +1311,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Rename a tag",
+        "summary": "Rename a Tag",
+        "description": "This function is an API endpoint that renames a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the old and new names of the tag.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to access it.\n\n# Example\n\nPUT /api/ab/tag/rename/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json\n\n{\"old\": \"tag1\", \"new\": \"tag2\"}",
         "operationId": "ab_tag_rename",
         "parameters": [
           {
@@ -1337,7 +1357,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Delete a tag",
+        "summary": "Delete a Tag",
+        "description": "This function is an API endpoint that deletes a tag from an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing an array of tag names to be deleted.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.  <br> If the request is empty or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the request is empty or the user is not authorized to access it.\n\n# Example\n\nDELETE /api/ab/tag/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json\n\n[\"tag1\", \"tag2\"]",
         "operationId": "ab_tag_delete",
         "parameters": [
           {
@@ -1385,7 +1406,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Get shared profiles\n\n# Example\n\nrule: 1: read, 2: write, 3: full control {\"data\":[{\"guid\":\"018fab24-0ae5-731c-be23-88aa4518ea26\",\"name\":\"shared profile\",\"owner\":\"admin\",\"rule\":3}],\"total\":2}",
+        "summary": "Get Shared Profiles",
+        "description": "This function is an API endpoint that retrieves the shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br> rule: 1: read, 2: write, 3: full control  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.\n\n# Example\n\n{\"data\":[{\"guid\":\"018fab24-0ae5-731c-be23-88aa4518ea26\",\"name\":\"shared profile\",\"owner\":\"admin\",\"rule\":3}],\"total\":2}",
         "operationId": "ab_shared",
         "responses": {
           "200": {
@@ -1482,7 +1504,7 @@
         "tags": [
           "software"
         ],
-        "description": "Get the software download url\n\n# Arguments\n\n* `key` - The key to the software download link, it can be `osx`, `w64` or `ios`\n\n# Usage\n\n* it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable\n\n<pre> [s3config] Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\" Region = \"eu-london-1\" AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\" SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\" Bucket = \"aezoz24elapn\" Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\" Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\" OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\" OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\" IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\" </pre>",
+        "description": "Get the software download url\n\n# Arguments\n\n* `key` - The key to the software download link, it can be `osx`, `w64` or `ios`\n\n# Usage\n\n* it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable\n\n<pre> [s3config]<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>",
         "operationId": "software",
         "parameters": [
           {
