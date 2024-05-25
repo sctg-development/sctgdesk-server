@@ -126,6 +126,7 @@ This website use:
         <AddressBook />
       </div>
     </main>
+    <MainFooter />
   </div>
 </template>
 
@@ -139,6 +140,7 @@ import { useUserStore } from '@/stores/sctgDeskStore';
 import { LoginApi } from '@/api';
 import DevicesCard from '@/components/DevicesCard.vue';
 import UsersCard from '@/components/UsersCard.vue';
+import MainFooter from '@/footers/mainfooter.vue';
 import { ref } from 'vue';
 import GroupsCard from '@/components/GroupsCard.vue';
 import AddressBook from '@/components/AddressBook.vue';

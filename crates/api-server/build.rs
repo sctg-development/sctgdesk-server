@@ -13,11 +13,51 @@
 //
 // You should have received a copy of the Affero General Public License
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::process::Command;
 use std::str;
+use std::fs;
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PackageJson {
+    name: String,
+    private: Option<bool>,
+    version: String,
+    #[serde(rename = "type")]
+    type_: Option<String>,
+    scripts: HashMap<String, String>,
+    dependencies: HashMap<String, String>,
+    devDependencies: HashMap<String, String>,
+}
+
+impl PackageJson {
+    pub fn new() -> Self {
+        Self {
+            name: String::new(),
+            private: None,
+            version: String::new(),
+            type_: None,
+            scripts: HashMap::new(),
+            dependencies: HashMap::new(),
+            devDependencies: HashMap::new(),
+        }
+    }
+
+    pub fn set_version(&mut self, version: &str) {
+        self.version = version.to_string();
+    }
+}
 fn main() {
     println!("cargo:rerun-if-changed=webconsole");
+
+    let data = fs::read_to_string("./webconsole/package.json").unwrap();
+    let mut package: PackageJson = serde_json::from_str(&data).unwrap();
+
+    package.set_version(std::env::var("MAIN_PKG_VERSION").unwrap_or(std::env::var("CARGO_PKG_VERSION").unwrap()).as_str());
+
+    let serialized = serde_json::to_string_pretty(&package).unwrap();
+    fs::write("./webconsole/package.json", serialized).unwrap();
 
     let output = Command::new("npm")
         .current_dir("webconsole")

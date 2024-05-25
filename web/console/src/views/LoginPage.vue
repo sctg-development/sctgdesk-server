@@ -10,7 +10,7 @@ This website use:
     <div class="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-sm">
             <img class="mx-auto h-10 w-auto" :src="$require('@/assets/sctg.svg')" alt="Your Company" />
-            <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">SCTGDesk server</h2>
+            <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">SCTGDesk server v{{ version }}</h2>
         </div>
 
         <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
@@ -58,6 +58,9 @@ import { useUserStore } from '@/stores/sctgDeskStore';
 import { useRouter } from 'vue-router';
 import { onMounted, ref } from 'vue';
 import { LoginApi, Configuration } from '@/api';
+import packageJson from '../../package.json';
+const version = packageJson.version;
+
 const userStore = useUserStore();
 const router = useRouter();
 
