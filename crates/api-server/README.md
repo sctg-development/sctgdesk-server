@@ -2,6 +2,8 @@
 * Standalone nightly build: [![Build and Deploy](https://github.com/sctg-development/sctgdesk-api-server/actions/workflows/build.yaml/badge.svg)](https://github.com/sctg-development/sctgdesk-api-server/actions/workflows/build.yaml)
 
 [**Download full server**](https://github.com/sctg-development/sctgdesk-server/releases)  
+[**API Documentation**](https://sctg-development.github.io/sctgdesk-api-server/)  
+
 
 # sctgdesk-api-server
 
