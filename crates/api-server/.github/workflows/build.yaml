@@ -151,11 +151,11 @@ jobs:
         </html>
         EOF
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.target }}
-        path: target/${{ matrix.target }}/release/
+    # - name: Upload artifact
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: ${{ matrix.target }}
+    #     path: target/${{ matrix.target }}/release/
 
     - name: Publish CI binary (${{ matrix.target }})
       continue-on-error: true
@@ -178,9 +178,15 @@ jobs:
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
-        git add docs/*
+        git add -v -f docs/openapi3.json docs/index.html docs/openapisnippet.min.js
         git commit -m "Update GitHub Pages" docs/*
         git push origin HEAD
+
+    - name: Upload pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        # Upload docs directory 
+        path: 'docs'
 
   deploy:
     environment:
@@ -189,15 +195,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Upload docs directory 
-          path: 'docs'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
