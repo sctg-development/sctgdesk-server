@@ -59,7 +59,7 @@ fn main() {
     // Construit le chemin du fichier dans le répertoire temporaire
     let tmp_dir = env::var("TMP").or_else(|_| env::var("TEMP")).or_else(|_| env::var("TMPDIR")).unwrap_or_else(|_| "/tmp".to_string());
     let mut path = PathBuf::from(tmp_dir);
-    path.push("version.txt");
+    path.push("version-8659B48F-5726-433D-BEC2-C7042FE9D93B.txt");
     // Lit la version à partir du fichier
     let version = fs::read_to_string(&path).unwrap_or_else(|_| env::var("CARGO_PKG_VERSION").unwrap());
 
