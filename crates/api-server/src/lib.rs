@@ -92,7 +92,7 @@ impl Fairing for CORS {
     }
 }
 
-/// Answers to OPTIONS requests
+/// # Answers to OPTIONS requests
 #[openapi(tag = "Cors")]
 #[options("/<_path..>")]
 async fn options(_path: PathBuf) -> Result<(), std::io::Error> {
@@ -193,7 +193,23 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
     rocket
 }
 
-/// Login
+/// # User Login
+///
+/// This function is an API endpoint that allows a user to log in without oauth.
+/// It is tagged with "login" for OpenAPI documentation. <br>
+///
+/// ## Parameters
+/// 
+/// - `request`: The request data, which includes the user's username and password.  <br>
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<LoginReply>` object, which includes the user's information and access token.  <br>
+/// If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the user is not authorized or if the system is in maintenance mode.
 #[openapi(tag = "login")]
 #[post("/api/login", format = "application/json", data = "<request>")]
 async fn login(
@@ -221,7 +237,26 @@ async fn login(
     Ok(Json(reply))
 }
 
-/// Get the user's legacy address book
+/// # Get the User's Legacy Address Book
+///
+/// This function is an API endpoint that allows an authenticated user to retrieve their legacy address book. <br>
+/// The Legacy Address Book is the address book that was used in the previous version of SCTGDesk. <br>
+/// Rustdesk client uses the legacy address book if it cannot find the new one <br>
+/// It is tagged with "address book legacy" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - none
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<AbGetResponse>` object, which includes the legacy address book information.  <br>
+/// If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the user is not authorized.
+///
 #[openapi(tag = "address book legacy")]
 #[get("/api/ab", format = "application/json")]
 async fn ab_get(
@@ -231,7 +266,27 @@ async fn ab_get(
     ab_get_handler(state, user).await
 }
 
-/// Get the user's address book
+/// # Get the User's Address Book
+///
+/// This function is an API endpoint that allows an authenticated user to retrieve their address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - none
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<AbGetResponse>` object, which includes the address book information.  <br>
+/// If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the user is not authorized.
+///
+/// # Example
+/// 
+/// POST /api/ab/get
 #[openapi(tag = "address book")]
 #[post("/api/ab/get", format = "application/json")]
 async fn ab_post(
@@ -311,7 +366,23 @@ async fn ab(
     Ok(())
 }
 
-/// Get the current user
+/// # Get the Current User
+///
+/// This function is an API endpoint that allows an authenticated user to retrieve their current user information.
+/// It is tagged with "user" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `request`: The request data, which includes the current user information.  <br>
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<CurrentUserResponse>` object, which includes the current user information.  <br>
+/// If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the user is not authorized.
 #[openapi(tag = "user")]
 #[post("/api/currentUser", format = "application/json", data = "<request>")]
 async fn current_user(
@@ -346,7 +417,24 @@ async fn audit(state: &State<ApiState>, request: Json<AuditRequest>) {
     state.check_maintenance().await;
 }
 
-/// Log the user out
+/// # Log the User Out
+///
+/// This function is an API endpoint that allows an authenticated user to log out.
+/// It is tagged with "login" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `request`: The request data, which includes the current user information.  <br>
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<LogoutReply>` object, which includes a success message.  <br>
+/// If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the user is not authorized.
+///
 #[openapi(tag = "login")]
 #[post("/api/logout", format = "application/json", data = "<request>")]
 async fn logout(
@@ -370,10 +458,23 @@ async fn logout(
     Ok(Json(reply))
 }
 
-/// Heartbeat
+/// # Heartbeat
 ///
-/// Frequently the client hits the /api/heartbeat endpoint.
-/// It updates the last_online field of the peer.
+/// This function is an API endpoint that is frequently hit by the client at the /api/heartbeat endpoint.
+/// It updates the `last_online` field of the peer.
+/// It is tagged with "peer" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `request`: The request data, which includes the heartbeat information.  
+///
+/// ## Returns
+/// 
+/// This function always returns a `String` with the message "OK".  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode.
 #[openapi(tag = "peer")]
 #[post("/api/heartbeat", format = "application/json", data = "<request>")]
 async fn heartbeat(state: &State<ApiState>, request: Json<HeartbeatRequest>) -> String {
@@ -382,10 +483,26 @@ async fn heartbeat(state: &State<ApiState>, request: Json<HeartbeatRequest>) -> 
     let res = state.update_heartbeat(heartbeat).await;
     log::debug!("res: {:?}", res);
     "OK".to_string()
-    //{"error":"License is not set"}
 }
 
-/// Set the system info
+/// # Set the System Info
+///
+/// This function is an API endpoint that allows a connected client to update its system information.
+/// It is tagged with "peer" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `request`: The request data, which includes the system information.  
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `String` with the message "SYSINFO_UPDATED".  <br>
+/// If the system info is not found, this function returns a `String` with the message "ID_NOT_FOUND".  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the system info is not found.
+///
 #[openapi(tag = "peer")]
 #[post("/api/sysinfo", format = "application/json", data = "<request>")]
 async fn sysinfo(state: &State<ApiState>, request: Json<utils::SystemInfo>) -> String {
@@ -399,7 +516,33 @@ async fn sysinfo(state: &State<ApiState>, request: Json<utils::SystemInfo>) -> S
     }
 }
 
-/// Get the list of users
+/// # Get the List of Users
+///
+/// This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of users.
+/// It is tagged with "user" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `current`: The current page number.  
+/// 
+/// - `pageSize`: The number of users per page.  
+/// 
+/// - `email`: The email to filter the users by.  
+/// 
+/// - `name`: The name to filter the users by.  
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<UserList>` object, which includes a success message, the total number of users, and the list of users.  <br>
+/// If no users are found, this function returns a `status::NotFound` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if no users are found.
+///
+/// # Example
+/// 
+/// GET /api/user-list?current=1&pageSize=10&email=test@test.com&name=Test
 #[openapi(tag = "user")]
 #[get(
     "/api/user-list?<current>&<pageSize>&<email>&<name>",
@@ -434,7 +577,29 @@ async fn users(
     Ok(Json(response))
 }
 
-/// Get the list of groups
+/// # Get the List of Groups
+///
+/// This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of groups.
+/// It is tagged with "group" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `current`: The current page number.  
+/// 
+/// - `pageSize`: The number of groups per page.  
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<GroupsResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br>
+/// If no groups are found, this function returns a `status::NotFound` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if no groups are found.
+///
+/// # Example
+/// 
+/// GET /api/groups?current=1&pageSize=10
 #[openapi(tag = "group")]
 #[get("/api/groups?<current>&<pageSize>", format = "application/json")]
 async fn groups(
@@ -465,7 +630,28 @@ async fn groups(
     Ok(Json(response))
 }
 
-/// Add a group
+/// # Add a Group (todo)
+///
+/// This function is an API endpoint that allows an authenticated admin to add a new group.
+/// It is tagged with "group" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `request`: The request data, which includes the details of the group to be added.  <br>
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br>
+/// If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the admin is not authorized.
+///
+/// # Example
+/// 
+/// POST /api/group
+/// {"name":"new group","password":"string","confirm-password":"string","email":"string","is_admin":false,"group_name":"string"}
 #[openapi(tag = "group")]
 #[post("/api/group", format = "application/json", data = "<_request>")]
 async fn group_add(
@@ -485,7 +671,27 @@ async fn group_add(
     Ok(Json(response))
 }
 
-/// Get the list of peers
+/// # Get Peers
+///
+/// This function is an API endpoint that retrieves the list of all peers in the network.
+/// It is tagged with "peer" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - none
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<PeersResponse>` object, which includes a success message, the total number of peers, and the list of peers.  <br>
+/// If no peers are found, this function returns a `status::NotFound` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if no peers are found.
+///
+/// # Example
+/// 
+/// GET /api/peers
 #[openapi(tag = "peer")]
 #[get("/api/peers", format = "application/json")]
 async fn peers(
@@ -506,17 +712,36 @@ async fn peers(
     }))
 }
 
-/// Login options
+/// # Login Options
 ///
 /// This is called by the client for knowing the Oauth2 provider(s) available
 /// You must provide a list of Oauth2 providers in the `oauth2.toml` config file
 /// The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable
 ///
-/// # Limitations
+/// This function is an API endpoint that is called by the client to get the list of available OAuth2 providers.
+/// The list of providers is defined in the `oauth2.toml` config file, which can be overridden by the `OAUTH2_CONFIG_FILE` environment variable.
+/// It is tagged with "login" for OpenAPI documentation.
 ///
-/// Currently it uses the client id as the user id the limitation is that the client cannot retrieve its address book
-/// if the client uses a different client.  
-/// For having a `real` user name. We need to add a step after the Oauth2 authorization code is exchanged for an access token.
+/// ## Limitations
+/// 
+/// It needs to be completed for mapping the username and email from the OAuth2 provider to the SCTGDesk user.
+///
+/// ## Parameters
+/// 
+/// - none
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<Vec<String>>` object, which includes the list of available OAuth2 providers.  <br>
+/// If the config file is not found or cannot be read, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the config file is not found or cannot be read.
+///
+/// # Example
+/// 
+/// GET /api/login-options
 #[openapi(tag = "login")]
 #[get("/api/login-options", format = "application/json")]
 async fn login_options(
@@ -540,6 +765,31 @@ async fn login_options(
 /// This entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses
 ///
 /// For testing you can generate a valid uuid field with the following command: `uuidgen | base64`
+/// # OIDC Auth Request
+///
+/// This function is an API endpoint that is called by the client to get the authorization URL for the chosen OAuth2 provider.
+/// It is tagged with "login" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `request`: The request data, which includes the chosen OAuth2 provider and a UUID.  <br> For testing you can generate a valid uuid field with the following command: `uuidgen | base64`
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<OidcAuthUrl>` object, which includes the authorization URL and a session code.  <br>
+/// If the UUID is invalid or the OAuth2 provider is not found, this function returns an `OidcAuthUrl` object with an empty URL and an error code.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the UUID is invalid or the OAuth2 provider is not found.
+///
+/// # Example
+/// 
+/// POST /api/oidc/auth
+/// {
+///     "op": "github",
+///     "uuid": "generated_uuid_base64_encoded"
+/// }
 #[openapi(tag = "login")]
 #[post("/api/oidc/auth", format = "application/json", data = "<request>")]
 async fn oidc_auth(
@@ -623,14 +873,38 @@ async fn oidc_auth(
     })
 }
 
-/// OIDC Auth callback
+/// # OIDC Auth Callback
 ///
-/// This entrypoint is the OAuth2 callback.
-/// It exchanges the code for an access token and stores it in the state
+/// This function is an API endpoint that serves as the OAuth2 callback.
+/// It exchanges the authorization code for an access token and stores it in the state.
+/// It is tagged with "login" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `code`: The authorization code received from the OIDC provider.  
+/// 
+/// - `state`: The state parameter received from the OIDC provider. This is the session code.  
+///
+/// ## Returns
+/// 
+/// If successful, this function returns "OK".  <br>
+/// If the session does not exist or the code exchange fails, this function returns "ERROR".  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the session does not exist or the code exchange fails.
+///
+/// # Example
+/// 
+/// GET /api/oidc/callback?code=authorization_code&state=session_code
 #[openapi(tag = "login")]
 #[get("/api/oidc/callback?<code>&<state>")]
-async fn oidc_callback(apistate: &State<ApiState>, code: &str, state: &str) -> String {
-    let oidc_code = state; // thius the session code
+async fn oidc_callback(
+    apistate: &State<ApiState>,
+    code: &str,
+    state: &str,
+) -> String {
+    let oidc_code = state; // this is the session code
     let oidc_authorization_code = code;
     let updated_oidc_session = apistate
         .oidc_session_exchange_code(oidc_authorization_code.to_string(), oidc_code.to_string())
@@ -641,11 +915,31 @@ async fn oidc_callback(apistate: &State<ApiState>, code: &str, state: &str) -> S
     "OK".to_string()
 }
 
-/// OIDC State request
+/// # OIDC State
 ///
-/// This entrypoint is called by the client for getting the status of the OIDC session
-/// it returns an empty json object if the session is not found
-/// it returns an access token if the session is found
+/// This function is an API endpoint that checks the state of an OpenID Connect (OIDC) session.
+/// It is tagged with "login" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `code`: The authorization code received from the OIDC provider.  
+/// 
+/// - `id`: The identifier of the OIDC session.  
+/// 
+/// - `uuid`: The UUID of the OIDC session.  
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<Option<OidcResponse>>` object.  <br>
+/// If the session does not exist, this function returns `Json(None)`.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the session does not exist.
+///
+/// # Example
+/// 
+/// GET /api/oidc/auth-query?code=authorization_code&id=session_id&uuid=session_uuid
 #[openapi(tag = "login")]
 #[get("/api/oidc/auth-query?<code>&<id>&<uuid>")]
 async fn oidc_state(
@@ -687,7 +981,27 @@ async fn oidc_state(
     Json(Some(auth_response))
 }
 
-/// Address book
+/// # Get Personal Address Book
+///
+/// This function is an API endpoint that retrieves the personal address book of the authenticated user.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - none
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<AbPersonal>` object.  <br>
+/// If the user is not authorized to access their personal address book, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the user is not authorized to access their personal address book.
+///
+/// # Example
+/// 
+/// POST /api/ab/personal
 #[openapi(tag = "address book")]
 #[post("/api/ab/personal")]
 async fn ab_personal(
@@ -708,7 +1022,27 @@ async fn ab_personal(
     Ok(Json(ab_personal))
 }
 
-/// Get the tags
+/// # Get the Tags
+///
+/// This function is an API endpoint that retrieves all tags from an address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `ab`: The identifier of the address book.  
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a JSON array of `AbTag` objects.  <br>
+/// If the address book does not exist or the user is not authorized to access it, this function returns a `status::NotFound` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
+///
+/// # Example
+/// 
+/// POST /api/ab/tags/018fab24-0ae5-731c-be23-88aa4518ea26
 #[openapi(tag = "address book")]
 #[post("/api/ab/tags/<ab>")]
 async fn ab_tags(
@@ -725,7 +1059,32 @@ async fn ab_tags(
     Ok(Json(ab_tags))
 }
 
-/// Add a tag
+/// # Add a Tag
+///
+/// This function is an API endpoint that adds a new tag to an address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `ab`: The identifier of the address book.  
+/// 
+/// - `request`: A JSON object containing the new tag to be added.  
+///
+/// ## Returns
+/// 
+/// If successful, this function returns an `ActionResponse::Empty` object.  <br>
+/// If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.
+///
+/// # Example
+/// 
+/// POST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26
+/// Content-Type: application/json
+/// 
+/// {"name": "tag1", "color": "#FF0000"}
 #[openapi(tag = "address book")]
 #[post(
     "/api/ab/tag/add/<ab>",
@@ -745,7 +1104,32 @@ async fn ab_tag_add(
     Ok(ActionResponse::Empty)
 }
 
-/// Update a tag
+/// # Update a Tag
+///
+/// This function is an API endpoint that updates a tag in an address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `ab`: The identifier of the address book.  
+/// 
+/// - `request`: A JSON object containing the updated tag.  
+///
+/// ## Returns
+/// 
+/// If successful, this function returns an `ActionResponse::Empty` object.  <br>
+/// If the tag does not exist or the user is not authorized to update it, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to update it.
+///
+/// # Example
+/// 
+/// PUT /api/ab/tag/update/018fab24-0ae5-731c-be23-88aa4518ea26
+/// Content-Type: application/json
+/// 
+/// {"name": "tag1", "color": "#FF0000"}
 #[openapi(tag = "address book")]
 #[put(
     "/api/ab/tag/update/<ab>",
@@ -765,7 +1149,32 @@ async fn ab_tag_update(
     Ok(ActionResponse::Empty)
 }
 
-/// Rename a tag
+/// # Rename a Tag
+///
+/// This function is an API endpoint that renames a tag in an address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `ab`: The identifier of the address book.
+/// 
+/// - `request`: A JSON object containing the old and new names of the tag.
+///
+/// ## Returns
+/// 
+/// If successful, this function returns an `ActionResponse::Empty` object.  <br>
+/// If the tag does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to access it.
+///
+/// # Example
+/// 
+/// PUT /api/ab/tag/rename/018fab24-0ae5-731c-be23-88aa4518ea26
+/// Content-Type: application/json
+/// 
+/// {"old": "tag1", "new": "tag2"}
 #[openapi(tag = "address book")]
 #[put(
     "/api/ab/tag/rename/<ab>",
@@ -794,7 +1203,32 @@ async fn ab_tag_rename(
     Ok(ActionResponse::Empty)
 }
 
-/// Delete a tag
+/// # Delete a Tag
+///
+/// This function is an API endpoint that deletes a tag from an address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `ab`: The identifier of the address book.  
+/// 
+/// - `request`: A JSON object containing an array of tag names to be deleted.  
+///
+/// ## Returns
+/// 
+/// If successful, this function returns an `ActionResponse::Empty` object.  <br>
+/// If the request is empty or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the request is empty or the user is not authorized to access it.
+///
+/// # Example
+/// 
+/// DELETE /api/ab/tag/018fab24-0ae5-731c-be23-88aa4518ea26
+/// Content-Type: application/json
+/// 
+/// ["tag1", "tag2"]
 #[openapi(tag = "address book")]
 #[delete("/api/ab/tag/<ab>", format = "application/json", data = "<request>")]
 async fn ab_tag_delete(
@@ -812,11 +1246,27 @@ async fn ab_tag_delete(
     Ok(ActionResponse::Empty)
 }
 
-/// Get shared profiles
+/// # Get Shared Profiles
+///
+/// This function is an API endpoint that retrieves the shared profiles from an address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
 /// 
+/// - none
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br>
+/// rule: 1: read, 2: write, 3: full control  <br>
+/// If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
+///
 /// # Example
 /// 
-/// rule: 1: read, 2: write, 3: full control  
 /// {"data":[{"guid":"018fab24-0ae5-731c-be23-88aa4518ea26","name":"shared profile","owner":"admin","rule":3}],"total":2}
 #[openapi(tag = "address book")]
 #[post("/api/ab/shared/profiles")]
@@ -869,7 +1319,27 @@ async fn ab_settings(
     Ok(Json(ab_settings))
 }
 
-/// List peers
+/// # List peers
+///
+/// This function is an API endpoint that lists the peers in an address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `current`: The current page number for pagination. This parameter is currently unused.
+/// 
+/// - `pageSize`: The number of items per page for pagination. This parameter is currently unused.
+/// 
+/// - `ab`: The identifier of the address book.
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<AbPeersResponse>` object containing the peers in the address book.  <br>
+/// If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
 ///
 #[openapi(tag = "address book")]
 #[post("/api/ab/peers?<current>&<pageSize>&<ab>")]
@@ -1152,17 +1622,17 @@ async fn users_client(
 /// * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable
 ///
 /// <pre>
-/// [s3config]
-/// Endpoint = "https://compat.objectstorage.eu-london-1.oraclecloud.com"
-/// Region = "eu-london-1"
-/// AccessKey = "c324ead11faa0d87337c07ddc4a1129fab76188d"
-/// SecretKey = "GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA="
-/// Bucket = "aezoz24elapn"
-/// Windows64Key = "master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe"
-/// Windows32Key = "master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe"
-/// OSXKey = "master/sctgdesk-releases/sctgdesk-1.2.4.dmg"
-/// OSXArm64Key = "master/sctgdesk-releases/sctgdesk-1.2.4.dmg"
-/// IOSKey = "master/sctgdesk-releases/sctgdesk-1.2.4.ipa"
+/// [s3config]<br>
+/// Endpoint = "https://compat.objectstorage.eu-london-1.oraclecloud.com"<br>
+/// Region = "eu-london-1"<br>
+/// AccessKey = "c324ead11faa0d87337c07ddc4a1129fab76188d"<br>
+/// SecretKey = "GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA="<br>
+/// Bucket = "aezoz24elapn"<br>
+/// Windows64Key = "master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe"<br>
+/// Windows32Key = "master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe"<br>
+/// OSXKey = "master/sctgdesk-releases/sctgdesk-1.2.4.dmg"<br>
+/// OSXArm64Key = "master/sctgdesk-releases/sctgdesk-1.2.4.dmg"<br>
+/// IOSKey = "master/sctgdesk-releases/sctgdesk-1.2.4.ipa"<br>
 /// </pre>
 #[openapi(tag = "software")]
 #[get(
