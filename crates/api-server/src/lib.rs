@@ -1634,6 +1634,7 @@ async fn users_client(
 /// OSXArm64Key = "master/sctgdesk-releases/sctgdesk-1.2.4.dmg"<br>
 /// IOSKey = "master/sctgdesk-releases/sctgdesk-1.2.4.ipa"<br>
 /// </pre>
+/// 
 #[openapi(tag = "software")]
 #[get(
     "/api/software/client-download-link/<key>",
