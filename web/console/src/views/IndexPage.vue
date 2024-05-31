@@ -123,7 +123,7 @@ This website use:
         <GroupsCard />
       </div>
       <div v-if="isCurrentPage('Address books')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-        <AddressBook />
+        <AccessibleAddressBooks />
       </div>
     </main>
     <MainFooter />
@@ -143,7 +143,7 @@ import UsersCard from '@/components/UsersCard.vue';
 import MainFooter from '@/footers/mainfooter.vue';
 import { ref } from 'vue';
 import GroupsCard from '@/components/GroupsCard.vue';
-import AddressBook from '@/components/AddressBook.vue';
+import AccessibleAddressBooks from '@/components/AccessibleAddressBooks.vue';
 const userStore = useUserStore();
 const router = useRouter();
 

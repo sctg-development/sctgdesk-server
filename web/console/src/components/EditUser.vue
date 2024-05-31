@@ -118,15 +118,15 @@ const grp = ref("");
 const groups = ref([] as Group[]);
 const groupApi = new GroupApi(userStore.api_configuration);
 
-    /**
-     * Props
-     * @prop {string} username: username to edit
-     * @prop {string} uuid: uuid of the user to edit
-     *
-     * Emits
-     * @event update_user_close: asks parent to close the modal
-     * @event user_updated: emits when user is updated
-     */
+/**
+ * Props
+ * @prop {string} username: username to edit
+ * @prop {string} uuid: uuid of the user to edit
+ *
+ * Emits
+ * @event update_user_close: asks parent to close the modal
+ * @event user_updated: emits when user is updated
+ */
 const emit = defineEmits(['update_user_close', 'user_updated'])
 const props = withDefaults(defineProps<{
     username: string;

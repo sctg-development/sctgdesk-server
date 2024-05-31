@@ -1725,6 +1725,7 @@ async fn ab_rules(
     ab: &str,
 ) -> Result<Json<AbRulesResponse>, status::Unauthorized<()>> {
     state.check_maintenance().await;
+    let current = if (current < 1) { 0 } else { current - 1};
     let rules = state.get_ab_rules(current,pageSize,ab).await;
     if rules.is_none() {
         return Err(status::Unauthorized::<()>(()));
