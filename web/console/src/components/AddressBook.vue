@@ -123,7 +123,7 @@ This website use:
     <!-- ====== Table Section End -->
     <ViewRules v-if="isViewRulesVisible" :ab="props.ab" @viewRulesOK="isViewRulesVisible = false"
         @viewRulesCancel="isViewRulesVisible = false" />
-    <AddRule v-if="isAddRulesVisible" :ab="props.ab" @addRuleOK="isAddRulesVisible = false"></AddRule>
+    <AddRule v-if="isAddRulesVisible" :ab="props.ab" @addRuleOK="isAddRulesVisible = false" @add-rule-cancel="isAddRulesVisible = false"></AddRule>
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'

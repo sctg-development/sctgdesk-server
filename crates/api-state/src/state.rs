@@ -668,4 +668,12 @@ impl ApiState {
     pub async fn get_ab_rules(&self, offset:u32, page_size: u32, ab: &str) -> Option<Vec<AbRule>> {
         self.db.get_ab_rules(offset,page_size, ab).await
     }
+
+    pub async fn delete_ab_rule(&self, rule: &str) -> Option<()> {
+        self.db.delete_ab_rule(rule).await
+    }
+
+    pub async fn add_ab_rule(&self, rule: AbRule) -> Option<()> {
+        self.db.add_ab_rule(rule).await
+    }
 }

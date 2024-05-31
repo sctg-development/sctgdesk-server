@@ -50,8 +50,8 @@ import {
 
 const emit = defineEmits(['modalOk', 'modalCancel'])
 const props = withDefaults(defineProps<{
-    okLabel: string;
-    cancelLabel: string;
+    okLabel?: string;
+    cancelLabel?: string;
     title: string;
 }>(),
     {

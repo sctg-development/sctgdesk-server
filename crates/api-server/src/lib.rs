@@ -39,6 +39,9 @@ use state::{self};
 use ui;
 use utils::guid_into_uuid;
 use utils::AbProfile;
+use utils::AbRule;
+use utils::AbRuleAddRequest;
+use utils::AbRuleDeleteRequest;
 use utils::AbRulesResponse;
 use utils::AbSharedAddRequest;
 use utils::{
@@ -146,6 +149,8 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 ab_shared_add,
                 ab_settings,
                 ab_rules,
+                ab_rule_add,
+                ab_rule_delete,
                 software,
                 software_version,
                 webconsole_index,
@@ -1737,6 +1742,71 @@ async fn ab_rules(
         data: rules,
     };
     Ok(Json(response))
+}
+
+/// # Add a Rule
+///
+/// This function is an API endpoint that adds a new rule to a shared address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `request`: The request containing the details of the rule to be added.
+///
+/// ## Returns
+/// 
+/// If successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully added. <br>
+/// If the system is in maintenance mode, this function returns a `status::Unauthorized` error.
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode.
+#[openapi(tag = "address book")]
+#[post("/api/ab/rule", format = "application/json", data = "<request>")]
+async fn ab_rule_add(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<AbRuleAddRequest>,
+) -> Result<ActionResponse, status::Unauthorized<()>> {
+    state.check_maintenance().await;
+    let rule = AbRule {
+        guid: request.0.guid,
+        user: request.0.user,
+        group: request.0.group,
+        rule: request.0.rule,
+    };
+    state.add_ab_rule(rule).await;
+    Ok(ActionResponse::Empty)
+}
+
+/// # Delete a Rule
+///
+/// This function is an API endpoint that deletes a rule from a shared address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
+///
+/// - `request`: The request containing the GUID of the rule to be deleted.
+///
+/// ## Returns
+/// 
+/// If successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully deleted. <br>
+/// If the system is in maintenance mode, this function returns a `status::Unauthorized` error.
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode.
+#[openapi(tag = "address book")]
+#[delete("/api/ab/rule", format = "application/json", data = "<request>")]
+async fn ab_rule_delete(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<AbRuleDeleteRequest>,
+) -> Result<ActionResponse, status::Unauthorized<()>> {
+    state.check_maintenance().await;
+    let rule = request.0.guid;
+    state.delete_ab_rule(rule.as_str()).await;
+    Ok(ActionResponse::Empty)
 }
 
 async fn webconsole_index_multi() -> Redirect {

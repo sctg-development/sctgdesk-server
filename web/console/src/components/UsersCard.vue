@@ -130,6 +130,7 @@ import { useUserStore } from '@/stores/sctgDeskStore';
 import { onMounted, ref } from 'vue';
 import AddUser from '@/components/AddUser.vue';
 import EditUser from '@/components/EditUser.vue';
+import { getUsers } from '@/utilities/api';
 
 const userStore = useUserStore();
 const users = ref([] as UserListResponse[]);
@@ -165,28 +166,6 @@ function toggle_edit_user(username?: string, uuid?: string): void {
     console.log(`Edit user: ${editUserName.value} (${editUserUuid.value})`)
     bModalEditUser.value = !bModalEditUser.value;
     refresh_users();
-}
-/**
- * Retrieves the list of users from the API.
- *
- * @return {Promise<UserListResponse[]>} A promise that resolves to the list of users.
- */
-function getUsers(): Promise<UserListResponse[]> {
-    const userApi = new UserApi(userStore.api_configuration);
-    return new Promise<UserListResponse[]>((resolve, reject) => {
-        //userApi.usersClient();
-        userApi.usersClient(1, 4294967295).then((response) => {
-            if (response.status == 200 && response.data.msg == "success") {
-                resolve(response.data.data);
-            }
-            else {
-                resolve([] as UserListResponse[]);
-            }
-        }).catch((error) => {
-            console.error(error);
-            resolve([] as UserListResponse[]);
-        });
-    });
 }
 
 function toggle_user(username: string, uuid: string, activate:boolean): void {

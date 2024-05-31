@@ -1394,4 +1394,78 @@ impl Database {
         }
         Some(ab_rules)
     }
+
+    pub async fn delete_ab_rule(&self, rule: &str) -> Option<()> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let rule_guid = Uuid::parse_str(rule);
+        if rule_guid.is_err() {
+            log::error!("delete_ab_rule error: {:?}", rule_guid);
+            return None;
+        }
+        let rule_guid = rule_guid.unwrap().as_bytes().to_vec();
+        let res = sqlx::query!(
+            r#"
+            DELETE FROM ab_rule WHERE guid = ?
+        "#,
+            rule_guid
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("delete_ab_rule error: {:?}", res);
+            return None;
+        }
+        Some(())
+    }
+
+    pub async fn add_ab_rule(&self, rule: AbRule) -> Option<()> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let rule_guid = Uuid::new_v4().as_bytes().to_vec();
+        let ab_guid = Uuid::parse_str(&rule.guid);
+        if ab_guid.is_err() {
+            log::error!("add_ab_rule error: {:?}", ab_guid);
+            return None;
+        }
+        let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
+        let user_guid = if (rule.user.is_some()) {
+            let uuid = Uuid::parse_str(&rule.user.unwrap());
+            if (uuid.is_err()){
+                None
+            }else{
+                Some(uuid.unwrap().as_bytes().to_vec())
+            }
+        } else {
+            None
+        };
+
+        let group_guid = if (rule.group.is_some()) {
+            let uuid = Uuid::parse_str(&rule.group.unwrap());
+            if (uuid.is_err()){
+                None
+            }else{
+                Some(uuid.unwrap().as_bytes().to_vec())
+            }
+        } else {
+            None
+        };
+
+        let res = sqlx::query!(
+            r#"
+            INSERT OR IGNORE INTO ab_rule (guid, ab, user, grp, rule)
+                VALUES (?, ?, ?, ?, ?)
+        "#,
+            rule_guid,
+            ab_guid,
+            user_guid,
+            group_guid,
+            rule.rule
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("add_ab_rule error: {:?}", res);
+            return None;
+        }
+        Some(())
+    }
 }

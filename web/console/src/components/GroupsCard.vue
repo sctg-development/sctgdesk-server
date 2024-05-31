@@ -97,13 +97,15 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { onMounted, ref } from 'vue';
 import { GroupApi, Group } from '@/api';
+import { getGroups } from '@/utilities/api';
 
 const userStore = useUserStore();
 const groups = ref([] as Group[]);
 const groupApi = new GroupApi(userStore.api_configuration);
+
 onMounted(() => {
-    groupApi.groups(1,4294967295).then((response) => {
-        groups.value = response.data.data;
+    getGroups().then((_groups) => {
+        groups.value = _groups;
     });
 });
 

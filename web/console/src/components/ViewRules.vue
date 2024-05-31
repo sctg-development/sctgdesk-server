@@ -5,7 +5,6 @@
             <div class="flex flex-wrap -mx-4">
                 <div class="w-full px-4">
                     <div class="max-w-full overflow-x-auto">
-                        <p>{{ name }}</p>
                         <table class="w-full table-auto">
                             <thead class="bg-slate-400">
                                 <tr class="text-center bg-primary">

@@ -734,3 +734,16 @@ pub struct AbRulesResponse {
     pub total: u32,
     pub data: Vec<AbRule>,
 }
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct AbRuleAddRequest {
+    pub guid: String, // address book guid
+    pub user: Option<String>, // user=None and group=None means all users
+    pub group: Option<String>,
+    pub rule: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct AbRuleDeleteRequest {
+    pub guid: String, // rule guid
+}

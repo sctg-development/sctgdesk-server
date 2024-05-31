@@ -21,6 +21,8 @@ import { AbGetResponse } from '../models';
 import { AbPeer } from '../models';
 import { AbPeersResponse } from '../models';
 import { AbPersonal } from '../models';
+import { AbRuleAddRequest } from '../models';
+import { AbRuleDeleteRequest } from '../models';
 import { AbRulesResponse } from '../models';
 import { AbSettingsResponse } from '../models';
 import { AbSharedAddRequest } from '../models';
@@ -354,6 +356,110 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             localVarUrlObj.search = (new URLSearchParams(query)).toString();
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that adds a new rule to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: The request containing the details of the rule to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully added. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.  ## Errors  This function will return an error if the system is in maintenance mode.
+         * @summary Add a Rule
+         * @param {AbRuleAddRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        abRuleAdd: async (body: AbRuleAddRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling abRuleAdd.');
+            }
+            const localVarPath = `/api/ab/rule`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization_admin required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that deletes a rule from a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: The request containing the GUID of the rule to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully deleted. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.  ## Errors  This function will return an error if the system is in maintenance mode.
+         * @summary Delete a Rule
+         * @param {AbRuleDeleteRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        abRuleDelete: async (body: AbRuleDeleteRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling abRuleDelete.');
+            }
+            const localVarPath = `/api/ab/rule`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization_admin required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
 
             return {
                 url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
@@ -941,6 +1047,34 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
+         * This function is an API endpoint that adds a new rule to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: The request containing the details of the rule to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully added. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.  ## Errors  This function will return an error if the system is in maintenance mode.
+         * @summary Add a Rule
+         * @param {AbRuleAddRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abRuleAdd(body: AbRuleAddRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<void>>> {
+            const localVarAxiosArgs = await AddressBookApiAxiosParamCreator(configuration).abRuleAdd(body, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * This function is an API endpoint that deletes a rule from a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: The request containing the GUID of the rule to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully deleted. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.  ## Errors  This function will return an error if the system is in maintenance mode.
+         * @summary Delete a Rule
+         * @param {AbRuleDeleteRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abRuleDelete(body: AbRuleDeleteRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<void>>> {
+            const localVarAxiosArgs = await AddressBookApiAxiosParamCreator(configuration).abRuleDelete(body, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
          * This function is an API endpoint that lists the rules attached to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `ab`: The identifier of the shared address book.  ## Returns  If successful, this function returns a `Json<AbRulesResponse>` object containing the rules for the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
          * @summary List the rules
          * @param {number} current 
@@ -1138,6 +1272,26 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abPost(options).then((request) => request(axios, basePath));
         },
         /**
+         * This function is an API endpoint that adds a new rule to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: The request containing the details of the rule to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully added. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.  ## Errors  This function will return an error if the system is in maintenance mode.
+         * @summary Add a Rule
+         * @param {AbRuleAddRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abRuleAdd(body: AbRuleAddRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<void>> {
+            return AddressBookApiFp(configuration).abRuleAdd(body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * This function is an API endpoint that deletes a rule from a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: The request containing the GUID of the rule to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully deleted. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.  ## Errors  This function will return an error if the system is in maintenance mode.
+         * @summary Delete a Rule
+         * @param {AbRuleDeleteRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abRuleDelete(body: AbRuleDeleteRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<void>> {
+            return AddressBookApiFp(configuration).abRuleDelete(body, options).then((request) => request(axios, basePath));
+        },
+        /**
          * This function is an API endpoint that lists the rules attached to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `ab`: The identifier of the shared address book.  ## Returns  If successful, this function returns a `Json<AbRulesResponse>` object containing the rules for the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
          * @summary List the rules
          * @param {number} current 
@@ -1304,6 +1458,28 @@ export class AddressBookApi extends BaseAPI {
      */
     public async abPost(options?: AxiosRequestConfig) : Promise<AxiosResponse<AbGetResponse>> {
         return AddressBookApiFp(this.configuration).abPost(options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that adds a new rule to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: The request containing the details of the rule to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully added. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.  ## Errors  This function will return an error if the system is in maintenance mode.
+     * @summary Add a Rule
+     * @param {AbRuleAddRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AddressBookApi
+     */
+    public async abRuleAdd(body: AbRuleAddRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<void>> {
+        return AddressBookApiFp(this.configuration).abRuleAdd(body, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that deletes a rule from a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: The request containing the GUID of the rule to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully deleted. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.  ## Errors  This function will return an error if the system is in maintenance mode.
+     * @summary Delete a Rule
+     * @param {AbRuleDeleteRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AddressBookApi
+     */
+    public async abRuleDelete(body: AbRuleDeleteRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<void>> {
+        return AddressBookApiFp(this.configuration).abRuleDelete(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * This function is an API endpoint that lists the rules attached to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `ab`: The identifier of the shared address book.  ## Returns  If successful, this function returns a `Json<AbRulesResponse>` object containing the rules for the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.

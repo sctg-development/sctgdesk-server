@@ -5,6 +5,8 @@ export * from './ab-personal';
 export * from './ab-profile';
 export * from './ab-request';
 export * from './ab-rule';
+export * from './ab-rule-add-request';
+export * from './ab-rule-delete-request';
 export * from './ab-rules-response';
 export * from './ab-settings-response';
 export * from './ab-shared-add-request';
