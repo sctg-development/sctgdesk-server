@@ -162,7 +162,7 @@ const navigation = ref([
 ])
 const userNavigation = [
   { name: `${userStore.user?.name} ${userStore.user?.email}`, href: '#', action: nop },
-  { name: 'Settings', href: '#', action: nop },
+  { name: 'Settings', href: 'javascript:alert("todo")', action: nop },
   { name: 'Sign out', href: '#', action: logout },
 ]
 
