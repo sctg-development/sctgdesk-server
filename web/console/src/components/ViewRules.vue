@@ -49,7 +49,7 @@
                                     </td>
                                     <td
                                         class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                                        <a href="javascript:alert('todo')" class="text-blue-500">Edit</a>
+                                        <a @click="deleteRule(rule.guid)" class="text-blue-500">Delete</a>
                                     </td>
                                 </tr>
                             </tbody>
@@ -62,7 +62,7 @@
     </Modal>
 </template>
 <script setup lang="ts">
-import { AbRule, AddressBookApi } from '@/api';
+import { AbRule, AddressBookApi, AbRuleDeleteRequest } from '@/api';
 import Modal from '@/components/Modal.vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { onMounted, ref } from 'vue';
@@ -87,11 +87,15 @@ function getRules(ab: string) {
         });
     });
 }
-onMounted(() => {
+
+function refreshRules() {
     getRules(props.ab).then((data) => {
         console.log("Rules fetched");
         rules.value = data;
     });
+}
+onMounted(() => {
+   refreshRules();
 });
 
 function decodeRights(rights: number): string {
@@ -107,5 +111,19 @@ function decodeRights(rights: number): string {
         default:
             return "Unknown";
     }
+}
+
+function deleteRule(rule: string): void {
+    const deleteRuleRequest = {
+        guid: rule,
+    } as AbRuleDeleteRequest;
+
+    const addressBookApi = new AddressBookApi(configuration);
+    addressBookApi.abRuleDelete(deleteRuleRequest).then(() => {
+        console.log("Rule deleted");
+        refreshRules();
+    }).catch((error) => {
+        console.error(error);
+    });
 }
 </script>
