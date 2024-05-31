@@ -24,12 +24,12 @@
                                 <button type="button"
                                     class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 m-1 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                                     @click="modalOk">
-                                    {{ props.ok_label }}
+                                    {{ props.okLabel }}
                                 </button>
                                 <button type="button"
                                     class="inline-flex justify-center rounded-md border border-transparent bg-gray-100 m-1 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                                     @click="modalCancel">
-                                    {{ props.cancel_label }}
+                                    {{ props.cancelLabel }}
                                 </button>
                             </div>
                         </DialogPanel>
@@ -50,13 +50,13 @@ import {
 
 const emit = defineEmits(['modalOk', 'modalCancel'])
 const props = withDefaults(defineProps<{
-    ok_label: string;
-    cancel_label: string;
+    okLabel: string;
+    cancelLabel: string;
     title: string;
 }>(),
     {
-        ok_label: 'Ok',
-        cancel_label: 'Cancel',
+        okLabel: 'Ok',
+        cancelLabel: 'Cancel',
         title: '',
     })
 

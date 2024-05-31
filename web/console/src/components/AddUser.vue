@@ -7,7 +7,7 @@ This website use:
 - And many others
 -->
 <template>
-    <Modal @modalOk="addUser()" @modalCancel="closeModal()" title="Add user">
+    <Modal @modalOk="addUser()" @modalCancel="closeModal()" okLabel="Add" title="Add user">
         <div>
             <label for="name" class="block text-sm font-medium leading-6 text-gray-900">Username</label>
             <div class="mt-2">

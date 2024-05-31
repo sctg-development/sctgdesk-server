@@ -1,5 +1,5 @@
 <template>
-    <Modal @modalOk="updateUser()" @modalCancel="closeModal()" title="Edit user">
+    <Modal @modalOk="updateUser()" @modalCancel="closeModal()" okLabel="Save" title="Edit user">
         <div>
             <label for="name" class="block text-sm font-medium leading-6 text-gray-900">Username</label>
             <div class="mt-2">
