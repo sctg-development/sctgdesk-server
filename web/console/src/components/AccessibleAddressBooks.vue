@@ -7,8 +7,8 @@ This website use:
 - And many others
 -->
 <template>
-    <AddressBook class="mb-4" name="Personal address book" :peers="ab_personal_peers" :isPersonal="true"/>
-    <AddressBook class="mb-4" v-for="sharedAddressBook in ab_shared_address_books" :key="sharedAddressBook.name" :name="sharedAddressBook.name" :peers="sharedAddressBook.peers" :isPersonal="false"/>
+    <AddressBook class="mb-4" name="Personal address book" :peers="ab_personal_peers" :isPersonal="true" :ab="ab_personal_guid"/>
+    <AddressBook class="mb-4" v-for="sharedAddressBook in ab_shared_address_books" :key="sharedAddressBook.name" :name="sharedAddressBook.name" :peers="sharedAddressBook.peers" :isPersonal="false" :ab="sharedAddressBook.guid"/>
     <div class="h-24"></div>
 </template>
 <script setup lang="ts">
@@ -18,6 +18,7 @@ import { AbPeer, AbProfile, AddressBookApi } from '@/api';
 import AddressBook from '@/components/AddressBook.vue';
 
 type sharedAddressBooks = {
+    guid: string;
     name: string;
     peers: AbPeer[];
 }[];
@@ -26,6 +27,7 @@ const userStore = useUserStore();
 const configuration = userStore.api_configuration;
 
 const ab_personal_peers = ref<AbPeer[]>([]);
+const ab_personal_guid = ref<string>("");
 const ab_shared_address_books = ref<sharedAddressBooks>([]);
 
 function getPersonalAddressBooks() {
@@ -33,6 +35,7 @@ function getPersonalAddressBooks() {
         const addressBookApi = new AddressBookApi(configuration);
         addressBookApi.abPersonal().then((response) => {
             const personalAddressBook = response.data.guid;
+            ab_personal_guid.value = personalAddressBook;
             addressBookApi.abPeers(1, 4294967295, personalAddressBook).then((response) => {
                 const peers = response.data.data;
                 resolve(peers);
@@ -54,6 +57,7 @@ function getSharedAddressBooks() {
             const sharedAddressBookPromises = sharedAddressBooksId.map((sharedAddressBook) => {
                 return addressBookApi.abPeers(1, 4294967295, sharedAddressBook.guid).then((response) => {
                     sharedAddressBooks.push({
+                        guid: sharedAddressBook.guid,
                         name: sharedAddressBook.name,
                         peers: response.data.data,
                     });
