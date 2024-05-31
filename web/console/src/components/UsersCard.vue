@@ -102,11 +102,11 @@ This website use:
                                     <td
                                         class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
                                         <a @click="toggle_edit_user(user.name, user.guid)"
-                                            class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
+                                            class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium m-1">
                                             Edit
                                         </a>
                                         <a @click="toggle_user(user.name, user.guid, user.status == 1 ? false : true)"
-                                            class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
+                                            class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium m-1">
                                             {{ user.status == 1 ? 'Deactivate' : 'Activate' }}
                                         </a>
                                     </td>
