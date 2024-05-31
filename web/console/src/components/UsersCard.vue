@@ -194,7 +194,7 @@ function toggle_user(username: string, uuid: string, activate:boolean): void {
     const enableUserRequest =  {rows:[uuid],disable: activate}  as EnableUserRequest;
     userApi.userEnable(enableUserRequest).then((response) => {
         if (response.status == 200 && response.data.msg == "success") {
-            alert(`${activate ? 'Activated' : 'Deactivated'} user ${username}`);
+            // alert(`${activate ? 'Activated' : 'Deactivated'} user ${username}`);
             refresh_users();
         }
         else {

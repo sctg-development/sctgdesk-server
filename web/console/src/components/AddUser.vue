@@ -7,7 +7,7 @@ This website use:
 - And many others
 -->
 <template>
-    <Modal @modalOk="addUser()" @modalCancel="closeModal()">
+    <Modal @modalOk="addUser()" @modalCancel="closeModal()" title="Add user">
         <div>
             <label for="name" class="block text-sm font-medium leading-6 text-gray-900">Username</label>
             <div class="mt-2">
@@ -102,7 +102,7 @@ function addUser() {
     const userApi = new UserApi(userStore.api_configuration);
     userApi.userAdd(user_request).then((response) => {
         if (response.status == 200 && response.data.msg == "success") {
-            alert("User added successfully");
+            console.log("User added successfully");
             closeModal();
         }
         else {

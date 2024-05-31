@@ -14,7 +14,7 @@
                         <DialogPanel
                             class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                             <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
-                                Edit User
+                                {{ props.title }}
                             </DialogTitle>
                             <div class="mt-2">
                                 <slot></slot>
@@ -52,10 +52,12 @@ const emit = defineEmits(['modalOk', 'modalCancel'])
 const props = withDefaults(defineProps<{
     ok_label: string;
     cancel_label: string;
+    title: string;
 }>(),
     {
         ok_label: 'Ok',
-        cancel_label: 'Cancel'
+        cancel_label: 'Cancel',
+        title: '',
     })
 
 

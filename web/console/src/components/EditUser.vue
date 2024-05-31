@@ -1,5 +1,5 @@
 <template>
-    <Modal @modalOk="updateUser()" @modalCancel="closeModal()">
+    <Modal @modalOk="updateUser()" @modalCancel="closeModal()" title="Edit user">
         <div>
             <label for="name" class="block text-sm font-medium leading-6 text-gray-900">Username</label>
             <div class="mt-2">
@@ -56,13 +56,6 @@
     </Modal>
 </template>
 <script setup lang="ts">
-import {
-    TransitionRoot,
-    TransitionChild,
-    Dialog,
-    DialogPanel,
-    DialogTitle,
-} from '@headlessui/vue'
 import { onMounted } from 'vue';
 import { ref } from 'vue';
 import { UpdateUserRequest, UserApi, GroupApi, Group, UserListResponse } from '@/api';
@@ -134,7 +127,7 @@ function updateUser() {
     const userApi = new UserApi(userStore.api_configuration);
     userApi.userUpdate(user_request).then((response) => {
         if (response.status == 200 && response.data.msg == "success") {
-            alert("User update successfully");
+            console.log("User update successfully");
             closeModal();
         }
         else {
