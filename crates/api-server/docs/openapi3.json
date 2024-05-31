@@ -1559,6 +1559,76 @@
         ]
       }
     },
+    "/api/ab/rule": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Add a Rule",
+        "description": "This function is an API endpoint that adds a new rule to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request containing the details of the rule to be added.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully added. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode.",
+        "operationId": "ab_rule_add",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbRuleAddRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Delete a Rule",
+        "description": "This function is an API endpoint that deletes a rule from a shared address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request containing the GUID of the rule to be deleted.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully deleted. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode.",
+        "operationId": "ab_rule_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbRuleDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
     "/api/software/client-download-link/{key}": {
       "get": {
         "tags": [
@@ -2706,6 +2776,42 @@
             "type": "integer",
             "format": "uint32",
             "minimum": 0.0
+          }
+        }
+      },
+      "AbRuleAddRequest": {
+        "type": "object",
+        "required": [
+          "guid",
+          "rule"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string",
+            "nullable": true
+          },
+          "group": {
+            "type": "string",
+            "nullable": true
+          },
+          "rule": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "AbRuleDeleteRequest": {
+        "type": "object",
+        "required": [
+          "guid"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
           }
         }
       },
