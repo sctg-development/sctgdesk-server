@@ -77,7 +77,8 @@ export const AddressBookLegacyApiAxiosParamCreator = function (configuration?: C
             };
         },
         /**
-         * Get the user's legacy address book
+         * This function is an API endpoint that allows an authenticated user to retrieve their legacy address book. <br> The Legacy Address Book is the address book that was used in the previous version of SCTGDesk. <br> Rustdesk client uses the legacy address book if it cannot find the new one <br> It is tagged with \"address book legacy\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbGetResponse>` object, which includes the legacy address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized.
+         * @summary Get the User's Legacy Address Book
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -141,7 +142,8 @@ export const AddressBookLegacyApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Get the user's legacy address book
+         * This function is an API endpoint that allows an authenticated user to retrieve their legacy address book. <br> The Legacy Address Book is the address book that was used in the previous version of SCTGDesk. <br> Rustdesk client uses the legacy address book if it cannot find the new one <br> It is tagged with \"address book legacy\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbGetResponse>` object, which includes the legacy address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized.
+         * @summary Get the User's Legacy Address Book
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -171,7 +173,8 @@ export const AddressBookLegacyApiFactory = function (configuration?: Configurati
             return AddressBookLegacyApiFp(configuration).ab(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Get the user's legacy address book
+         * This function is an API endpoint that allows an authenticated user to retrieve their legacy address book. <br> The Legacy Address Book is the address book that was used in the previous version of SCTGDesk. <br> Rustdesk client uses the legacy address book if it cannot find the new one <br> It is tagged with \"address book legacy\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbGetResponse>` object, which includes the legacy address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized.
+         * @summary Get the User's Legacy Address Book
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -199,7 +202,8 @@ export class AddressBookLegacyApi extends BaseAPI {
         return AddressBookLegacyApiFp(this.configuration).ab(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Get the user's legacy address book
+     * This function is an API endpoint that allows an authenticated user to retrieve their legacy address book. <br> The Legacy Address Book is the address book that was used in the previous version of SCTGDesk. <br> Rustdesk client uses the legacy address book if it cannot find the new one <br> It is tagged with \"address book legacy\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbGetResponse>` object, which includes the legacy address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized.
+     * @summary Get the User's Legacy Address Book
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AddressBookLegacyApi

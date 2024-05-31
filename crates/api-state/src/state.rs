@@ -31,7 +31,7 @@ use oauth2::ProviderConfig;
 
 use tokio::sync::RwLock;
 use utils::{
-    AbPeer, AbTag, AddUserRequest, AddressBook, Group, OidcState, Peer, Token, UpdateUserRequest, UserListResponse
+    AbPeer, AbRule, AbTag, AddUserRequest, AddressBook, Group, OidcState, Peer, Token, UpdateUserRequest, UserListResponse
 };
 
 pub struct ApiState {
@@ -663,5 +663,9 @@ impl ApiState {
     /// Get shared address books
     pub async fn get_shared_address_books(&self, user_id: UserId) -> Option<Vec<AddressBook>> {
         self.db.get_shared_address_books(user_id).await
+    }
+
+    pub async fn get_ab_rules(&self, offset:u32, page_size: u32, ab: &str) -> Option<Vec<AbRule>> {
+        self.db.get_ab_rules(offset,page_size, ab).await
     }
 }

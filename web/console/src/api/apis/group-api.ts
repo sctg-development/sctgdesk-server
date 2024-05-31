@@ -27,7 +27,8 @@ import { UsersResponse } from '../models';
 export const GroupApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Add a group
+         * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
+         * @summary Add a Group (todo)
          * @param {AddUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -78,7 +79,8 @@ export const GroupApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * Get the list of groups
+         * This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of groups. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number.  - `pageSize`: The number of groups per page.  ## Returns  If successful, this function returns a `Json<GroupsResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If no groups are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no groups are found.  # Example  GET /api/groups?current=1&pageSize=10
+         * @summary Get the List of Groups
          * @param {number} current 
          * @param {number} page_size 
          * @param {*} [options] Override http request option.
@@ -147,7 +149,8 @@ export const GroupApiAxiosParamCreator = function (configuration?: Configuration
 export const GroupApiFp = function(configuration?: Configuration) {
     return {
         /**
-         * Add a group
+         * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
+         * @summary Add a Group (todo)
          * @param {AddUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -160,7 +163,8 @@ export const GroupApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Get the list of groups
+         * This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of groups. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number.  - `pageSize`: The number of groups per page.  ## Returns  If successful, this function returns a `Json<GroupsResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If no groups are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no groups are found.  # Example  GET /api/groups?current=1&pageSize=10
+         * @summary Get the List of Groups
          * @param {number} current 
          * @param {number} page_size 
          * @param {*} [options] Override http request option.
@@ -183,7 +187,8 @@ export const GroupApiFp = function(configuration?: Configuration) {
 export const GroupApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
-         * Add a group
+         * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
+         * @summary Add a Group (todo)
          * @param {AddUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -192,7 +197,8 @@ export const GroupApiFactory = function (configuration?: Configuration, basePath
             return GroupApiFp(configuration).groupAdd(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Get the list of groups
+         * This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of groups. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number.  - `pageSize`: The number of groups per page.  ## Returns  If successful, this function returns a `Json<GroupsResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If no groups are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no groups are found.  # Example  GET /api/groups?current=1&pageSize=10
+         * @summary Get the List of Groups
          * @param {number} current 
          * @param {number} page_size 
          * @param {*} [options] Override http request option.
@@ -212,7 +218,8 @@ export const GroupApiFactory = function (configuration?: Configuration, basePath
  */
 export class GroupApi extends BaseAPI {
     /**
-     * Add a group
+     * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
+     * @summary Add a Group (todo)
      * @param {AddUserRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -222,7 +229,8 @@ export class GroupApi extends BaseAPI {
         return GroupApiFp(this.configuration).groupAdd(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Get the list of groups
+     * This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of groups. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number.  - `pageSize`: The number of groups per page.  ## Returns  If successful, this function returns a `Json<GroupsResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If no groups are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no groups are found.  # Example  GET /api/groups?current=1&pageSize=10
+     * @summary Get the List of Groups
      * @param {number} current 
      * @param {number} page_size 
      * @param {*} [options] Override http request option.

@@ -24,7 +24,8 @@ import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } fr
 export const CorsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Answers to OPTIONS requests
+         * 
+         * @summary Answers to OPTIONS requests
          * @param {string} _path 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -72,7 +73,8 @@ export const CorsApiAxiosParamCreator = function (configuration?: Configuration)
 export const CorsApiFp = function(configuration?: Configuration) {
     return {
         /**
-         * Answers to OPTIONS requests
+         * 
+         * @summary Answers to OPTIONS requests
          * @param {string} _path 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -94,7 +96,8 @@ export const CorsApiFp = function(configuration?: Configuration) {
 export const CorsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
-         * Answers to OPTIONS requests
+         * 
+         * @summary Answers to OPTIONS requests
          * @param {string} _path 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -113,7 +116,8 @@ export const CorsApiFactory = function (configuration?: Configuration, basePath?
  */
 export class CorsApi extends BaseAPI {
     /**
-     * Answers to OPTIONS requests
+     * 
+     * @summary Answers to OPTIONS requests
      * @param {string} _path 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

@@ -27,7 +27,8 @@ import { SystemInfo } from '../models';
 export const PeerApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Heartbeat  Frequently the client hits the /api/heartbeat endpoint. It updates the last_online field of the peer.
+         * This function is an API endpoint that is frequently hit by the client at the /api/heartbeat endpoint. It updates the `last_online` field of the peer. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the heartbeat information.  ## Returns  This function always returns a `String` with the message \"OK\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode.
+         * @summary Heartbeat
          * @param {HeartbeatRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -69,7 +70,8 @@ export const PeerApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * Get the list of peers
+         * This function is an API endpoint that retrieves the list of all peers in the network. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<PeersResponse>` object, which includes a success message, the total number of peers, and the list of peers.  <br> If no peers are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no peers are found.  # Example  GET /api/peers
+         * @summary Get Peers
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -111,7 +113,8 @@ export const PeerApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * Set the system info
+         * This function is an API endpoint that allows a connected client to update its system information. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the system information.  ## Returns  If successful, this function returns a `String` with the message \"SYSINFO_UPDATED\".  <br> If the system info is not found, this function returns a `String` with the message \"ID_NOT_FOUND\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the system info is not found.
+         * @summary Set the System Info
          * @param {SystemInfo} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -162,7 +165,8 @@ export const PeerApiAxiosParamCreator = function (configuration?: Configuration)
 export const PeerApiFp = function(configuration?: Configuration) {
     return {
         /**
-         * Heartbeat  Frequently the client hits the /api/heartbeat endpoint. It updates the last_online field of the peer.
+         * This function is an API endpoint that is frequently hit by the client at the /api/heartbeat endpoint. It updates the `last_online` field of the peer. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the heartbeat information.  ## Returns  This function always returns a `String` with the message \"OK\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode.
+         * @summary Heartbeat
          * @param {HeartbeatRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -175,7 +179,8 @@ export const PeerApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Get the list of peers
+         * This function is an API endpoint that retrieves the list of all peers in the network. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<PeersResponse>` object, which includes a success message, the total number of peers, and the list of peers.  <br> If no peers are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no peers are found.  # Example  GET /api/peers
+         * @summary Get Peers
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -187,7 +192,8 @@ export const PeerApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Set the system info
+         * This function is an API endpoint that allows a connected client to update its system information. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the system information.  ## Returns  If successful, this function returns a `String` with the message \"SYSINFO_UPDATED\".  <br> If the system info is not found, this function returns a `String` with the message \"ID_NOT_FOUND\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the system info is not found.
+         * @summary Set the System Info
          * @param {SystemInfo} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -209,7 +215,8 @@ export const PeerApiFp = function(configuration?: Configuration) {
 export const PeerApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
-         * Heartbeat  Frequently the client hits the /api/heartbeat endpoint. It updates the last_online field of the peer.
+         * This function is an API endpoint that is frequently hit by the client at the /api/heartbeat endpoint. It updates the `last_online` field of the peer. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the heartbeat information.  ## Returns  This function always returns a `String` with the message \"OK\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode.
+         * @summary Heartbeat
          * @param {HeartbeatRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -218,7 +225,8 @@ export const PeerApiFactory = function (configuration?: Configuration, basePath?
             return PeerApiFp(configuration).heartbeat(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Get the list of peers
+         * This function is an API endpoint that retrieves the list of all peers in the network. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<PeersResponse>` object, which includes a success message, the total number of peers, and the list of peers.  <br> If no peers are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no peers are found.  # Example  GET /api/peers
+         * @summary Get Peers
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -226,7 +234,8 @@ export const PeerApiFactory = function (configuration?: Configuration, basePath?
             return PeerApiFp(configuration).peers(options).then((request) => request(axios, basePath));
         },
         /**
-         * Set the system info
+         * This function is an API endpoint that allows a connected client to update its system information. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the system information.  ## Returns  If successful, this function returns a `String` with the message \"SYSINFO_UPDATED\".  <br> If the system info is not found, this function returns a `String` with the message \"ID_NOT_FOUND\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the system info is not found.
+         * @summary Set the System Info
          * @param {SystemInfo} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -245,7 +254,8 @@ export const PeerApiFactory = function (configuration?: Configuration, basePath?
  */
 export class PeerApi extends BaseAPI {
     /**
-     * Heartbeat  Frequently the client hits the /api/heartbeat endpoint. It updates the last_online field of the peer.
+     * This function is an API endpoint that is frequently hit by the client at the /api/heartbeat endpoint. It updates the `last_online` field of the peer. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the heartbeat information.  ## Returns  This function always returns a `String` with the message \"OK\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode.
+     * @summary Heartbeat
      * @param {HeartbeatRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -255,7 +265,8 @@ export class PeerApi extends BaseAPI {
         return PeerApiFp(this.configuration).heartbeat(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Get the list of peers
+     * This function is an API endpoint that retrieves the list of all peers in the network. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<PeersResponse>` object, which includes a success message, the total number of peers, and the list of peers.  <br> If no peers are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no peers are found.  # Example  GET /api/peers
+     * @summary Get Peers
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof PeerApi
@@ -264,7 +275,8 @@ export class PeerApi extends BaseAPI {
         return PeerApiFp(this.configuration).peers(options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Set the system info
+     * This function is an API endpoint that allows a connected client to update its system information. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the system information.  ## Returns  If successful, this function returns a `String` with the message \"SYSINFO_UPDATED\".  <br> If the system info is not found, this function returns a `String` with the message \"ID_NOT_FOUND\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the system info is not found.
+     * @summary Set the System Info
      * @param {SystemInfo} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

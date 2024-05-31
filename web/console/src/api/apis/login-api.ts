@@ -31,7 +31,8 @@ import { OidcResponse } from '../models';
 export const LoginApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Login
+         * This function is an API endpoint that allows a user to log in without oauth. It is tagged with \"login\" for OpenAPI documentation. <br>  ## Parameters  - `request`: The request data, which includes the user's username and password.  <br>  ## Returns  If successful, this function returns a `Json<LoginReply>` object, which includes the user's information and access token.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized or if the system is in maintenance mode.
+         * @summary User Login
          * @param {LoginRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -73,7 +74,8 @@ export const LoginApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * Login options  This is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable  # Limitations  Currently it uses the client id as the user id the limitation is that the client cannot retrieve its address book if the client uses a different client. For having a `real` user name. We need to add a step after the Oauth2 authorization code is exchanged for an access token.
+         * This is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable  This function is an API endpoint that is called by the client to get the list of available OAuth2 providers. The list of providers is defined in the `oauth2.toml` config file, which can be overridden by the `OAUTH2_CONFIG_FILE` environment variable. It is tagged with \"login\" for OpenAPI documentation.  ## Limitations  It needs to be completed for mapping the username and email from the OAuth2 provider to the SCTGDesk user.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<Vec<String>>` object, which includes the list of available OAuth2 providers.  <br> If the config file is not found or cannot be read, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the config file is not found or cannot be read.  # Example  GET /api/login-options
+         * @summary Login Options
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -106,7 +108,8 @@ export const LoginApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * Log the user out
+         * This function is an API endpoint that allows an authenticated user to log out. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the current user information.  <br>  ## Returns  If successful, this function returns a `Json<LogoutReply>` object, which includes a success message.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized.
+         * @summary Log the User Out
          * @param {CurrentUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -157,7 +160,7 @@ export const LoginApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * OIDC Auth request  This entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses  For testing you can generate a valid uuid field with the following command: `uuidgen | base64`
+         * OIDC Auth request  This entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses  For testing you can generate a valid uuid field with the following command: `uuidgen | base64` # OIDC Auth Request  This function is an API endpoint that is called by the client to get the authorization URL for the chosen OAuth2 provider. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the chosen OAuth2 provider and a UUID.  <br> For testing you can generate a valid uuid field with the following command: `uuidgen | base64`  ## Returns  If successful, this function returns a `Json<OidcAuthUrl>` object, which includes the authorization URL and a session code.  <br> If the UUID is invalid or the OAuth2 provider is not found, this function returns an `OidcAuthUrl` object with an empty URL and an error code.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the UUID is invalid or the OAuth2 provider is not found.  # Example  POST /api/oidc/auth { \"op\": \"github\", \"uuid\": \"generated_uuid_base64_encoded\" }
          * @param {OidcAuthRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -199,7 +202,8 @@ export const LoginApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * OIDC Auth callback  This entrypoint is the OAuth2 callback. It exchanges the code for an access token and stores it in the state
+         * This function is an API endpoint that serves as the OAuth2 callback. It exchanges the authorization code for an access token and stores it in the state. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `code`: The authorization code received from the OIDC provider.  - `state`: The state parameter received from the OIDC provider. This is the session code.  ## Returns  If successful, this function returns \"OK\".  <br> If the session does not exist or the code exchange fails, this function returns \"ERROR\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the session does not exist or the code exchange fails.  # Example  GET /api/oidc/callback?code=authorization_code&state=session_code
+         * @summary OIDC Auth Callback
          * @param {string} code 
          * @param {string} state 
          * @param {*} [options] Override http request option.
@@ -250,7 +254,8 @@ export const LoginApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * OIDC State request  This entrypoint is called by the client for getting the status of the OIDC session it returns an empty json object if the session is not found it returns an access token if the session is found
+         * This function is an API endpoint that checks the state of an OpenID Connect (OIDC) session. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `code`: The authorization code received from the OIDC provider.  - `id`: The identifier of the OIDC session.  - `uuid`: The UUID of the OIDC session.  ## Returns  If successful, this function returns a `Json<Option<OidcResponse>>` object.  <br> If the session does not exist, this function returns `Json(None)`.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the session does not exist.  # Example  GET /api/oidc/auth-query?code=authorization_code&id=session_id&uuid=session_uuid
+         * @summary OIDC State
          * @param {string} code 
          * @param {string} id 
          * @param {string} uuid 
@@ -319,7 +324,8 @@ export const LoginApiAxiosParamCreator = function (configuration?: Configuration
 export const LoginApiFp = function(configuration?: Configuration) {
     return {
         /**
-         * Login
+         * This function is an API endpoint that allows a user to log in without oauth. It is tagged with \"login\" for OpenAPI documentation. <br>  ## Parameters  - `request`: The request data, which includes the user's username and password.  <br>  ## Returns  If successful, this function returns a `Json<LoginReply>` object, which includes the user's information and access token.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized or if the system is in maintenance mode.
+         * @summary User Login
          * @param {LoginRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -332,7 +338,8 @@ export const LoginApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Login options  This is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable  # Limitations  Currently it uses the client id as the user id the limitation is that the client cannot retrieve its address book if the client uses a different client. For having a `real` user name. We need to add a step after the Oauth2 authorization code is exchanged for an access token.
+         * This is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable  This function is an API endpoint that is called by the client to get the list of available OAuth2 providers. The list of providers is defined in the `oauth2.toml` config file, which can be overridden by the `OAUTH2_CONFIG_FILE` environment variable. It is tagged with \"login\" for OpenAPI documentation.  ## Limitations  It needs to be completed for mapping the username and email from the OAuth2 provider to the SCTGDesk user.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<Vec<String>>` object, which includes the list of available OAuth2 providers.  <br> If the config file is not found or cannot be read, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the config file is not found or cannot be read.  # Example  GET /api/login-options
+         * @summary Login Options
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -344,7 +351,8 @@ export const LoginApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Log the user out
+         * This function is an API endpoint that allows an authenticated user to log out. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the current user information.  <br>  ## Returns  If successful, this function returns a `Json<LogoutReply>` object, which includes a success message.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized.
+         * @summary Log the User Out
          * @param {CurrentUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -357,7 +365,7 @@ export const LoginApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * OIDC Auth request  This entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses  For testing you can generate a valid uuid field with the following command: `uuidgen | base64`
+         * OIDC Auth request  This entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses  For testing you can generate a valid uuid field with the following command: `uuidgen | base64` # OIDC Auth Request  This function is an API endpoint that is called by the client to get the authorization URL for the chosen OAuth2 provider. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the chosen OAuth2 provider and a UUID.  <br> For testing you can generate a valid uuid field with the following command: `uuidgen | base64`  ## Returns  If successful, this function returns a `Json<OidcAuthUrl>` object, which includes the authorization URL and a session code.  <br> If the UUID is invalid or the OAuth2 provider is not found, this function returns an `OidcAuthUrl` object with an empty URL and an error code.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the UUID is invalid or the OAuth2 provider is not found.  # Example  POST /api/oidc/auth { \"op\": \"github\", \"uuid\": \"generated_uuid_base64_encoded\" }
          * @param {OidcAuthRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -370,7 +378,8 @@ export const LoginApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * OIDC Auth callback  This entrypoint is the OAuth2 callback. It exchanges the code for an access token and stores it in the state
+         * This function is an API endpoint that serves as the OAuth2 callback. It exchanges the authorization code for an access token and stores it in the state. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `code`: The authorization code received from the OIDC provider.  - `state`: The state parameter received from the OIDC provider. This is the session code.  ## Returns  If successful, this function returns \"OK\".  <br> If the session does not exist or the code exchange fails, this function returns \"ERROR\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the session does not exist or the code exchange fails.  # Example  GET /api/oidc/callback?code=authorization_code&state=session_code
+         * @summary OIDC Auth Callback
          * @param {string} code 
          * @param {string} state 
          * @param {*} [options] Override http request option.
@@ -384,7 +393,8 @@ export const LoginApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * OIDC State request  This entrypoint is called by the client for getting the status of the OIDC session it returns an empty json object if the session is not found it returns an access token if the session is found
+         * This function is an API endpoint that checks the state of an OpenID Connect (OIDC) session. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `code`: The authorization code received from the OIDC provider.  - `id`: The identifier of the OIDC session.  - `uuid`: The UUID of the OIDC session.  ## Returns  If successful, this function returns a `Json<Option<OidcResponse>>` object.  <br> If the session does not exist, this function returns `Json(None)`.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the session does not exist.  # Example  GET /api/oidc/auth-query?code=authorization_code&id=session_id&uuid=session_uuid
+         * @summary OIDC State
          * @param {string} code 
          * @param {string} id 
          * @param {string} uuid 
@@ -408,7 +418,8 @@ export const LoginApiFp = function(configuration?: Configuration) {
 export const LoginApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
-         * Login
+         * This function is an API endpoint that allows a user to log in without oauth. It is tagged with \"login\" for OpenAPI documentation. <br>  ## Parameters  - `request`: The request data, which includes the user's username and password.  <br>  ## Returns  If successful, this function returns a `Json<LoginReply>` object, which includes the user's information and access token.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized or if the system is in maintenance mode.
+         * @summary User Login
          * @param {LoginRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -417,7 +428,8 @@ export const LoginApiFactory = function (configuration?: Configuration, basePath
             return LoginApiFp(configuration).login(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Login options  This is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable  # Limitations  Currently it uses the client id as the user id the limitation is that the client cannot retrieve its address book if the client uses a different client. For having a `real` user name. We need to add a step after the Oauth2 authorization code is exchanged for an access token.
+         * This is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable  This function is an API endpoint that is called by the client to get the list of available OAuth2 providers. The list of providers is defined in the `oauth2.toml` config file, which can be overridden by the `OAUTH2_CONFIG_FILE` environment variable. It is tagged with \"login\" for OpenAPI documentation.  ## Limitations  It needs to be completed for mapping the username and email from the OAuth2 provider to the SCTGDesk user.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<Vec<String>>` object, which includes the list of available OAuth2 providers.  <br> If the config file is not found or cannot be read, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the config file is not found or cannot be read.  # Example  GET /api/login-options
+         * @summary Login Options
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -425,7 +437,8 @@ export const LoginApiFactory = function (configuration?: Configuration, basePath
             return LoginApiFp(configuration).loginOptions(options).then((request) => request(axios, basePath));
         },
         /**
-         * Log the user out
+         * This function is an API endpoint that allows an authenticated user to log out. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the current user information.  <br>  ## Returns  If successful, this function returns a `Json<LogoutReply>` object, which includes a success message.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized.
+         * @summary Log the User Out
          * @param {CurrentUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -434,7 +447,7 @@ export const LoginApiFactory = function (configuration?: Configuration, basePath
             return LoginApiFp(configuration).logout(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * OIDC Auth request  This entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses  For testing you can generate a valid uuid field with the following command: `uuidgen | base64`
+         * OIDC Auth request  This entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses  For testing you can generate a valid uuid field with the following command: `uuidgen | base64` # OIDC Auth Request  This function is an API endpoint that is called by the client to get the authorization URL for the chosen OAuth2 provider. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the chosen OAuth2 provider and a UUID.  <br> For testing you can generate a valid uuid field with the following command: `uuidgen | base64`  ## Returns  If successful, this function returns a `Json<OidcAuthUrl>` object, which includes the authorization URL and a session code.  <br> If the UUID is invalid or the OAuth2 provider is not found, this function returns an `OidcAuthUrl` object with an empty URL and an error code.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the UUID is invalid or the OAuth2 provider is not found.  # Example  POST /api/oidc/auth { \"op\": \"github\", \"uuid\": \"generated_uuid_base64_encoded\" }
          * @param {OidcAuthRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -443,7 +456,8 @@ export const LoginApiFactory = function (configuration?: Configuration, basePath
             return LoginApiFp(configuration).oidcAuth(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * OIDC Auth callback  This entrypoint is the OAuth2 callback. It exchanges the code for an access token and stores it in the state
+         * This function is an API endpoint that serves as the OAuth2 callback. It exchanges the authorization code for an access token and stores it in the state. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `code`: The authorization code received from the OIDC provider.  - `state`: The state parameter received from the OIDC provider. This is the session code.  ## Returns  If successful, this function returns \"OK\".  <br> If the session does not exist or the code exchange fails, this function returns \"ERROR\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the session does not exist or the code exchange fails.  # Example  GET /api/oidc/callback?code=authorization_code&state=session_code
+         * @summary OIDC Auth Callback
          * @param {string} code 
          * @param {string} state 
          * @param {*} [options] Override http request option.
@@ -453,7 +467,8 @@ export const LoginApiFactory = function (configuration?: Configuration, basePath
             return LoginApiFp(configuration).oidcCallback(code, state, options).then((request) => request(axios, basePath));
         },
         /**
-         * OIDC State request  This entrypoint is called by the client for getting the status of the OIDC session it returns an empty json object if the session is not found it returns an access token if the session is found
+         * This function is an API endpoint that checks the state of an OpenID Connect (OIDC) session. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `code`: The authorization code received from the OIDC provider.  - `id`: The identifier of the OIDC session.  - `uuid`: The UUID of the OIDC session.  ## Returns  If successful, this function returns a `Json<Option<OidcResponse>>` object.  <br> If the session does not exist, this function returns `Json(None)`.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the session does not exist.  # Example  GET /api/oidc/auth-query?code=authorization_code&id=session_id&uuid=session_uuid
+         * @summary OIDC State
          * @param {string} code 
          * @param {string} id 
          * @param {string} uuid 
@@ -474,7 +489,8 @@ export const LoginApiFactory = function (configuration?: Configuration, basePath
  */
 export class LoginApi extends BaseAPI {
     /**
-     * Login
+     * This function is an API endpoint that allows a user to log in without oauth. It is tagged with \"login\" for OpenAPI documentation. <br>  ## Parameters  - `request`: The request data, which includes the user's username and password.  <br>  ## Returns  If successful, this function returns a `Json<LoginReply>` object, which includes the user's information and access token.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized or if the system is in maintenance mode.
+     * @summary User Login
      * @param {LoginRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -484,7 +500,8 @@ export class LoginApi extends BaseAPI {
         return LoginApiFp(this.configuration).login(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Login options  This is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable  # Limitations  Currently it uses the client id as the user id the limitation is that the client cannot retrieve its address book if the client uses a different client. For having a `real` user name. We need to add a step after the Oauth2 authorization code is exchanged for an access token.
+     * This is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable  This function is an API endpoint that is called by the client to get the list of available OAuth2 providers. The list of providers is defined in the `oauth2.toml` config file, which can be overridden by the `OAUTH2_CONFIG_FILE` environment variable. It is tagged with \"login\" for OpenAPI documentation.  ## Limitations  It needs to be completed for mapping the username and email from the OAuth2 provider to the SCTGDesk user.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<Vec<String>>` object, which includes the list of available OAuth2 providers.  <br> If the config file is not found or cannot be read, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the config file is not found or cannot be read.  # Example  GET /api/login-options
+     * @summary Login Options
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof LoginApi
@@ -493,7 +510,8 @@ export class LoginApi extends BaseAPI {
         return LoginApiFp(this.configuration).loginOptions(options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Log the user out
+     * This function is an API endpoint that allows an authenticated user to log out. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the current user information.  <br>  ## Returns  If successful, this function returns a `Json<LogoutReply>` object, which includes a success message.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized.
+     * @summary Log the User Out
      * @param {CurrentUserRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -503,7 +521,7 @@ export class LoginApi extends BaseAPI {
         return LoginApiFp(this.configuration).logout(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * OIDC Auth request  This entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses  For testing you can generate a valid uuid field with the following command: `uuidgen | base64`
+     * OIDC Auth request  This entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses  For testing you can generate a valid uuid field with the following command: `uuidgen | base64` # OIDC Auth Request  This function is an API endpoint that is called by the client to get the authorization URL for the chosen OAuth2 provider. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the chosen OAuth2 provider and a UUID.  <br> For testing you can generate a valid uuid field with the following command: `uuidgen | base64`  ## Returns  If successful, this function returns a `Json<OidcAuthUrl>` object, which includes the authorization URL and a session code.  <br> If the UUID is invalid or the OAuth2 provider is not found, this function returns an `OidcAuthUrl` object with an empty URL and an error code.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the UUID is invalid or the OAuth2 provider is not found.  # Example  POST /api/oidc/auth { \"op\": \"github\", \"uuid\": \"generated_uuid_base64_encoded\" }
      * @param {OidcAuthRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -513,7 +531,8 @@ export class LoginApi extends BaseAPI {
         return LoginApiFp(this.configuration).oidcAuth(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * OIDC Auth callback  This entrypoint is the OAuth2 callback. It exchanges the code for an access token and stores it in the state
+     * This function is an API endpoint that serves as the OAuth2 callback. It exchanges the authorization code for an access token and stores it in the state. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `code`: The authorization code received from the OIDC provider.  - `state`: The state parameter received from the OIDC provider. This is the session code.  ## Returns  If successful, this function returns \"OK\".  <br> If the session does not exist or the code exchange fails, this function returns \"ERROR\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the session does not exist or the code exchange fails.  # Example  GET /api/oidc/callback?code=authorization_code&state=session_code
+     * @summary OIDC Auth Callback
      * @param {string} code 
      * @param {string} state 
      * @param {*} [options] Override http request option.
@@ -524,7 +543,8 @@ export class LoginApi extends BaseAPI {
         return LoginApiFp(this.configuration).oidcCallback(code, state, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * OIDC State request  This entrypoint is called by the client for getting the status of the OIDC session it returns an empty json object if the session is not found it returns an access token if the session is found
+     * This function is an API endpoint that checks the state of an OpenID Connect (OIDC) session. It is tagged with \"login\" for OpenAPI documentation.  ## Parameters  - `code`: The authorization code received from the OIDC provider.  - `id`: The identifier of the OIDC session.  - `uuid`: The UUID of the OIDC session.  ## Returns  If successful, this function returns a `Json<Option<OidcResponse>>` object.  <br> If the session does not exist, this function returns `Json(None)`.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the session does not exist.  # Example  GET /api/oidc/auth-query?code=authorization_code&id=session_id&uuid=session_uuid
+     * @summary OIDC State
      * @param {string} code 
      * @param {string} id 
      * @param {string} uuid 

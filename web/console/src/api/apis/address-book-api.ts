@@ -21,7 +21,9 @@ import { AbGetResponse } from '../models';
 import { AbPeer } from '../models';
 import { AbPeersResponse } from '../models';
 import { AbPersonal } from '../models';
+import { AbRulesResponse } from '../models';
 import { AbSettingsResponse } from '../models';
+import { AbSharedAddRequest } from '../models';
 import { AbSharedProfilesResponse } from '../models';
 import { AbTag } from '../models';
 import { AbTagRenameRequest } from '../models';
@@ -203,7 +205,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * List peers
+         * This function is an API endpoint that lists the peers in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `ab`: The identifier of the address book.  ## Returns  If successful, this function returns a `Json<AbPeersResponse>` object containing the peers in the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
+         * @summary List peers
          * @param {number} current 
          * @param {number} page_size 
          * @param {string} ab 
@@ -272,7 +275,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Address book
+         * This function is an API endpoint that retrieves the personal address book of the authenticated user. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbPersonal>` object.  <br> If the user is not authorized to access their personal address book, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized to access their personal address book.  # Example  POST /api/ab/personal
+         * @summary Get Personal Address Book
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -314,7 +318,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Get the user's address book
+         * This function is an API endpoint that allows an authenticated user to retrieve their address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbGetResponse>` object, which includes the address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized.  # Example  POST /api/ab/get
+         * @summary Get the User's Address Book
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -337,6 +342,76 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
                     ? await configuration.accessToken()
                     : await configuration.accessToken;
                 localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that lists the rules attached to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `ab`: The identifier of the shared address book.  ## Returns  If successful, this function returns a `Json<AbRulesResponse>` object containing the rules for the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
+         * @summary List the rules
+         * @param {number} current 
+         * @param {number} page_size 
+         * @param {string} ab 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        abRules: async (current: number, page_size: number, ab: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'current' is not null or undefined
+            if (current === null || current === undefined) {
+                throw new RequiredError('current','Required parameter current was null or undefined when calling abRules.');
+            }
+            // verify required parameter 'page_size' is not null or undefined
+            if (page_size === null || page_size === undefined) {
+                throw new RequiredError('page_size','Required parameter page_size was null or undefined when calling abRules.');
+            }
+            // verify required parameter 'ab' is not null or undefined
+            if (ab === null || ab === undefined) {
+                throw new RequiredError('ab','Required parameter ab was null or undefined when calling abRules.');
+            }
+            const localVarPath = `/api/ab/rules`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            if (current !== undefined) {
+                localVarQueryParameter['current'] = current;
+            }
+
+            if (page_size !== undefined) {
+                localVarQueryParameter['pageSize'] = page_size;
+            }
+
+            if (ab !== undefined) {
+                localVarQueryParameter['ab'] = ab;
             }
 
             const query = new URLSearchParams(localVarUrlObj.search);
@@ -398,7 +473,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Shared profile
+         * This function is an API endpoint that retrieves the shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br> rule: 1: read, 2: write, 3: full control  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.  # Example  {\"data\":[{\"guid\":\"018fab24-0ae5-731c-be23-88aa4518ea26\",\"name\":\"shared profile\",\"owner\":\"admin\",\"rule\":3}],\"total\":2}
+         * @summary Get Shared Profiles
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -440,7 +516,59 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Add a tag
+         * Add shared profile
+         * @param {AbSharedAddRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        abSharedAdd: async (body: AbSharedAddRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling abSharedAdd.');
+            }
+            const localVarPath = `/api/ab/shared/add`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization_admin required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new tag to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.  # Example  POST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
+         * @summary Add a Tag
          * @param {AbTag} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -497,7 +625,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Delete a tag
+         * This function is an API endpoint that deletes a tag from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing an array of tag names to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the request is empty or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the request is empty or the user is not authorized to access it.  # Example  DELETE /api/ab/tag/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  [\"tag1\", \"tag2\"]
+         * @summary Delete a Tag
          * @param {Array<string>} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -554,7 +683,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Rename a tag
+         * This function is an API endpoint that renames a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the old and new names of the tag.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to access it.  # Example  PUT /api/ab/tag/rename/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"old\": \"tag1\", \"new\": \"tag2\"}
+         * @summary Rename a Tag
          * @param {AbTagRenameRequest} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -611,7 +741,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Update a tag
+         * This function is an API endpoint that updates a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the updated tag.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to update it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to update it.  # Example  PUT /api/ab/tag/update/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
+         * @summary Update a Tag
          * @param {AbTag} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -668,7 +799,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Get the tags
+         * This function is an API endpoint that retrieves all tags from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  ## Returns  If successful, this function returns a JSON array of `AbTag` objects.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.  # Example  POST /api/ab/tags/018fab24-0ae5-731c-be23-88aa4518ea26
+         * @summary Get the Tags
          * @param {string} ab 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -767,7 +899,8 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * List peers
+         * This function is an API endpoint that lists the peers in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `ab`: The identifier of the address book.  ## Returns  If successful, this function returns a `Json<AbPeersResponse>` object containing the peers in the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
+         * @summary List peers
          * @param {number} current 
          * @param {number} page_size 
          * @param {string} ab 
@@ -782,7 +915,8 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Address book
+         * This function is an API endpoint that retrieves the personal address book of the authenticated user. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbPersonal>` object.  <br> If the user is not authorized to access their personal address book, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized to access their personal address book.  # Example  POST /api/ab/personal
+         * @summary Get Personal Address Book
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -794,12 +928,29 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Get the user's address book
+         * This function is an API endpoint that allows an authenticated user to retrieve their address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbGetResponse>` object, which includes the address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized.  # Example  POST /api/ab/get
+         * @summary Get the User's Address Book
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         async abPost(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<AbGetResponse>>> {
             const localVarAxiosArgs = await AddressBookApiAxiosParamCreator(configuration).abPost(options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * This function is an API endpoint that lists the rules attached to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `ab`: The identifier of the shared address book.  ## Returns  If successful, this function returns a `Json<AbRulesResponse>` object containing the rules for the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
+         * @summary List the rules
+         * @param {number} current 
+         * @param {number} page_size 
+         * @param {string} ab 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abRules(current: number, page_size: number, ab: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<AbRulesResponse>>> {
+            const localVarAxiosArgs = await AddressBookApiAxiosParamCreator(configuration).abRules(current, page_size, ab, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -818,7 +969,8 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Shared profile
+         * This function is an API endpoint that retrieves the shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br> rule: 1: read, 2: write, 3: full control  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.  # Example  {\"data\":[{\"guid\":\"018fab24-0ae5-731c-be23-88aa4518ea26\",\"name\":\"shared profile\",\"owner\":\"admin\",\"rule\":3}],\"total\":2}
+         * @summary Get Shared Profiles
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -830,7 +982,21 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Add a tag
+         * Add shared profile
+         * @param {AbSharedAddRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abSharedAdd(body: AbSharedAddRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<AbSharedProfilesResponse>>> {
+            const localVarAxiosArgs = await AddressBookApiAxiosParamCreator(configuration).abSharedAdd(body, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new tag to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.  # Example  POST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
+         * @summary Add a Tag
          * @param {AbTag} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -844,7 +1010,8 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Delete a tag
+         * This function is an API endpoint that deletes a tag from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing an array of tag names to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the request is empty or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the request is empty or the user is not authorized to access it.  # Example  DELETE /api/ab/tag/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  [\"tag1\", \"tag2\"]
+         * @summary Delete a Tag
          * @param {Array<string>} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -858,7 +1025,8 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Rename a tag
+         * This function is an API endpoint that renames a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the old and new names of the tag.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to access it.  # Example  PUT /api/ab/tag/rename/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"old\": \"tag1\", \"new\": \"tag2\"}
+         * @summary Rename a Tag
          * @param {AbTagRenameRequest} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -872,7 +1040,8 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Update a tag
+         * This function is an API endpoint that updates a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the updated tag.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to update it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to update it.  # Example  PUT /api/ab/tag/update/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
+         * @summary Update a Tag
          * @param {AbTag} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -886,7 +1055,8 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Get the tags
+         * This function is an API endpoint that retrieves all tags from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  ## Returns  If successful, this function returns a JSON array of `AbTag` objects.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.  # Example  POST /api/ab/tags/018fab24-0ae5-731c-be23-88aa4518ea26
+         * @summary Get the Tags
          * @param {string} ab 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -938,7 +1108,8 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abPeerUpdate(body, ab, options).then((request) => request(axios, basePath));
         },
         /**
-         * List peers
+         * This function is an API endpoint that lists the peers in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `ab`: The identifier of the address book.  ## Returns  If successful, this function returns a `Json<AbPeersResponse>` object containing the peers in the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
+         * @summary List peers
          * @param {number} current 
          * @param {number} page_size 
          * @param {string} ab 
@@ -949,7 +1120,8 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abPeers(current, page_size, ab, options).then((request) => request(axios, basePath));
         },
         /**
-         * Address book
+         * This function is an API endpoint that retrieves the personal address book of the authenticated user. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbPersonal>` object.  <br> If the user is not authorized to access their personal address book, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized to access their personal address book.  # Example  POST /api/ab/personal
+         * @summary Get Personal Address Book
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -957,12 +1129,25 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abPersonal(options).then((request) => request(axios, basePath));
         },
         /**
-         * Get the user's address book
+         * This function is an API endpoint that allows an authenticated user to retrieve their address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbGetResponse>` object, which includes the address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized.  # Example  POST /api/ab/get
+         * @summary Get the User's Address Book
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         async abPost(options?: AxiosRequestConfig): Promise<AxiosResponse<AbGetResponse>> {
             return AddressBookApiFp(configuration).abPost(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * This function is an API endpoint that lists the rules attached to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `ab`: The identifier of the shared address book.  ## Returns  If successful, this function returns a `Json<AbRulesResponse>` object containing the rules for the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
+         * @summary List the rules
+         * @param {number} current 
+         * @param {number} page_size 
+         * @param {string} ab 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abRules(current: number, page_size: number, ab: string, options?: AxiosRequestConfig): Promise<AxiosResponse<AbRulesResponse>> {
+            return AddressBookApiFp(configuration).abRules(current, page_size, ab, options).then((request) => request(axios, basePath));
         },
         /**
          * Settings
@@ -973,7 +1158,8 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abSettings(options).then((request) => request(axios, basePath));
         },
         /**
-         * Shared profile
+         * This function is an API endpoint that retrieves the shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br> rule: 1: read, 2: write, 3: full control  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.  # Example  {\"data\":[{\"guid\":\"018fab24-0ae5-731c-be23-88aa4518ea26\",\"name\":\"shared profile\",\"owner\":\"admin\",\"rule\":3}],\"total\":2}
+         * @summary Get Shared Profiles
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -981,7 +1167,17 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abShared(options).then((request) => request(axios, basePath));
         },
         /**
-         * Add a tag
+         * Add shared profile
+         * @param {AbSharedAddRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abSharedAdd(body: AbSharedAddRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<AbSharedProfilesResponse>> {
+            return AddressBookApiFp(configuration).abSharedAdd(body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new tag to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.  # Example  POST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
+         * @summary Add a Tag
          * @param {AbTag} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -991,7 +1187,8 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abTagAdd(body, ab, options).then((request) => request(axios, basePath));
         },
         /**
-         * Delete a tag
+         * This function is an API endpoint that deletes a tag from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing an array of tag names to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the request is empty or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the request is empty or the user is not authorized to access it.  # Example  DELETE /api/ab/tag/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  [\"tag1\", \"tag2\"]
+         * @summary Delete a Tag
          * @param {Array<string>} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -1001,7 +1198,8 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abTagDelete(body, ab, options).then((request) => request(axios, basePath));
         },
         /**
-         * Rename a tag
+         * This function is an API endpoint that renames a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the old and new names of the tag.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to access it.  # Example  PUT /api/ab/tag/rename/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"old\": \"tag1\", \"new\": \"tag2\"}
+         * @summary Rename a Tag
          * @param {AbTagRenameRequest} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -1011,7 +1209,8 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abTagRename(body, ab, options).then((request) => request(axios, basePath));
         },
         /**
-         * Update a tag
+         * This function is an API endpoint that updates a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the updated tag.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to update it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to update it.  # Example  PUT /api/ab/tag/update/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
+         * @summary Update a Tag
          * @param {AbTag} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -1021,7 +1220,8 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abTagUpdate(body, ab, options).then((request) => request(axios, basePath));
         },
         /**
-         * Get the tags
+         * This function is an API endpoint that retrieves all tags from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  ## Returns  If successful, this function returns a JSON array of `AbTag` objects.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.  # Example  POST /api/ab/tags/018fab24-0ae5-731c-be23-88aa4518ea26
+         * @summary Get the Tags
          * @param {string} ab 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -1073,7 +1273,8 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abPeerUpdate(body, ab, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * List peers
+     * This function is an API endpoint that lists the peers in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `ab`: The identifier of the address book.  ## Returns  If successful, this function returns a `Json<AbPeersResponse>` object containing the peers in the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
+     * @summary List peers
      * @param {number} current 
      * @param {number} page_size 
      * @param {string} ab 
@@ -1085,7 +1286,8 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abPeers(current, page_size, ab, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Address book
+     * This function is an API endpoint that retrieves the personal address book of the authenticated user. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbPersonal>` object.  <br> If the user is not authorized to access their personal address book, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized to access their personal address book.  # Example  POST /api/ab/personal
+     * @summary Get Personal Address Book
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AddressBookApi
@@ -1094,13 +1296,27 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abPersonal(options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Get the user's address book
+     * This function is an API endpoint that allows an authenticated user to retrieve their address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbGetResponse>` object, which includes the address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the user is not authorized.  # Example  POST /api/ab/get
+     * @summary Get the User's Address Book
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AddressBookApi
      */
     public async abPost(options?: AxiosRequestConfig) : Promise<AxiosResponse<AbGetResponse>> {
         return AddressBookApiFp(this.configuration).abPost(options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that lists the rules attached to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `ab`: The identifier of the shared address book.  ## Returns  If successful, this function returns a `Json<AbRulesResponse>` object containing the rules for the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
+     * @summary List the rules
+     * @param {number} current 
+     * @param {number} page_size 
+     * @param {string} ab 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AddressBookApi
+     */
+    public async abRules(current: number, page_size: number, ab: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<AbRulesResponse>> {
+        return AddressBookApiFp(this.configuration).abRules(current, page_size, ab, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Settings
@@ -1112,7 +1328,8 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abSettings(options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Shared profile
+     * This function is an API endpoint that retrieves the shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - none  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br> rule: 1: read, 2: write, 3: full control  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.  # Example  {\"data\":[{\"guid\":\"018fab24-0ae5-731c-be23-88aa4518ea26\",\"name\":\"shared profile\",\"owner\":\"admin\",\"rule\":3}],\"total\":2}
+     * @summary Get Shared Profiles
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AddressBookApi
@@ -1121,7 +1338,18 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abShared(options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Add a tag
+     * Add shared profile
+     * @param {AbSharedAddRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AddressBookApi
+     */
+    public async abSharedAdd(body: AbSharedAddRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<AbSharedProfilesResponse>> {
+        return AddressBookApiFp(this.configuration).abSharedAdd(body, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new tag to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.  # Example  POST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
+     * @summary Add a Tag
      * @param {AbTag} body 
      * @param {string} ab 
      * @param {*} [options] Override http request option.
@@ -1132,7 +1360,8 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abTagAdd(body, ab, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Delete a tag
+     * This function is an API endpoint that deletes a tag from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing an array of tag names to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the request is empty or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the request is empty or the user is not authorized to access it.  # Example  DELETE /api/ab/tag/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  [\"tag1\", \"tag2\"]
+     * @summary Delete a Tag
      * @param {Array<string>} body 
      * @param {string} ab 
      * @param {*} [options] Override http request option.
@@ -1143,7 +1372,8 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abTagDelete(body, ab, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Rename a tag
+     * This function is an API endpoint that renames a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the old and new names of the tag.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to access it.  # Example  PUT /api/ab/tag/rename/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"old\": \"tag1\", \"new\": \"tag2\"}
+     * @summary Rename a Tag
      * @param {AbTagRenameRequest} body 
      * @param {string} ab 
      * @param {*} [options] Override http request option.
@@ -1154,7 +1384,8 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abTagRename(body, ab, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Update a tag
+     * This function is an API endpoint that updates a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the updated tag.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to update it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to update it.  # Example  PUT /api/ab/tag/update/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
+     * @summary Update a Tag
      * @param {AbTag} body 
      * @param {string} ab 
      * @param {*} [options] Override http request option.
@@ -1165,7 +1396,8 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abTagUpdate(body, ab, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Get the tags
+     * This function is an API endpoint that retrieves all tags from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  ## Returns  If successful, this function returns a JSON array of `AbTag` objects.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.  # Example  POST /api/ab/tags/018fab24-0ae5-731c-be23-88aa4518ea26
+     * @summary Get the Tags
      * @param {string} ab 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

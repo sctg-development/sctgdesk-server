@@ -31,7 +31,8 @@ import { UsersResponse } from '../models';
 export const UserApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Get the current user
+         * This function is an API endpoint that allows an authenticated user to retrieve their current user information. It is tagged with \"user\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the current user information.  <br>  ## Returns  If successful, this function returns a `Json<CurrentUserResponse>` object, which includes the current user information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized.
+         * @summary Get the Current User
          * @param {CurrentUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -235,7 +236,8 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * Get the list of users
+         * This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of users. It is tagged with \"user\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number.  - `pageSize`: The number of users per page.  - `email`: The email to filter the users by.  - `name`: The name to filter the users by.  ## Returns  If successful, this function returns a `Json<UserList>` object, which includes a success message, the total number of users, and the list of users.  <br> If no users are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no users are found.  # Example  GET /api/user-list?current=1&pageSize=10&email=test@test.com&name=Test
+         * @summary Get the List of Users
          * @param {number} current 
          * @param {number} page_size 
          * @param {string} [email] 
@@ -384,7 +386,8 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
 export const UserApiFp = function(configuration?: Configuration) {
     return {
         /**
-         * Get the current user
+         * This function is an API endpoint that allows an authenticated user to retrieve their current user information. It is tagged with \"user\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the current user information.  <br>  ## Returns  If successful, this function returns a `Json<CurrentUserResponse>` object, which includes the current user information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized.
+         * @summary Get the Current User
          * @param {CurrentUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -436,7 +439,8 @@ export const UserApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Get the list of users
+         * This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of users. It is tagged with \"user\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number.  - `pageSize`: The number of users per page.  - `email`: The email to filter the users by.  - `name`: The name to filter the users by.  ## Returns  If successful, this function returns a `Json<UserList>` object, which includes a success message, the total number of users, and the list of users.  <br> If no users are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no users are found.  # Example  GET /api/user-list?current=1&pageSize=10&email=test@test.com&name=Test
+         * @summary Get the List of Users
          * @param {number} current 
          * @param {number} page_size 
          * @param {string} [email] 
@@ -477,7 +481,8 @@ export const UserApiFp = function(configuration?: Configuration) {
 export const UserApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
-         * Get the current user
+         * This function is an API endpoint that allows an authenticated user to retrieve their current user information. It is tagged with \"user\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the current user information.  <br>  ## Returns  If successful, this function returns a `Json<CurrentUserResponse>` object, which includes the current user information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized.
+         * @summary Get the Current User
          * @param {CurrentUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -513,7 +518,8 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
             return UserApiFp(configuration).userUpdate(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Get the list of users
+         * This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of users. It is tagged with \"user\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number.  - `pageSize`: The number of users per page.  - `email`: The email to filter the users by.  - `name`: The name to filter the users by.  ## Returns  If successful, this function returns a `Json<UserList>` object, which includes a success message, the total number of users, and the list of users.  <br> If no users are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no users are found.  # Example  GET /api/user-list?current=1&pageSize=10&email=test@test.com&name=Test
+         * @summary Get the List of Users
          * @param {number} current 
          * @param {number} page_size 
          * @param {string} [email] 
@@ -547,7 +553,8 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
  */
 export class UserApi extends BaseAPI {
     /**
-     * Get the current user
+     * This function is an API endpoint that allows an authenticated user to retrieve their current user information. It is tagged with \"user\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the current user information.  <br>  ## Returns  If successful, this function returns a `Json<CurrentUserResponse>` object, which includes the current user information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the user is not authorized.
+     * @summary Get the Current User
      * @param {CurrentUserRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -587,7 +594,8 @@ export class UserApi extends BaseAPI {
         return UserApiFp(this.configuration).userUpdate(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Get the list of users
+     * This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of users. It is tagged with \"user\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number.  - `pageSize`: The number of users per page.  - `email`: The email to filter the users by.  - `name`: The name to filter the users by.  ## Returns  If successful, this function returns a `Json<UserList>` object, which includes a success message, the total number of users, and the list of users.  <br> If no users are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no users are found.  # Example  GET /api/user-list?current=1&pageSize=10&email=test@test.com&name=Test
+     * @summary Get the List of Users
      * @param {number} current 
      * @param {number} page_size 
      * @param {string} [email] 

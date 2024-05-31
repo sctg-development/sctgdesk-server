@@ -39,6 +39,7 @@ use state::{self};
 use ui;
 use utils::guid_into_uuid;
 use utils::AbProfile;
+use utils::AbRulesResponse;
 use utils::AbSharedAddRequest;
 use utils::{
     self, get_host::get_host, AbPeer, AbPeersResponse, AbPersonal, AbSettingsResponse,
@@ -144,6 +145,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 ab_shared,
                 ab_shared_add,
                 ab_settings,
+                ab_rules,
                 software,
                 software_version,
                 webconsole_index,
@@ -1689,6 +1691,51 @@ async fn software_version() -> Json<SoftwareVersionResponse> {
         client: None,
     };
     Json(response)
+}
+
+/// # List the rules
+///
+/// This function is an API endpoint that lists the rules attached to a shared address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+///
+/// ## Parameters
+/// 
+/// - `current`: The current page number for pagination. This parameter is currently unused.
+/// 
+/// - `pageSize`: The number of items per page for pagination. This parameter is currently unused.
+/// 
+/// - `ab`: The identifier of the shared address book.
+///
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<AbRulesResponse>` object containing the rules for the address book.  <br>
+/// If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>
+///
+/// ## Errors
+/// 
+/// This function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.
+///
+#[openapi(tag = "address book")]
+#[get("/api/ab/rules?<current>&<pageSize>&<ab>", format = "application/json")]
+async fn ab_rules(
+    state: &State<ApiState>,
+    _user: AuthenticatedUser,
+    current: u32,
+    #[allow(unused_variables)] pageSize: u32,
+    ab: &str,
+) -> Result<Json<AbRulesResponse>, status::Unauthorized<()>> {
+    state.check_maintenance().await;
+    let rules = state.get_ab_rules(current,pageSize,ab).await;
+    if rules.is_none() {
+        return Err(status::Unauthorized::<()>(()));
+    }
+    let rules = rules.unwrap();
+    let response = AbRulesResponse {
+        msg: "success".to_string(),
+        total: rules.len() as u32,
+        data: rules,
+    };
+    Ok(Json(response))
 }
 
 async fn webconsole_index_multi() -> Redirect {

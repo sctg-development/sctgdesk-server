@@ -27,6 +27,7 @@ use std::path::Path;
 use utils::guid_into_uuid;
 use utils::types::AddressBook;
 use utils::AbPeer;
+use utils::AbRule;
 use utils::AbTag;
 use utils::Group;
 use utils::Peer;
@@ -252,7 +253,10 @@ impl Database {
         .await
         .ok()?;
 
-        let ab = AddressBook { ab: res.ab, ..Default::default() };
+        let ab = AddressBook {
+            ab: res.ab,
+            ..Default::default()
+        };
 
         Some(ab)
     }
@@ -1322,7 +1326,8 @@ impl Database {
             WHERE
                 personal = 0
         "#,
-            user_id, user_id
+            user_id,
+            user_id
         )
         .fetch_all(&mut conn)
         .await
@@ -1339,5 +1344,54 @@ impl Database {
             });
         }
         Some(address_books)
+    }
+
+    pub async fn get_ab_rules(&self, offset: u32, page_size: u32, ab: &str) -> Option<Vec<AbRule>> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let ab_guid = Uuid::parse_str(ab);
+        if ab_guid.is_err() {
+            log::error!("get_ab_rules error: {:?}", ab_guid);
+            return None;
+        }
+        let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
+        let res = sqlx::query!(
+            r#"
+            SELECT
+                r.guid,
+                u.name as username,
+                g.name as groupname,
+                r.rule
+            FROM
+                ab_rule r
+            LEFT JOIN
+                user u ON u.guid = r.user
+            LEFT JOIN
+                grp g ON g.guid = r.grp
+            WHERE
+                ab = ?
+        "#,
+            ab_guid
+        )
+        .fetch_all(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("get_ab_rules error: {:?}", res);
+            return None;
+        }
+        let res = res.unwrap();
+        let mut ab_rules = Vec::new();
+        for row in res {
+            let uuid = guid_into_uuid(row.guid).unwrap_or("".to_string());
+            let user = row.username;
+            let group = row.groupname;
+            let ab_rule = AbRule {
+                user: user,
+                group: group,
+                rule: row.rule as u32,
+                guid: uuid,
+            };
+            ab_rules.push(ab_rule);
+        }
+        Some(ab_rules)
     }
 }

@@ -719,3 +719,18 @@ pub struct AbSharedAddRequest {
     pub name: String,
     pub note: Option<String>,
 }
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct AbRule {
+    pub guid: String,
+    pub user: Option<String>,
+    pub group: Option<String>,
+    pub rule: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct AbRulesResponse {
+    pub msg: String,
+    pub total: u32,
+    pub data: Vec<AbRule>,
+}
