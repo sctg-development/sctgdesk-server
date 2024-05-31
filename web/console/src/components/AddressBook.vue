@@ -119,6 +119,7 @@ import { AbPeer } from '@/api';
 
 const props = defineProps<{
     name: string,
-    peers: AbPeer[]
+    peers: AbPeer[],
+    isPersonal?: boolean,
 }>()
 </script>

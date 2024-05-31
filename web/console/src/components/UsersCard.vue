@@ -151,6 +151,7 @@ onMounted(() => {
  */
 function toggle_add_user(): void {
     bModalAddUser.value = !bModalAddUser.value;
+    refresh_users();
 }
 
 /**
@@ -163,6 +164,7 @@ function toggle_edit_user(username?: string, uuid?: string): void {
     editUserUuid.value = uuid || "";
     console.log(`Edit user: ${editUserName.value} (${editUserUuid.value})`)
     bModalEditUser.value = !bModalEditUser.value;
+    refresh_users();
 }
 /**
  * Retrieves the list of users from the API.

@@ -1,98 +1,59 @@
 <template>
-    <TransitionRoot appear :show="true" as="template">
-        <Dialog as="div" @close="closeModal" class="relative z-10">
-            <TransitionChild as="template" enter="duration-300 ease-out" enter-from="opacity-0" enter-to="opacity-100"
-                leave="duration-200 ease-in" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-black/25" />
-            </TransitionChild>
-
-            <div class="fixed inset-0 overflow-y-auto">
-                <div class="flex min-h-full items-center justify-center p-4 text-center">
-                    <TransitionChild as="template" enter="duration-300 ease-out" enter-from="opacity-0 scale-95"
-                        enter-to="opacity-100 scale-100" leave="duration-200 ease-in" leave-from="opacity-100 scale-100"
-                        leave-to="opacity-0 scale-95">
-                        <DialogPanel
-                            class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                            <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
-                                Edit User
-                            </DialogTitle>
-                            <div class="mt-2">
-                                <div>
-                                    <label for="name"
-                                        class="block text-sm font-medium leading-6 text-gray-900">Username</label>
-                                    <div class="mt-2">
-                                        <input v-model="name" id="name" name="name" type="text" required readonly
-                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label for="password"
-                                        class="block text-sm font-medium leading-6 text-gray-900">Password</label>
-                                    <div class="mt-2">
-                                        <input v-model="password" id="passwors" name="password" type="password" required
-                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label for="confirm-password"
-                                        class="block text-sm font-medium leading-6 text-gray-900">Confirm</label>
-                                    <div class="mt-2">
-                                        <input v-model="confirm_password" id="confirm_password" name="confirm_password"
-                                            type="password" required
-                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label for="email"
-                                        class="block text-sm font-medium leading-6 text-gray-900">Email</label>
-                                    <div class="mt-2">
-                                        <input v-model="email" id="email" name="email" type="text" required
-                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label for="note"
-                                        class="block text-sm font-medium leading-6 text-gray-900">Note</label>
-                                    <div class="mt-2">
-                                        <input v-model="note" id="note" name="note" type="text"
-                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label for="is_admin"
-                                        class="block text-sm font-medium leading-6 text-gray-900">Administrator</label>
-                                    <div class="mt-2">
-                                        <input v-model="is_admin" id="is_admin" name="is_admon" type="checkbox" required
-                                            class="block rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label for="grp"
-                                        class="block text-sm font-medium leading-6 text-gray-900">Group</label>
-                                    <div class="mt-2">
-                                        <select v-model="grp" id="grp" name="grp" required
-                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                            <option v-for="group in groups" :key="group.guid" :value="group.name">
-                                                {{ group.name }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4">
-                                <button type="button"
-                                    class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                                    @click="updateUser">
-                                    Update User
-                                </button>
-                            </div>
-                        </DialogPanel>
-                    </TransitionChild>
-                </div>
+    <Modal @modalOk="updateUser()" @modalCancel="closeModal()">
+        <div>
+            <label for="name" class="block text-sm font-medium leading-6 text-gray-900">Username</label>
+            <div class="mt-2">
+                <input v-model="name" id="name" name="name" type="text" required readonly
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
             </div>
-        </Dialog>
-    </TransitionRoot>
+        </div>
+        <div>
+            <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password</label>
+            <div class="mt-2">
+                <input v-model="password" id="passwors" name="password" type="password" required
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+            </div>
+        </div>
+        <div>
+            <label for="confirm-password" class="block text-sm font-medium leading-6 text-gray-900">Confirm</label>
+            <div class="mt-2">
+                <input v-model="confirm_password" id="confirm_password" name="confirm_password" type="password" required
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+            </div>
+        </div>
+        <div>
+            <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Email</label>
+            <div class="mt-2">
+                <input v-model="email" id="email" name="email" type="text" required
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+            </div>
+        </div>
+        <div>
+            <label for="note" class="block text-sm font-medium leading-6 text-gray-900">Note</label>
+            <div class="mt-2">
+                <input v-model="note" id="note" name="note" type="text"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+            </div>
+        </div>
+        <div>
+            <label for="is_admin" class="block text-sm font-medium leading-6 text-gray-900">Administrator</label>
+            <div class="mt-2">
+                <input v-model="is_admin" id="is_admin" name="is_admon" type="checkbox" required
+                    class="block rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+            </div>
+        </div>
+        <div>
+            <label for="grp" class="block text-sm font-medium leading-6 text-gray-900">Group</label>
+            <div class="mt-2">
+                <select v-model="grp" id="grp" name="grp" required
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                    <option v-for="group in groups" :key="group.guid" :value="group.name">
+                        {{ group.name }}
+                    </option>
+                </select>
+            </div>
+        </div>
+    </Modal>
 </template>
 <script setup lang="ts">
 import {
@@ -105,6 +66,7 @@ import {
 import { onMounted } from 'vue';
 import { ref } from 'vue';
 import { UpdateUserRequest, UserApi, GroupApi, Group, UserListResponse } from '@/api';
+import Modal from '@/components/Modal.vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 
 const userStore = useUserStore();

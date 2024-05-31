@@ -7,8 +7,8 @@ This website use:
 - And many others
 -->
 <template>
-    <AddressBook class="mb-4" name="Personal address book" :peers="ab_personal_peers" />
-    <AddressBook class="mb-4" v-for="sharedAddressBook in ab_shared_address_books" :key="sharedAddressBook.name" :name="sharedAddressBook.name" :peers="sharedAddressBook.peers" />
+    <AddressBook class="mb-4" name="Personal address book" :peers="ab_personal_peers" :isPersonal="true"/>
+    <AddressBook class="mb-4" v-for="sharedAddressBook in ab_shared_address_books" :key="sharedAddressBook.name" :name="sharedAddressBook.name" :peers="sharedAddressBook.peers" :isPersonal="false"/>
     <div class="h-24"></div>
 </template>
 <script setup lang="ts">
