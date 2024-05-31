@@ -1499,6 +1499,66 @@
         ]
       }
     },
+    "/api/ab/rules": {
+      "get": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "List the rules",
+        "description": "This function is an API endpoint that lists the rules attached to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `current`: The current page number for pagination. This parameter is currently unused.\n\n- `pageSize`: The number of items per page for pagination. This parameter is currently unused.\n\n- `ab`: The identifier of the shared address book.\n\n## Returns\n\nIf successful, this function returns a `Json<AbRulesResponse>` object containing the rules for the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.",
+        "operationId": "ab_rules",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "ab",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbRulesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
     "/api/software/client-download-link/{key}": {
       "get": {
         "tags": [
@@ -2594,6 +2654,55 @@
             "nullable": true
           },
           "max_peer_one_ab": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "AbRulesResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "msg",
+          "total"
+        ],
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbRule"
+            }
+          }
+        }
+      },
+      "AbRule": {
+        "type": "object",
+        "required": [
+          "guid",
+          "rule"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string",
+            "nullable": true
+          },
+          "group": {
+            "type": "string",
+            "nullable": true
+          },
+          "rule": {
             "type": "integer",
             "format": "uint32",
             "minimum": 0.0
