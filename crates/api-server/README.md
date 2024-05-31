@@ -116,6 +116,12 @@ DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo run --release
 
 <img width="1089" alt="Capture d’écran 2024-05-24 à 11 49 13" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/db13010b-077a-4e14-943b-9d8de3266f82">
 
+<img width="730" alt="Capture d’écran 2024-05-31 à 20 12 59" src="https://github.com/sctg-development/sctgdesk-api-server/assets/165936401/3a990deb-d8bb-4725-a47d-435ec3667fee">
+
+<img width="621" alt="Capture d’écran 2024-05-31 à 20 13 40" src="https://github.com/sctg-development/sctgdesk-api-server/assets/165936401/355f3903-2b54-4b08-abd0-e33c84a260ed">
+
+
+
 ### Api documentation
 
 <img width="1502" alt="apidoc" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/88fe7910-fe62-43e5-a16c-70dc1201e040">
