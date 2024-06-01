@@ -519,7 +519,8 @@
         "tags": [
           "user"
         ],
-        "description": "Get Users for client",
+        "summary": "Get Users for client",
+        "description": "This function is an API endpoint that retrieves all users.\n\n## Parameters\n\n- `current`: The current page number for pagination. This parameter is currently unused.\n\n- `pageSize`: The number of items per page for pagination. This parameter is currently unused.\n\n- `accessible`: A boolean value indicating whether the user is accessible. This parameter is currently unused.\n\n- `status`: The status of the user. This parameter is currently unused.\n\n## Returns\n\nIf successful, this function returns a `Json<UserList>` object containing the users.",
         "operationId": "users_client",
         "parameters": [
           {
@@ -588,7 +589,8 @@
         "tags": [
           "user"
         ],
-        "description": "Update current user password",
+        "summary": "Update user",
+        "description": "This function is an API endpoint that updates a user.<br> Normal user can only update themselves, admin can update any user.<br>\n\n## Parameters\n\n- `request`: A JSON object containing the updated user information.\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object containing the updated user information.",
         "operationId": "user_update",
         "requestBody": {
           "content": {
@@ -625,7 +627,8 @@
         "tags": [
           "user"
         ],
-        "description": "Add user",
+        "summary": "Add user",
+        "description": "This function is an API endpoint that adds a new user.\n\n## Parameters\n\n- `request`: A JSON object containing the new user information.\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object containing the updated user information.",
         "operationId": "user_add",
         "requestBody": {
           "content": {
@@ -664,7 +667,8 @@
         "tags": [
           "user"
         ],
-        "description": "Enable users",
+        "summary": "Enable users",
+        "description": "This function is an API endpoint that enables or disables users.\n\n## Parameters\n\n- `request`: A JSON object containing the list of users to enable or disable.\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object containing the updated user information.",
         "operationId": "user_enable",
         "requestBody": {
           "content": {
@@ -733,7 +737,8 @@
         "tags": [
           "todo"
         ],
-        "description": "List strategies",
+        "summary": "List strategies",
+        "description": "This function is an API endpoint that retrieves the list of all strategies. <br> TODO: This function is currently unused.",
         "operationId": "strategies",
         "responses": {
           "200": {
@@ -882,7 +887,8 @@
         "tags": [
           "todo"
         ],
-        "description": "Get OIDC Providers",
+        "summary": "Get OIDC Providers",
+        "description": "This function is an API endpoint that retrieves all OIDC providers.\n\nTODO: This function is currently unused.",
         "operationId": "oidc_get",
         "responses": {
           "200": {
@@ -909,7 +915,8 @@
         "tags": [
           "todo"
         ],
-        "description": "Add OIDC Provider",
+        "summary": "Add OIDC Provider",
+        "description": "This function is an API endpoint that adds an OIDC provider.\n\nTODO: This function is currently unused.",
         "operationId": "oidc_add",
         "requestBody": {
           "content": {
@@ -948,7 +955,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Add peer",
+        "summary": "Add peer",
+        "description": "This function is an API endpoint that adds a peer to an address book.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the new peer information.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.",
         "operationId": "ab_peer_add",
         "parameters": [
           {
@@ -993,7 +1001,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Update peer",
+        "summary": "Update peer",
+        "description": "This function is an API endpoint that updates a peer in an address book.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the updated peer information.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.",
         "operationId": "ab_peer_update",
         "parameters": [
           {
@@ -1038,7 +1047,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Delete peer",
+        "summary": "Delete peer",
+        "description": "This function is an API endpoint that deletes a peer from an address book.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing an array of peer IDs to be deleted.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.",
         "operationId": "ab_peer_delete",
         "parameters": [
           {
@@ -1436,7 +1446,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Add shared profile",
+        "summary": "Add shared profile",
+        "description": "TODO: Add shared profile",
         "operationId": "ab_shared_add",
         "requestBody": {
           "content": {
@@ -1470,12 +1481,52 @@
         ]
       }
     },
+    "/api/ab/shared": {
+      "delete": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Delete shared profiles",
+        "description": "TODO: Delete shared profiles",
+        "operationId": "ab_shared_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
     "/api/ab/settings": {
       "post": {
         "tags": [
           "address book"
         ],
-        "description": "Settings",
+        "summary": "Settings",
+        "description": "This function is an API endpoint that retrieves the settings for an address book.<br> TODO: Implement the settings for an address book.",
         "operationId": "ab_settings",
         "responses": {
           "200": {
@@ -1668,7 +1719,8 @@
         "tags": [
           "software"
         ],
-        "description": "Retrieve the server version",
+        "summary": "Retrieve the server version",
+        "description": "This function is an API endpoint that retrieves the version of the server. It is tagged with \"software\" for OpenAPI documentation.\n\n## Returns\n\nIf successful, this function returns a `Json<SoftwareVersionResponse>` object containing the version of the server.",
         "operationId": "software_version",
         "responses": {
           "200": {
