@@ -147,6 +147,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 ab_tag_delete,
                 ab_shared,
                 ab_shared_add,
+                ab_shared_delete,
                 ab_settings,
                 ab_rules,
                 ab_rule_add,
@@ -1297,20 +1298,10 @@ async fn ab_shared(
     Ok(Json(ab_shared_profiles))
 }
 
-/// Add shared profile
-#[openapi(tag = "address book")]
-#[post("/api/ab/shared/add", format = "application/json", data = "<request>")]
-async fn ab_shared_add(
-    state: &State<ApiState>,
-    _user: AuthenticatedAdmin,
-    request: Json<AbSharedAddRequest>,
-) -> Result<Json<AbSharedProfilesResponse>, status::Unauthorized<()>> {
-    state.check_maintenance().await;
-    let ab_shared_profiles = AbSharedProfilesResponse::default();
-    Ok(Json(ab_shared_profiles))
-}
-
-/// Settings
+/// # Settings
+/// 
+/// This function is an API endpoint that retrieves the settings for an address book.<br>
+/// TODO: Implement the settings for an address book.
 #[openapi(tag = "address book")]
 #[post("/api/ab/settings")]
 async fn ab_settings(
@@ -1370,7 +1361,19 @@ async fn ab_peers(
     Ok(Json(ab_peer_response))
 }
 
-/// Add peer
+/// # Add peer
+/// 
+/// This function is an API endpoint that adds a peer to an address book.
+/// 
+/// ## Parameters
+/// 
+/// - `ab`: The identifier of the address book.
+/// 
+/// - `request`: A JSON object containing the new peer information.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns an `ActionResponse::Empty` object.
 #[openapi(tag = "address book")]
 #[post(
     "/api/ab/peer/add/<ab>",
@@ -1389,7 +1392,19 @@ async fn ab_peer_add(
     Ok(ActionResponse::Empty)
 }
 
-/// Update peer
+/// # Update peer
+/// 
+/// This function is an API endpoint that updates a peer in an address book.
+/// 
+/// ## Parameters
+/// 
+/// - `ab`: The identifier of the address book.
+/// 
+/// - `request`: A JSON object containing the updated peer information.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns an `ActionResponse::Empty` object.
 #[openapi(tag = "address book")]
 #[put(
     "/api/ab/peer/update/<ab>",
@@ -1427,7 +1442,19 @@ async fn ab_peer_update(
     Ok(ActionResponse::Empty)
 }
 
-/// Delete peer
+/// # Delete peer
+/// 
+/// This function is an API endpoint that deletes a peer from an address book.
+/// 
+/// ## Parameters
+/// 
+/// - `ab`: The identifier of the address book.
+/// 
+/// - `request`: A JSON object containing an array of peer IDs to be deleted.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns an `ActionResponse::Empty` object.
 #[openapi(tag = "address book")]
 #[delete("/api/ab/peer/<ab>", format = "application/json", data = "<request>")]
 async fn ab_peer_delete(
@@ -1445,7 +1472,11 @@ async fn ab_peer_delete(
     Ok(ActionResponse::Empty)
 }
 
-/// List strategies
+/// # List strategies
+/// 
+/// This function is an API endpoint that retrieves the list of all strategies. <br>
+/// TODO: This function is currently unused.
+/// 
 #[openapi(tag = "todo")]
 #[get("/api/stategies", format = "application/json")]
 async fn strategies(
@@ -1464,7 +1495,17 @@ async fn strategies(
     Ok(Json(response))
 }
 
-/// Add user
+/// # Add user
+/// 
+/// This function is an API endpoint that adds a new user.
+/// 
+/// ## Parameters
+/// 
+/// - `request`: A JSON object containing the new user information.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
 #[openapi(tag = "user")]
 #[post("/api/user", format = "application/json", data = "<request>")]
 async fn user_add(
@@ -1496,7 +1537,17 @@ async fn user_add(
     Ok(Json(response))
 }
 
-/// Enable users
+/// # Enable users
+/// 
+/// This function is an API endpoint that enables or disables users.
+/// 
+/// ## Parameters
+/// 
+/// - `request`: A JSON object containing the list of users to enable or disable.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
 #[openapi(tag = "user")]
 #[post("/api/enable-users", format = "application/json", data = "<request>")]
 async fn user_enable(
@@ -1527,7 +1578,18 @@ async fn user_enable(
     Ok(Json(response))
 }
 
-/// Update current user password
+/// # Update user
+/// 
+/// This function is an API endpoint that updates a user.<br>
+/// Normal user can only update themselves, admin can update any user.<br>
+/// 
+/// ## Parameters
+/// 
+/// - `request`: A JSON object containing the updated user information.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
 #[openapi(tag = "user")]
 #[put("/api/user", format = "application/json", data = "<request>")]
 async fn user_update(
@@ -1561,7 +1623,11 @@ async fn user_update(
     Ok(Json(response))
 }
 
-/// Add OIDC Provider
+/// # Add OIDC Provider
+/// 
+/// This function is an API endpoint that adds an OIDC provider.
+/// 
+/// TODO: This function is currently unused.
 #[openapi(tag = "todo")]
 #[put("/api/oidc/settings", format = "application/json", data = "<_request>")]
 async fn oidc_add(
@@ -1575,7 +1641,11 @@ async fn oidc_add(
     Err(status::Unauthorized::<()>(()))
 }
 
-/// Get OIDC Providers
+/// # Get OIDC Providers
+/// 
+/// This function is an API endpoint that retrieves all OIDC providers.
+/// 
+/// TODO: This function is currently unused.
 #[openapi(tag = "todo")]
 #[get("/api/oidc/settings", format = "application/json")]
 async fn oidc_get(
@@ -1587,7 +1657,23 @@ async fn oidc_get(
     Err(status::Unauthorized::<()>(()))
 }
 
-/// Get Users for client
+/// # Get Users for client
+/// 
+/// This function is an API endpoint that retrieves all users.
+/// 
+/// ## Parameters
+/// 
+/// - `current`: The current page number for pagination. This parameter is currently unused.
+/// 
+/// - `pageSize`: The number of items per page for pagination. This parameter is currently unused.
+/// 
+/// - `accessible`: A boolean value indicating whether the user is accessible. This parameter is currently unused.
+/// 
+/// - `status`: The status of the user. This parameter is currently unused.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<UserList>` object containing the users.
 #[openapi(tag = "user")]
 #[get(
     "/api/users?<current>&<pageSize>&<accessible>&<status>",
@@ -1685,7 +1771,14 @@ async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<
     }
 }
 
-/// Retrieve the server version
+/// # Retrieve the server version
+/// 
+/// This function is an API endpoint that retrieves the version of the server.
+/// It is tagged with "software" for OpenAPI documentation.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<SoftwareVersionResponse>` object containing the version of the server.
 #[openapi(tag = "software")]
 #[get("/api/software/version/server", format = "application/json")]
 async fn software_version() -> Json<SoftwareVersionResponse> {
@@ -1806,6 +1899,35 @@ async fn ab_rule_delete(
     state.check_maintenance().await;
     let rule = request.0.guid;
     state.delete_ab_rule(rule.as_str()).await;
+    Ok(ActionResponse::Empty)
+}
+
+/// # Add shared profile
+/// 
+/// TODO: Add shared profile
+#[openapi(tag = "address book")]
+#[post("/api/ab/shared/add", format = "application/json", data = "<request>")]
+async fn ab_shared_add(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<AbSharedAddRequest>,
+) -> Result<Json<AbSharedProfilesResponse>, status::Unauthorized<()>> {
+    state.check_maintenance().await;
+    let ab_shared_profiles = AbSharedProfilesResponse::default();
+    Ok(Json(ab_shared_profiles))
+}
+
+/// # Delete shared profiles
+/// 
+/// TODO: Delete shared profiles
+#[openapi(tag = "address book")]
+#[delete("/api/ab/shared", format = "application/json", data = "<request>")]
+async fn ab_shared_delete(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<Vec<String>>,
+) -> Result<ActionResponse, status::Unauthorized<()>> {
+    state.check_maintenance().await;
     Ok(ActionResponse::Empty)
 }
 
