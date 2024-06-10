@@ -1736,6 +1736,56 @@
         }
       }
     },
+    "/api/software/releases/latest": {
+      "get": {
+        "tags": [
+          "software"
+        ],
+        "summary": "Retrieve the client version",
+        "description": "This function is an API endpoint that retrieves the version of the client. It copies the GitHub method of retrieving the latest release version. It is tagged with \"software\" for OpenAPI documentation.\n\nIt can be used by replacing the check_software_update() from the client. You can find the client code at rustdesk/src/common.rs ## Returns\n\nReturns in the location header the URL of the latest release. something like https://api-server/api/releases/tag/1.2.6",
+        "operationId": "software_releases_latest",
+        "responses": {
+          "500": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/releases/tag/{version}": {
+      "get": {
+        "tags": [
+          "software"
+        ],
+        "summary": "Simulate GitHub API for releases",
+        "description": "This function is an API endpoint that simulates the GitHub API for releases.\n\n## Parameters\n\n- `version`: The version of the release.\n\n## Returns\n\nReturns a `Json<SoftwareVersionResponse>` object containing the version of the release.",
+        "operationId": "software_releases_tag",
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareVersionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "tags": [
