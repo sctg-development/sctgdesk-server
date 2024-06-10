@@ -16,6 +16,7 @@
 use aws_config::{BehaviorVersion, ConfigLoader};
 use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::{config::Region, Client};
+use regex::Regex;
 use serde::Deserialize;
 use std::error::Error;
 use std::fs;
@@ -168,4 +169,30 @@ mod tests {
 
         assert_eq!(status, StatusCode::OK);
     }
+}
+
+pub async fn extract_version() -> Result<String, Box<dyn std::error::Error>> {
+    let config = get_s3_config_file().await?;
+
+    // Create a regex to match the version number
+    let re = Regex::new(r"\d+\.\d+\.\d+")?;
+
+    // List all keys containing the version number
+    let keys = [
+        &config.s3config.windows64_key,
+        &config.s3config.windows32_key,
+        &config.s3config.osxkey,
+        &config.s3config.osxarm64_key,
+        &config.s3config.ioskey,
+    ];
+
+    // Extract the version number from the keys
+    for key in &keys {
+        if let Some(captures) = re.captures(key) {
+            return Ok(String::from(captures.get(0).unwrap().as_str()));
+        }
+    }
+
+
+    Err("No version found".into())
 }

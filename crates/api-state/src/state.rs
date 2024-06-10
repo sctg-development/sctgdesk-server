@@ -676,4 +676,20 @@ impl ApiState {
     pub async fn add_ab_rule(&self, rule: AbRule) -> Option<()> {
         self.db.add_ab_rule(rule).await
     }
+
+    /// Add a shared address book given its name and its owner
+    /// It returns the guid of the shared address book
+    /// 
+    /// # Arguments
+    /// 
+    /// - `name` - The name of the shared address book
+    /// 
+    /// - `owner` - The owner of the shared address book
+    /// 
+    /// # Returns
+    /// 
+    /// - `Option<String>` - The guid of the shared address book
+    pub async fn add_shared_address_book(&self, name: &str, owner: UserId) -> Option<String> {
+        self.db.add_shared_address_book(name, owner).await
+    }
 }

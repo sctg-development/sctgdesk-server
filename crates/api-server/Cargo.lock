@@ -2642,6 +2642,7 @@ dependencies = [
  "aws-config",
  "aws-sdk-s3",
  "log",
+ "regex",
  "serde",
  "tokio",
  "toml 0.5.11",

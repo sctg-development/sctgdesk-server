@@ -1468,4 +1468,27 @@ impl Database {
         }
         Some(())
     }
+
+    pub async fn add_shared_address_book(&self, name: &str, owner: UserId) -> Option<String>
+    {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let ab_guid = Uuid::new_v4().as_bytes().to_vec();
+        let res = sqlx::query!(
+            r#"
+            INSERT OR IGNORE INTO ab(guid, name, owner, personal, info)
+                VALUES (?, ?, ?, 0, '{}')
+        "#,
+            ab_guid,
+            name,
+            owner
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("add_shared_address_book error: {:?}", res);
+            return None;
+        }
+        
+        Some(guid_into_uuid(ab_guid)?)
+    }
 }

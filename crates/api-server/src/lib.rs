@@ -15,6 +15,7 @@
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
 mod api;
 mod extended_json;
+mod extended_request;
 
 use std::collections::HashMap;
 use std::env;
@@ -24,6 +25,7 @@ use std::sync::Arc;
 
 use api::ActionResponse;
 use extended_json::ExtendedJson;
+use extended_request::ExtendedRequest;
 use oauth2::oauth_provider::OAuthProvider;
 use oauth2::oauth_provider::OAuthProviderFactory;
 use rocket::fairing::{Fairing, Info, Kind};
@@ -49,6 +51,7 @@ use utils::{
     AbSharedProfilesResponse, AbTag, BearerAuthToken, OidcAuthRequest, OidcAuthUrl, OidcResponse,
     OidcState, OidcUser, OidcUserInfo, OidcUserStatus,
 };
+use s3software::extract_version;
 
 use base64::prelude::{Engine as _, BASE64_STANDARD};
 use rocket::{
@@ -57,7 +60,7 @@ use rocket::{
 use state::{ApiState, UserPasswordInfo};
 use utils::{
     include_png_as_base64, unwrap_or_return, uuid_into_guid, AbTagRenameRequest, AddUserRequest,
-    AddressBook, EnableUserRequest, Group, GroupsResponse, OidcSettingsResponse, PeersResponse,
+    AddressBook, EnableUserRequest, GroupsResponse, OidcSettingsResponse, PeersResponse,
     SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList,
 };
 use utils::{
@@ -154,6 +157,8 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 ab_rule_delete,
                 software,
                 software_version,
+                software_releases_latest,
+                software_releases_tag,
                 webconsole_index,
                 webconsole_index_html,
                 // webconsole_assets,
@@ -1791,6 +1796,58 @@ async fn software_version() -> Json<SoftwareVersionResponse> {
     Json(response)
 }
 
+/// # Retrieve the client version
+/// 
+/// This function is an API endpoint that retrieves the version of the client.
+/// It copies the GitHub method of retrieving the latest release version.
+/// It is tagged with "software" for OpenAPI documentation.
+/// 
+/// It can be used by replacing the check_software_update() from the client.
+/// You can find the client code at rustdesk/src/common.rs
+/// ## Returns
+/// 
+/// Returns in the location header the URL of the latest release.
+/// something like https://api-server/api/releases/tag/1.2.6
+#[openapi(tag = "software")]
+#[get("/api/software/releases/latest")]
+async fn software_releases_latest(
+    request: ExtendedRequest,
+) -> Redirect {
+    log::debug!("software_releases_latest");
+    let headers = request.headers;
+    let host = get_host(headers);
+    let version = extract_version().await.map_err(|e| status::NotFound(Box::new(e)));
+    if version.is_err() {
+        return Redirect::to(format!("{}/api/software/releases/0.0.0",host));
+    }
+    let version = version.unwrap();
+    let url = format!("{}/api/releases/tag/{}",host, version);
+    Redirect::to(url)
+}
+
+/// # Simulate GitHub API for releases
+/// 
+/// This function is an API endpoint that simulates the GitHub API for releases.
+/// 
+/// ## Parameters
+/// 
+/// - `version`: The version of the release.
+/// 
+/// ## Returns
+/// 
+/// Returns a `Json<SoftwareVersionResponse>` object containing the version of the release.
+#[openapi(tag = "software")]
+#[get("/api/releases/tag/<version>")]
+async fn software_releases_tag(
+    version: &str,
+) -> Result<Json<SoftwareVersionResponse>, status::NotFound<()>> {
+    log::debug!("software_releases_tag");
+    let response = SoftwareVersionResponse {
+        server: None,
+        client: Some(version.to_string()),
+    };
+    Ok(Json(response))
+}
 /// # List the rules
 ///
 /// This function is an API endpoint that lists the rules attached to a shared address book.
