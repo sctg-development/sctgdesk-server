@@ -24,6 +24,8 @@ use std::time::Duration;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct S3Config {
+    #[serde(rename = "Page")]
+    pub page: String,
     #[serde(rename = "Endpoint")]
     pub endpoint: String,
     #[serde(rename = "Region")]
@@ -195,4 +197,9 @@ pub async fn extract_version() -> Result<String, Box<dyn std::error::Error>> {
 
 
     Err("No version found".into())
+}
+
+pub async fn get_software_download_page() -> Result<String, Box<dyn std::error::Error>> {
+    let config = get_s3_config_file().await?;
+    Ok(config.s3config.page)
 }

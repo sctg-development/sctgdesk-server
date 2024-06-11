@@ -35,6 +35,7 @@ use rocket::response::{Redirect, Responder};
 use rocket::{async_trait, delete, options, put, routes, uri};
 use rocket::{Request, Response};
 
+use s3software::get_software_download_page;
 use s3software::{get_s3_config_file, get_signed_release_url_with_config};
 use state::{self};
 #[cfg(feature = "ui")]
@@ -158,6 +159,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 software,
                 software_version,
                 software_releases_latest,
+                software_download,
                 software_releases_tag,
                 webconsole_index,
                 webconsole_index_html,
@@ -1720,6 +1722,7 @@ async fn users_client(
 ///
 /// <pre>
 /// [s3config]<br>
+/// Page = "https://github.com/rustdesk/rustdesk/releases/latest"<br>
 /// Endpoint = "https://compat.objectstorage.eu-london-1.oraclecloud.com"<br>
 /// Region = "eu-london-1"<br>
 /// AccessKey = "c324ead11faa0d87337c07ddc4a1129fab76188d"<br>
@@ -1858,6 +1861,18 @@ async fn software_releases_tag(
         client: Some(version.to_string()),
     };
     Ok(Json(response))
+}
+
+/// # Redirect to the software download page
+/// 
+/// This function is an API endpoint that redirects to the software download page.
+/// You must set the `Page` key in the `s3config` of the S3 configuration file.
+/// 
+#[openapi(tag = "software")]
+#[get("/api/software/download")]
+async fn software_download() -> Redirect {
+let url = get_software_download_page().await.unwrap_or("https://github.com/sctg-development/sctgdesk".to_string());
+    Redirect::to(url)
 }
 /// # List the rules
 ///
