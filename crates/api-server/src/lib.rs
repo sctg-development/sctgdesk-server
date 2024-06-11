@@ -1832,7 +1832,7 @@ async fn software_releases_latest(
         return Redirect::to(format!("{}/api/software/releases/0.0.0",host));
     }
     let version = version.unwrap();
-    let url = format!("{}/api/releases/tag/{}",host, version);
+    let url = format!("{}/api/software/releases/tag/{}",host, version);
     Redirect::to(url)
 }
 
@@ -1848,7 +1848,7 @@ async fn software_releases_latest(
 /// 
 /// Returns a `Json<SoftwareVersionResponse>` object containing the version of the release.
 #[openapi(tag = "software")]
-#[get("/api/releases/tag/<version>")]
+#[get("/api/software/releases/tag/<version>")]
 async fn software_releases_tag(
     version: &str,
 ) -> Result<Json<SoftwareVersionResponse>, status::NotFound<()>> {
