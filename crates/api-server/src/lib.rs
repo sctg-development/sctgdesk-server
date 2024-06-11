@@ -1808,6 +1808,16 @@ async fn software_version() -> Json<SoftwareVersionResponse> {
 /// 
 /// Returns in the location header the URL of the latest release.
 /// something like https://api-server/api/releases/tag/1.2.6
+/// 
+/// ## Example
+/// 
+/// It is easy to modify the client code to use this API endpoint.
+/// this is how we can modify the client code to use this API endpoint.
+/// ```rust
+///     // see https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972
+///     let url=format!("{}/api/software/releases/latest",get_api_server("".to_owned(), "".to_owned())).to_owned();
+///     log::info!("URL for checking software updates: {}", url);
+/// ```
 #[openapi(tag = "software")]
 #[get("/api/software/releases/latest")]
 async fn software_releases_latest(
