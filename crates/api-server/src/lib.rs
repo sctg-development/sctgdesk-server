@@ -1813,11 +1813,12 @@ async fn software_version() -> Json<SoftwareVersionResponse> {
 /// 
 /// It is easy to modify the client code to use this API endpoint.
 /// this is how we can modify the client code to use this API endpoint.
-/// ```rust
-///     // see https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972
-///     let url=format!("{}/api/software/releases/latest",get_api_server("".to_owned(), "".to_owned())).to_owned();
-///     log::info!("URL for checking software updates: {}", url);
-/// ```
+/// 
+/// <pre>
+///     // see <a href='https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972'>Sample modification on github</a><br>
+///     let url=format!("{}/api/software/releases/latest",get_api_server("".to_owned(), "".to_owned())).to_owned();<br>
+///     log::info!("URL for checking software updates: {}", url);<br>
+/// </pre>
 #[openapi(tag = "software")]
 #[get("/api/software/releases/latest")]
 async fn software_releases_latest(
