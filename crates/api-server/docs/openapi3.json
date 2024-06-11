@@ -1685,7 +1685,7 @@
         "tags": [
           "software"
         ],
-        "description": "Get the software download url\n\n# Arguments\n\n* `key` - The key to the software download link, it can be `osx`, `w64` or `ios`\n\n# Usage\n\n* it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable\n\n<pre> [s3config]<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>",
+        "description": "Get the software download url\n\n# Arguments\n\n* `key` - The key to the software download link, it can be `osx`, `w64` or `ios`\n\n# Usage\n\n* it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable\n\n<pre> [s3config]<br> Page = \"https://github.com/rustdesk/rustdesk/releases/latest\"<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>",
         "operationId": "software",
         "parameters": [
           {
@@ -1744,6 +1744,21 @@
         "summary": "Retrieve the client version",
         "description": "This function is an API endpoint that retrieves the version of the client. It copies the GitHub method of retrieving the latest release version. It is tagged with \"software\" for OpenAPI documentation.\n\nIt can be used by replacing the check_software_update() from the client. You can find the client code at rustdesk/src/common.rs ## Returns\n\nReturns in the location header the URL of the latest release. something like https://api-server/api/releases/tag/1.2.6\n\n## Example\n\nIt is easy to modify the client code to use this API endpoint. this is how we can modify the client code to use this API endpoint.\n\n<pre> // see <a href='https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972'>Sample modification on github</a><br> let url=format!(\"{}/api/software/releases/latest\",get_api_server(\"\".to_owned(), \"\".to_owned())).to_owned();<br> log::info!(\"URL for checking software updates: {}\", url);<br> </pre>",
         "operationId": "software_releases_latest",
+        "responses": {
+          "500": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/software/download": {
+      "get": {
+        "tags": [
+          "software"
+        ],
+        "summary": "Redirect to the software download page",
+        "description": "This function is an API endpoint that redirects to the software download page. You must set the `Page` key in the `s3config` of the S3 configuration file.",
+        "operationId": "software_download",
         "responses": {
           "500": {
             "description": ""
