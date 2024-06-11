@@ -1751,7 +1751,7 @@
         }
       }
     },
-    "/api/releases/tag/{version}": {
+    "/api/software/releases/tag/{version}": {
       "get": {
         "tags": [
           "software"
