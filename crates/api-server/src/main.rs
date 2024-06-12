@@ -18,22 +18,65 @@ use rocket::{
     data::{Limits, ToByteUnit},
 };
 use sctgdesk_api_server::build_rocket;
+use clap::{Arg, Command};
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
-    //Run the API Server
-    let figment = rocket::Config::figment()
-        .merge(("address", "0.0.0.0"))
-        .merge(("port", 21114))
-        .merge(("log_level", LogLevel::Debug))
-        .merge(("secret_key", "wJq+s/xvwZjmMX3ev0p4gQTs9Ej5wt0brsk3ZGhoBTg="))
-        .merge(("ident",  format!("SCTGDeskApiServer/{}", env!("CARGO_PKG_VERSION"))))
-        // .merge(("tls.certs", "rustdesk.crt"))
-        // .merge(("tls.key", "rustdesk.pem"))
-        .merge(("limits", Limits::new().limit("json", 2.mebibytes())));
-    let _rocket = build_rocket(figment).await.ignite().await?.launch().await?;
-    // End of API Server start
+    // Command line argument parsing
+    let matches = Command::new("SCTGDeskApiServer")
+        .version(env!("CARGO_PKG_VERSION"))
+        .about("Runs the SCTGDesk API Server")
+        .arg(Arg::new("address")
+            .long("address")
+            .value_name("ADDRESS")
+            .about("Sets the address for the server")
+            .takes_value(true)
+            .default_value("127.0.0.1"))
+        .arg(Arg::new("port")
+            .long("port")
+            .value_name("PORT")
+            .about("Sets the port for the server")
+            .takes_value(true)
+            .default_value("21114"))
+        .arg(Arg::new("log_level")
+            .long("log_level")
+            .value_name("LOG_LEVEL")
+            .about("Sets the log level for the server")
+            .takes_value(true)
+            .default_value("debug"))
+        .arg(Arg::new("secret_key")
+            .long("secret_key")
+            .value_name("SECRET_KEY")
+            .about("Sets the secret key for the server")
+            .takes_value(true)
+            .default_value("wJq+s/xvwZjmMX3ev0p4gQTs9Ej5wt0brsk3ZGhoBTg="))
+        .get_matches();
 
+    // Get values from command line arguments
+    let address = matches.value_of("address").unwrap();
+    let port = matches.value_of("port").unwrap().parse::<u16>().unwrap();
+    let log_level = match matches.value_of("log_level").unwrap().to_lowercase().as_str() {
+        "off" => LogLevel::Off,
+        "critical" => LogLevel::Critical,
+        "normal" => LogLevel::Normal,
+        "debug" => LogLevel::Debug,
+        _ => LogLevel::Debug,
+    };
+    let secret_key = matches.value_of("secret_key").unwrap();
+
+    // Configure Rocket
+    let figment = rocket::Config::figment()
+        .merge(("address", address))
+        .merge(("port", port))
+        .merge(("log_level", log_level))
+        .merge(("secret_key", secret_key))
+        .merge(("ident", format!("SCTGDeskApiServer/{}", env!("CARGO_PKG_VERSION"))))
+        .merge(("limits", Limits::new().limit("json", 2.mebibytes())));
+
+    // Launch Rocket
+    let _rocket = build_rocket(figment).await.ignite().await?.launch().await?;
+    
+    // End of API Server start
     // Other stuff here
     Ok(())
 }
