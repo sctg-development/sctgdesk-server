@@ -99,8 +99,25 @@ Each time you modify the code, the server will automatically rebuild and reload 
 
 The server can be run as a standalone server. To run the server, execute the following command:
 
+In  development mode:
 ```bash
 DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo run --release
+```
+
+In production mode:
+```bash
+sctgdesk-api-server --help
+Runs the SCTGDesk API Server
+
+Usage: sctgdesk-api-server [OPTIONS]
+
+Options:
+      --address <ADDRESS>        Sets the address for the server [default: 127.0.0.1]
+      --port <PORT>              Sets the port for the server [default: 21114]
+      --log_level <LOG_LEVEL>    Sets the log level for the server [default: debug]
+      --secret_key <SECRET_KEY>  Sets the secret key for the server [default: wJq+s/xvwZjmMX3ev0p4gQTs9Ej5wt0brsk3ZGhoBTg=]
+  -h, --help                     Print help
+  -V, --version                  Print version
 ```
 ## Screenshots
 
