@@ -406,19 +406,141 @@
         ]
       }
     },
+    "/api/group/{guid}": {
+      "get": {
+        "tags": [
+          "group"
+        ],
+        "summary": "Get a Group",
+        "description": "This function is an API endpoint that allows an authenticated admin to retrieve a group. It is tagged with \"group\" for OpenAPI documentation.\n\n## Parameters\n\n- `guid`: The GUID of the group to retrieve.\n\n## Returns\n\nIf successful, this function returns a `Json<Group>` object If the group is not found, this function returns a `status::NotFound` error.",
+        "operationId": "group_get",
+        "parameters": [
+          {
+            "name": "guid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "group"
+        ],
+        "summary": "Delete a group",
+        "description": "This function is an API endpoint that allows an authenticated admin to delete a group. It is tagged with \"group\" for OpenAPI documentation.\n\n## Parameters\n\n- `guid`: The GUID of the group to retrieve.\n\n## Returns",
+        "operationId": "group_delete",
+        "parameters": [
+          {
+            "name": "guid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
     "/api/group": {
+      "put": {
+        "tags": [
+          "group"
+        ],
+        "summary": "Update a group",
+        "description": "This function is an API endpoint that allows an authenticated admin to update a group.<br> Todo allow to use different team\n\n## Parameters\n\n- `guid`: The request data, which includes the details of the group to be updated.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br>",
+        "operationId": "group_update",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGoupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      },
       "post": {
         "tags": [
           "group"
         ],
-        "summary": "Add a Group (todo)",
-        "description": "This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the details of the group to be added.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the admin is not authorized.\n\n# Example\n\nPOST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}",
+        "summary": "Add a Group",
+        "description": "This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation..<br> Todo allow to use different team\n\n## Parameters\n\n- `request`: The request data, which includes the details of the group to be added.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the admin is not authorized.\n\n# Example\n\nPOST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}",
         "operationId": "group_add",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddUserRequest"
+                "$ref": "#/components/schemas/AddGoupRequest"
               }
             }
           },
@@ -2238,34 +2360,65 @@
           }
         }
       },
-      "AddUserRequest": {
+      "AddGoupRequest": {
         "type": "object",
         "required": [
-          "confirm-password",
-          "email",
-          "group_name",
-          "is_admin",
+          "allowed_incomings",
+          "allowed_outgoings",
           "name",
-          "password"
+          "note"
         ],
         "properties": {
           "name": {
             "type": "string"
           },
-          "password": {
+          "note": {
             "type": "string"
           },
-          "confirm-password": {
+          "allowed_outgoings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowed_incomings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "UpdateGoupRequest": {
+        "type": "object",
+        "required": [
+          "allowed_incomings",
+          "allowed_outgoings",
+          "guid",
+          "name",
+          "note"
+        ],
+        "properties": {
+          "guid": {
             "type": "string"
           },
-          "email": {
+          "name": {
             "type": "string"
           },
-          "is_admin": {
-            "type": "boolean"
-          },
-          "group_name": {
+          "note": {
             "type": "string"
+          },
+          "allowed_outgoings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowed_incomings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -2326,6 +2479,37 @@
           },
           "is_admin": {
             "type": "boolean"
+          }
+        }
+      },
+      "AddUserRequest": {
+        "type": "object",
+        "required": [
+          "confirm-password",
+          "email",
+          "group_name",
+          "is_admin",
+          "name",
+          "password"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "confirm-password": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "is_admin": {
+            "type": "boolean"
+          },
+          "group_name": {
+            "type": "string"
           }
         }
       },
