@@ -151,11 +151,11 @@ jobs:
         </html>
         EOF
 
-    # - name: Upload artifact
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: ${{ matrix.target }}
-    #     path: target/${{ matrix.target }}/release/
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.target }}
+        path: target/${{ matrix.target }}/release/
 
     - name: Publish CI binary (${{ matrix.target }})
       continue-on-error: true
