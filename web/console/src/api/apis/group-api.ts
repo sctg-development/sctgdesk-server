@@ -17,8 +17,10 @@ import { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
-import { AddUserRequest } from '../models';
+import { AddGoupRequest } from '../models';
+import { Group } from '../models';
 import { GroupsResponse } from '../models';
+import { UpdateGoupRequest } from '../models';
 import { UsersResponse } from '../models';
 /**
  * GroupApi - axios parameter creator
@@ -27,13 +29,13 @@ import { UsersResponse } from '../models';
 export const GroupApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
-         * @summary Add a Group (todo)
-         * @param {AddUserRequest} body 
+         * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation..<br> Todo allow to use different team  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
+         * @summary Add a Group
+         * @param {AddGoupRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        groupAdd: async (body: AddUserRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        groupAdd: async (body: AddGoupRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling groupAdd.');
@@ -46,6 +48,165 @@ export const GroupApiAxiosParamCreator = function (configuration?: Configuration
                 baseOptions = configuration.baseOptions;
             }
             const localVarRequestOptions :AxiosRequestConfig = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization_admin required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that allows an authenticated admin to delete a group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `guid`: The GUID of the group to retrieve.  ## Returns
+         * @summary Delete a group
+         * @param {Array<string>} body 
+         * @param {string} guid 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        groupDelete: async (body: Array<string>, guid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling groupDelete.');
+            }
+            // verify required parameter 'guid' is not null or undefined
+            if (guid === null || guid === undefined) {
+                throw new RequiredError('guid','Required parameter guid was null or undefined when calling groupDelete.');
+            }
+            const localVarPath = `/api/group/{guid}`
+                .replace(`{${"guid"}}`, encodeURIComponent(String(guid)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization_admin required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that allows an authenticated admin to retrieve a group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `guid`: The GUID of the group to retrieve.  ## Returns  If successful, this function returns a `Json<Group>` object If the group is not found, this function returns a `status::NotFound` error.
+         * @summary Get a Group
+         * @param {string} guid 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        groupGet: async (guid: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'guid' is not null or undefined
+            if (guid === null || guid === undefined) {
+                throw new RequiredError('guid','Required parameter guid was null or undefined when calling groupGet.');
+            }
+            const localVarPath = `/api/group/{guid}`
+                .replace(`{${"guid"}}`, encodeURIComponent(String(guid)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization_admin required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that allows an authenticated admin to update a group.<br> Todo allow to use different team  ## Parameters  - `guid`: The request data, which includes the details of the group to be updated.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br>
+         * @summary Update a group
+         * @param {UpdateGoupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        groupUpdate: async (body: UpdateGoupRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling groupUpdate.');
+            }
+            const localVarPath = `/api/group`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'PUT', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -149,14 +310,57 @@ export const GroupApiAxiosParamCreator = function (configuration?: Configuration
 export const GroupApiFp = function(configuration?: Configuration) {
     return {
         /**
-         * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
-         * @summary Add a Group (todo)
-         * @param {AddUserRequest} body 
+         * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation..<br> Todo allow to use different team  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
+         * @summary Add a Group
+         * @param {AddGoupRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async groupAdd(body: AddUserRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<UsersResponse>>> {
+        async groupAdd(body: AddGoupRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<UsersResponse>>> {
             const localVarAxiosArgs = await GroupApiAxiosParamCreator(configuration).groupAdd(body, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * This function is an API endpoint that allows an authenticated admin to delete a group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `guid`: The GUID of the group to retrieve.  ## Returns
+         * @summary Delete a group
+         * @param {Array<string>} body 
+         * @param {string} guid 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async groupDelete(body: Array<string>, guid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<void>>> {
+            const localVarAxiosArgs = await GroupApiAxiosParamCreator(configuration).groupDelete(body, guid, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * This function is an API endpoint that allows an authenticated admin to retrieve a group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `guid`: The GUID of the group to retrieve.  ## Returns  If successful, this function returns a `Json<Group>` object If the group is not found, this function returns a `status::NotFound` error.
+         * @summary Get a Group
+         * @param {string} guid 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async groupGet(guid: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<Group>>> {
+            const localVarAxiosArgs = await GroupApiAxiosParamCreator(configuration).groupGet(guid, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * This function is an API endpoint that allows an authenticated admin to update a group.<br> Todo allow to use different team  ## Parameters  - `guid`: The request data, which includes the details of the group to be updated.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br>
+         * @summary Update a group
+         * @param {UpdateGoupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async groupUpdate(body: UpdateGoupRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<UsersResponse>>> {
+            const localVarAxiosArgs = await GroupApiAxiosParamCreator(configuration).groupUpdate(body, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -187,14 +391,45 @@ export const GroupApiFp = function(configuration?: Configuration) {
 export const GroupApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
-         * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
-         * @summary Add a Group (todo)
-         * @param {AddUserRequest} body 
+         * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation..<br> Todo allow to use different team  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
+         * @summary Add a Group
+         * @param {AddGoupRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async groupAdd(body: AddUserRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<UsersResponse>> {
+        async groupAdd(body: AddGoupRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<UsersResponse>> {
             return GroupApiFp(configuration).groupAdd(body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * This function is an API endpoint that allows an authenticated admin to delete a group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `guid`: The GUID of the group to retrieve.  ## Returns
+         * @summary Delete a group
+         * @param {Array<string>} body 
+         * @param {string} guid 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async groupDelete(body: Array<string>, guid: string, options?: AxiosRequestConfig): Promise<AxiosResponse<void>> {
+            return GroupApiFp(configuration).groupDelete(body, guid, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * This function is an API endpoint that allows an authenticated admin to retrieve a group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `guid`: The GUID of the group to retrieve.  ## Returns  If successful, this function returns a `Json<Group>` object If the group is not found, this function returns a `status::NotFound` error.
+         * @summary Get a Group
+         * @param {string} guid 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async groupGet(guid: string, options?: AxiosRequestConfig): Promise<AxiosResponse<Group>> {
+            return GroupApiFp(configuration).groupGet(guid, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * This function is an API endpoint that allows an authenticated admin to update a group.<br> Todo allow to use different team  ## Parameters  - `guid`: The request data, which includes the details of the group to be updated.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br>
+         * @summary Update a group
+         * @param {UpdateGoupRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async groupUpdate(body: UpdateGoupRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<UsersResponse>> {
+            return GroupApiFp(configuration).groupUpdate(body, options).then((request) => request(axios, basePath));
         },
         /**
          * This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of groups. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number.  - `pageSize`: The number of groups per page.  ## Returns  If successful, this function returns a `Json<GroupsResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If no groups are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no groups are found.  # Example  GET /api/groups?current=1&pageSize=10
@@ -218,15 +453,49 @@ export const GroupApiFactory = function (configuration?: Configuration, basePath
  */
 export class GroupApi extends BaseAPI {
     /**
-     * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
-     * @summary Add a Group (todo)
-     * @param {AddUserRequest} body 
+     * This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation..<br> Todo allow to use different team  ## Parameters  - `request`: The request data, which includes the details of the group to be added.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the admin is not authorized.  # Example  POST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}
+     * @summary Add a Group
+     * @param {AddGoupRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof GroupApi
      */
-    public async groupAdd(body: AddUserRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<UsersResponse>> {
+    public async groupAdd(body: AddGoupRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<UsersResponse>> {
         return GroupApiFp(this.configuration).groupAdd(body, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that allows an authenticated admin to delete a group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `guid`: The GUID of the group to retrieve.  ## Returns
+     * @summary Delete a group
+     * @param {Array<string>} body 
+     * @param {string} guid 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GroupApi
+     */
+    public async groupDelete(body: Array<string>, guid: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<void>> {
+        return GroupApiFp(this.configuration).groupDelete(body, guid, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that allows an authenticated admin to retrieve a group. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `guid`: The GUID of the group to retrieve.  ## Returns  If successful, this function returns a `Json<Group>` object If the group is not found, this function returns a `status::NotFound` error.
+     * @summary Get a Group
+     * @param {string} guid 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GroupApi
+     */
+    public async groupGet(guid: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<Group>> {
+        return GroupApiFp(this.configuration).groupGet(guid, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that allows an authenticated admin to update a group.<br> Todo allow to use different team  ## Parameters  - `guid`: The request data, which includes the details of the group to be updated.  <br>  ## Returns  If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br>
+     * @summary Update a group
+     * @param {UpdateGoupRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof GroupApi
+     */
+    public async groupUpdate(body: UpdateGoupRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<UsersResponse>> {
+        return GroupApiFp(this.configuration).groupUpdate(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of groups. It is tagged with \"group\" for OpenAPI documentation.  ## Parameters  - `current`: The current page number.  - `pageSize`: The number of groups per page.  ## Returns  If successful, this function returns a `Json<GroupsResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If no groups are found, this function returns a `status::NotFound` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if no groups are found.  # Example  GET /api/groups?current=1&pageSize=10

@@ -761,3 +761,20 @@ pub struct CpuCount {
     pub cpu: String,
     pub total: u32,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+pub struct AddGoupRequest {
+    pub name: String,
+    pub note: String,
+    pub allowed_outgoings: Vec<String>,
+    pub allowed_incomings: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+pub struct UpdateGoupRequest {
+    pub guid: String,
+    pub name: String,
+    pub note: String,
+    pub allowed_outgoings: Vec<String>,
+    pub allowed_incomings: Vec<String>,
+}

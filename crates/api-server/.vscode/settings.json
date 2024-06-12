@@ -15,10 +15,12 @@
     ],
     "sqltools.useNodeRuntime": true,
     "terminal.integrated.env.osx": {
-        "DATABASE_URL": "sqlite://${workspaceFolder}/db_v2.sqlite3"
+        "DATABASE_URL": "sqlite:///Users/rlemeill/Development/sctgdesk-api-server/db_v2.sqlite3"
     },
-    "rust-analyzer.checkOnSave": true,
     "rust-analyzer.runnables.extraEnv": {
-        "DATABASE_URL": "sqlite://${workspaceFolder}/db_v2.sqlite3"
-    }
+        "DATABASE_URL": "sqlite:///Users/rlemeill/Development/sctgdesk-api-server/db_v2.sqlite3"
+    },
+    "rust-analyzer.cargo.extraEnv": {
+        "DATABASE_URL": "sqlite:///Users/rlemeill/Development/sctgdesk-api-server/db_v2.sqlite3"
+    },
 }

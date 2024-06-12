@@ -31,7 +31,8 @@ use oauth2::ProviderConfig;
 
 use tokio::sync::RwLock;
 use utils::{
-    AbPeer, AbRule, AbTag, AddUserRequest, AddressBook, CpuCount, Group, OidcState, Peer, Platform, Token, UpdateUserRequest, UserListResponse
+    AbPeer, AbRule, AbTag, AddUserRequest, AddressBook, CpuCount, Group, OidcState, Peer, Platform,
+    Token, UpdateUserRequest, UserListResponse,
 };
 
 pub struct ApiState {
@@ -656,7 +657,7 @@ impl ApiState {
     }
 
     /// Get groups
-    pub async fn get_groups(&self, offset:u32, page_size: u32) -> Option<Vec<Group>> {
+    pub async fn get_groups(&self, offset: u32, page_size: u32) -> Option<Vec<Group>> {
         self.db.get_groups(offset, page_size).await
     }
 
@@ -665,8 +666,8 @@ impl ApiState {
         self.db.get_shared_address_books(user_id).await
     }
 
-    pub async fn get_ab_rules(&self, offset:u32, page_size: u32, ab: &str) -> Option<Vec<AbRule>> {
-        self.db.get_ab_rules(offset,page_size, ab).await
+    pub async fn get_ab_rules(&self, offset: u32, page_size: u32, ab: &str) -> Option<Vec<AbRule>> {
+        self.db.get_ab_rules(offset, page_size, ab).await
     }
 
     pub async fn delete_ab_rule(&self, rule: &str) -> Option<()> {
@@ -679,15 +680,15 @@ impl ApiState {
 
     /// Add a shared address book given its name and its owner
     /// It returns the guid of the shared address book
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// - `name` - The name of the shared address book
-    /// 
+    ///
     /// - `owner` - The owner of the shared address book
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// - `Option<String>` - The guid of the shared address book
     pub async fn add_shared_address_book(&self, name: &str, owner: UserId) -> Option<String> {
         self.db.add_shared_address_book(name, owner).await
@@ -697,8 +698,23 @@ impl ApiState {
         self.db.get_peers_count(platform).await
     }
 
-    pub async fn get_cpus_count(&self) -> Vec<CpuCount>{
+    pub async fn get_cpus_count(&self) -> Vec<CpuCount> {
         self.db.get_cpus_count().await
     }
-}
 
+    pub async fn create_group(&self, name: &str, team: &str, note: &str) -> Option<()> {
+        self.db.create_group(name, team, note).await
+    }
+
+    pub async fn update_group(&self, guid: &str, name: &str, team: &str, note: &str) -> Option<()> {
+        self.db.update_group(guid, name, team, note).await
+    }
+
+    pub async fn get_group(&self, guid: &str) -> Option<Group> {
+        self.db.get_group(guid).await
+    }
+
+    pub async fn delete_group(&self, guid: &str) -> Option<()> {
+        self.db.delete_group(guid).await
+    }
+}

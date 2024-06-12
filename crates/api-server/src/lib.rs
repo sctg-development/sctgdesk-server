@@ -48,9 +48,11 @@ use utils::AbRuleAddRequest;
 use utils::AbRuleDeleteRequest;
 use utils::AbRulesResponse;
 use utils::AbSharedAddRequest;
+use utils::AddGoupRequest;
 use utils::CpuCount;
 use utils::PeersCountResponse;
 use utils::Platform;
+use utils::UpdateGoupRequest;
 use utils::{
     self, get_host::get_host, AbPeer, AbPeersResponse, AbPersonal, AbSettingsResponse,
     AbSharedProfilesResponse, AbTag, BearerAuthToken, OidcAuthRequest, OidcAuthUrl, OidcResponse,
@@ -129,7 +131,10 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 heartbeat,
                 sysinfo,
                 groups,
+                group_get,
                 group_add,
+                group_delete,
+                group_update,
                 users,
                 users_client,
                 user_add,
@@ -652,10 +657,40 @@ async fn groups(
     Ok(Json(response))
 }
 
-/// # Add a Group (todo)
+/// # Get a Group
+/// 
+/// This function is an API endpoint that allows an authenticated admin to retrieve a group.
+/// It is tagged with "group" for OpenAPI documentation.
+/// 
+/// ## Parameters
+/// 
+/// - `guid`: The GUID of the group to retrieve.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<Group>` object
+/// If the group is not found, this function returns a `status::NotFound` error.
+#[openapi(tag = "group")]
+#[get("/api/group/<guid>", format = "application/json")]
+async fn group_get(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    guid: String,
+) -> Result<Json<utils::Group>, status::NotFound<()>> {
+    log::debug!("group_get");
+    state.check_maintenance().await;
+    let group = state.get_group(guid.as_str()).await;
+    if group.is_none() {
+        return Err(status::NotFound::<()>(()));
+    }
+    Ok(Json(group.unwrap()))
+}
+
+/// # Add a Group
 ///
 /// This function is an API endpoint that allows an authenticated admin to add a new group.
-/// It is tagged with "group" for OpenAPI documentation.
+/// It is tagged with "group" for OpenAPI documentation..<br>
+/// Todo allow to use different team
 ///
 /// ## Parameters
 ///
@@ -675,15 +710,19 @@ async fn groups(
 /// POST /api/group
 /// {"name":"new group","password":"string","confirm-password":"string","email":"string","is_admin":false,"group_name":"string"}
 #[openapi(tag = "group")]
-#[post("/api/group", format = "application/json", data = "<_request>")]
+#[post("/api/group", format = "application/json", data = "<request>")]
 async fn group_add(
     state: &State<ApiState>,
     _user: AuthenticatedAdmin,
-    _request: Json<AddUserRequest>,
+    request: Json<AddGoupRequest>,
 ) -> Result<Json<UsersResponse>, status::Unauthorized<()>> {
     log::debug!("create_group");
     state.check_maintenance().await;
 
+    let request = request.into_inner();
+    let _res = state
+        .create_group(request.name.as_str(), "Default", request.note.as_str()) // Todo allow to use different team
+        .await;
     let response = UsersResponse {
         msg: "success".to_string(),
         total: 1,
@@ -691,6 +730,71 @@ async fn group_add(
     };
 
     Ok(Json(response))
+}
+
+/// # Update a group
+///
+/// This function is an API endpoint that allows an authenticated admin to update a group.<br>
+/// Todo allow to use different team
+///
+/// ## Parameters
+///
+/// - `guid`: The request data, which includes the details of the group to be updated.  <br>
+///
+/// ## Returns
+///
+/// If successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br>
+#[openapi(tag = "group")]
+#[put("/api/group", format = "application/json", data = "<request>")]
+async fn group_update(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<UpdateGoupRequest>,
+) -> Result<Json<UsersResponse>, status::Unauthorized<()>> {
+    log::debug!("update_group");
+    state.check_maintenance().await;
+
+    let request = request.into_inner();
+    let _res = state
+        .update_group(
+            request.guid.as_str(),
+            request.name.as_str(),
+            "Default", // Todo allow to use different team
+            request.note.as_str(),
+        )
+        .await;
+    let response = UsersResponse {
+        msg: "success".to_string(),
+        total: 1,
+        data: "[{}]".to_string(),
+    };
+
+    Ok(Json(response))
+}
+
+/// # Delete a group
+/// 
+/// This function is an API endpoint that allows an authenticated admin to delete a group.
+/// It is tagged with "group" for OpenAPI documentation.
+/// 
+/// ## Parameters
+/// 
+/// - `guid`: The GUID of the group to retrieve.
+/// 
+/// ## Returns
+/// 
+#[openapi(tag = "group")]
+#[delete("/api/group/<guid>", format = "application/json", data = "<request>")]
+async fn group_delete(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<Vec<String>>,
+    guid: &str,
+) -> Result<(), status::Unauthorized<()>> {
+    log::debug!("group_delete");
+    state.check_maintenance().await;
+    let _res = state.delete_group(guid).await;
+    Ok(())
 }
 
 /// # Get Peers
@@ -735,18 +839,18 @@ async fn peers(
 }
 
 /// # Count Peers per platform
-/// 
+///
 /// This function is an API endpoint that retrieves the count of peers per platform.
 /// It is tagged with "peer" for OpenAPI documentation.
-/// 
+///
 /// ## Parameters
-/// 
+///
 /// - `platform`: The platform to filter the peers by (windows, macos, linux, android or all). <br>
-/// 
+///
 /// ## Returns
-/// 
+///
 /// If successful, this function returns a `Json<PeersCountResponse>` object, which includes the total number of peers for the specified platform.  <br>
-/// 
+///
 #[openapi(tag = "peer")]
 #[get("/api/peers/count/<platform>", format = "application/json")]
 async fn peers_count(
@@ -786,14 +890,14 @@ async fn peers_count(
 }
 
 /// # Get the List of cpus used by the peers
-/// 
+///
 /// This function is an API endpoint that retrieves the count of cpus used by the peers.
 /// It is tagged with "peer" for OpenAPI documentation.
-/// 
+///
 /// ## Parameters
-/// 
+///
 /// ## Returns
-/// 
+///
 /// If successful, this function returns a `Json<Vec<CpuCount>>` object, which includes the total number of cpus used by the peers.  <br>
 #[openapi(tag = "peer")]
 #[get("/api/peers/cpus", format = "application/json")]

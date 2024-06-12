@@ -1551,4 +1551,166 @@ impl Database {
         }
         cpu_counts
     }
+
+    /// Get a group given its guid
+    /// 
+    /// # Arguments
+    /// 
+    /// * `guid` - group guid in string format
+    /// 
+    /// # Returns
+    /// 
+    /// Option<Group>
+    pub async fn get_group(&self, guid: &str) -> Option<Group> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let group_guid = Uuid::parse_str(guid);
+        if group_guid.is_err() {
+            log::error!("get_group error: {:?}", group_guid);
+            return None;
+        }
+        let group_guid = group_guid.unwrap().as_bytes().to_vec();
+        let res = sqlx::query!(
+            r#"
+            SELECT
+                guid,
+                team,
+                name,
+                note,
+                created_at as "created_at!: String",
+                info as "info!: String"
+            FROM
+                grp
+            WHERE
+                guid = ?
+        "#,
+            group_guid
+        )
+        .fetch_one(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("get_group error: {:?}", res);
+            return None;
+        }
+        let res = res.unwrap();
+        let guid = guid_into_uuid(res.guid).unwrap_or("".to_string());
+        let team = guid_into_uuid(res.team).unwrap_or("".to_string());
+        Some(Group {
+            guid: guid,
+            name: res.name,
+            team: team,
+            note: res.note,
+            created_at: res.created_at.into(),
+            access_to: Vec::<String>::new(),
+            accessed_from: Vec::<String>::new(),
+            info: res.info,
+        })
+    }
+
+    
+    /// Create a new group
+    /// 
+    /// # Arguments
+    /// 
+    /// * `name` - group name
+    /// * `team` - team name ( must exist in the database )
+    /// * `note` - group note
+    /// 
+    /// # Returns
+    /// 
+    /// Option<()>
+    pub async fn create_group(&self, name: &str, team: &str, note: &str) -> Option<()> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let group_guid = Uuid::new_v4().as_bytes().to_vec();
+
+        let res = sqlx::query!(
+            r#"
+            INSERT OR IGNORE INTO grp(guid, team, name, note, created_at, info)
+                VALUES (?, (SELECT guid FROM team  WHERE name = ?) , ?, ?, current_timestamp, '{}')
+        "#,
+            group_guid,
+            team,
+            name,
+            note
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("create_group error: {:?}", res);
+            return None;
+        }
+        Some(())
+    }
+
+    /// Update a group
+    /// 
+    /// # Arguments
+    /// 
+    /// * `guid` - uuid of the group in string format
+    /// * `name` - group name
+    /// * `team` - team name ( must exist in the database )
+    /// * `note` - group note
+    /// 
+    /// # Returns
+    /// 
+    /// Option<()>
+    pub async fn update_group(&self, guid: &str, name: &str, team: &str, note: &str) -> Option<()> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let group_guid = Uuid::parse_str(guid);
+        if group_guid.is_err() {
+            log::error!("update_group error: {:?}", group_guid);
+            return None;
+        }
+        let group_guid = group_guid.unwrap().as_bytes().to_vec();
+
+        let res = sqlx::query!(
+            r#"
+            UPDATE grp SET team = (SELECT guid FROM team  WHERE name = ?), name = ?, note = ?, created_at = current_timestamp
+                WHERE guid = ?
+        "#,
+            team,
+            name,
+            note,
+            group_guid
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("update_group error: {:?}", res);
+            return None;
+        }
+        Some(())
+    }
+
+    /// Delete a group
+    /// 
+    /// # Arguments
+    /// 
+    /// * `guid` - uuid of the group in string format
+    /// 
+    /// # Returns
+    /// 
+    /// Option<()>
+    pub async fn delete_group(&self, guid: &str) -> Option<()> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let group_guid = Uuid::parse_str(guid);
+        if group_guid.is_err() {
+            log::error!("delete_group error: {:?}", group_guid);
+            return None;
+        }
+        let group_guid = group_guid.unwrap().as_bytes().to_vec();
+
+        let res = sqlx::query!(
+            r#"
+            DELETE FROM grp WHERE guid = ?
+        "#,
+            group_guid
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("delete_group error: {:?}", res);
+            return None;
+        }
+        Some(())
+    }
 }

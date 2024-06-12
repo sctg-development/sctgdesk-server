@@ -77,9 +77,13 @@ This website use:
                                     </td>
                                     <td
                                         class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                                        <a href="javascript:alert('todo')"
+                                        <a @click="toggle_edit_group(group.guid)"
                                             class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
                                             Edit
+                                        </a>
+                                        <a @click="delete_group(group.guid)"
+                                            class="ml-1 inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
+                                            Delete
                                         </a>
                                     </td>
                                 </tr>
@@ -91,26 +95,70 @@ This website use:
         </div>
     </section>
     <!-- ====== Table Section End -->
+    <AddGroup v-if="bModalAddGroup" @add_group_close="toggle_add_group"
+        @group_added="refresh_groups(); bModalAddGroup = false" />
+    <EditGroup v-if="bModalEditGroup" @edit_group_close="toggle_edit_group"
+        @group_updated="refresh_groups(); bModalEditGroup = false" :uuid="uuid" />
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { useUserStore } from '@/stores/sctgDeskStore';
 import { onMounted, ref } from 'vue';
-import { GroupApi, Group } from '@/api';
+import { Group, GroupApi } from '@/api';
 import { getGroups } from '@/utilities/api';
-
-const userStore = useUserStore();
+import AddGroup from './AddGroup.vue';
+import EditGroup from './EditGroup.vue';
+import { useUserStore } from '@/stores/sctgDeskStore';
+const bModalAddGroup = ref(false);
+const bModalEditGroup = ref(false);
+const uuid = ref("");
 const groups = ref([] as Group[]);
-const groupApi = new GroupApi(userStore.api_configuration);
+
 
 onMounted(() => {
+    refresh_groups();
+});
+
+/**
+ * Refreshes the groups by fetching the latest data from the API and updating the `groups` value.
+ *
+ * @return {Promise<void>} A promise that resolves when the groups are successfully refreshed.
+ */
+function refresh_groups(): void {
     getGroups().then((_groups) => {
         groups.value = _groups;
     });
-});
+}
 
-function toggle_add_group() {
-    console.log('toggle_add_group');
-    alert('todo')
+/**
+ * Deletes a group using the GroupApi service.
+ *
+ * @param {string} groupGuid The GUID of the group to delete.
+ * @return {void} This function does not return anything.
+ */
+function delete_group(groupGuid: string): void {
+    if (confirm("Are you sure you want to delete this group?")) {
+        const groupApi = new GroupApi(useUserStore().api_configuration);
+        groupApi.groupDelete([], groupGuid).then(() => {
+            refresh_groups();
+        });
+    }
+}
+/**
+ * Toggles the value of `bModalAddGroup` to show or hide the AddGroup component.
+ *
+ * @return {void} This function does not return anything.
+ */
+function toggle_add_group(): void {
+    bModalAddGroup.value = !bModalAddGroup.value;
+}
+
+/**
+ * Toggles the value of `bModalEditGroup` to show or hide the EditGroup component.
+ *
+ * @return {void} This function does not return anything.
+ */
+function toggle_edit_group(groupGuid: string): void {
+        uuid.value = groupGuid;
+        bModalEditGroup.value = !bModalEditGroup.value;
 }
 </script>
