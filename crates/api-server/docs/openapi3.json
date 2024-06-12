@@ -732,6 +732,79 @@
         ]
       }
     },
+    "/api/peers/count/{platform}": {
+      "get": {
+        "tags": [
+          "peer"
+        ],
+        "summary": "Count Peers per platform",
+        "description": "This function is an API endpoint that retrieves the count of peers per platform. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n- `platform`: The platform to filter the peers by (windows, macos, linux, android or all). <br>\n\n## Returns\n\nIf successful, this function returns a `Json<PeersCountResponse>` object, which includes the total number of peers for the specified platform.  <br>",
+        "operationId": "peers_count",
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeersCountResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/peers/cpus": {
+      "get": {
+        "tags": [
+          "peer"
+        ],
+        "summary": "Get the List of cpus used by the peers",
+        "description": "This function is an API endpoint that retrieves the count of cpus used by the peers. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n## Returns\n\nIf successful, this function returns a `Json<Vec<CpuCount>>` object, which includes the total number of cpus used by the peers.  <br>",
+        "operationId": "peers_cpus",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CpuCount"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
     "/api/stategies": {
       "get": {
         "tags": [
@@ -2412,6 +2485,36 @@
           "ip": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "PeersCountResponse": {
+        "type": "object",
+        "required": [
+          "total"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "CpuCount": {
+        "type": "object",
+        "required": [
+          "cpu",
+          "total"
+        ],
+        "properties": {
+          "cpu": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
           }
         }
       },
