@@ -10,7 +10,8 @@ This website use:
     <div class="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-sm">
             <img class="mx-auto h-10 w-auto" :src="$require('@/assets/sctg.svg')" alt="Your Company" />
-            <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">SCTGDesk server v{{ version }}</h2>
+            <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">SCTGDesk server v{{
+                serverVersion }}</h2>
         </div>
 
         <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
@@ -58,15 +59,17 @@ import { useUserStore } from '@/stores/sctgDeskStore';
 import { useRouter } from 'vue-router';
 import { onMounted, ref } from 'vue';
 import { LoginApi, Configuration } from '@/api';
-import packageJson from '../../package.json';
-const version = packageJson.version;
+import { useVersionsStore } from '@/stores/versionsStore';
+import { basePath } from '@/utilities/api';
+
+const serverVersion = ref("");
 
 const userStore = useUserStore();
 const router = useRouter();
 
 const name = ref("");
 const password = ref("");
-const basePath = window.location.origin == "http://localhost:5173" ? "http://127.0.0.1:21114" : window.location.origin;
+
 const oidc_link = ref(null as HTMLAnchorElement | null);
 
 type OauthProvider = {
@@ -82,7 +85,7 @@ const oauthproviders = ref([] as OauthProvider[]);
  * @param {SubmitEvent} e - The submit event object.
  * @return {void} This function does not return a value.
  */
-function handleLogin(e: SubmitEvent) {
+function handleLogin(e: SubmitEvent): void {
     e.preventDefault();
     const configuration = new Configuration({
         // Workaround for development environment
@@ -146,7 +149,7 @@ function oidcAuth_step1(provider: OauthProvider) {
     loginApi.oidcAuth(oidcAuthRequest).then(async (response) => {
         console.log(response);
         userStore.oidc_code = response.data.code;
-        
+
         oidc_link.value.href = response.data.url;
         oidc_link.value.innerText = `Please authenticate with ${userStore.oidc_provider}...`;
         oidc_link.value.target = "_blank";
@@ -171,7 +174,7 @@ function oidcAuth_step1(provider: OauthProvider) {
  * @return {Promise<boolean>} A promise that resolves to true if the authentication is successful,
  *                           or false otherwise.
  */
-function oidcAuth_step2():Promise<boolean> {
+function oidcAuth_step2(): Promise<boolean> {
     const configuration = new Configuration({
         basePath: basePath,
         username: name.value,
@@ -206,11 +209,14 @@ function oidcAuth_step2():Promise<boolean> {
  * @param {string} string - The string to capitalize.
  * @return {string} The capitalized string.
  */
-function capitalizeFirstLetter(string: string): string{
+function capitalizeFirstLetter(string: string): string {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 onMounted(() => {
+    useVersionsStore().fetchVersions().then(() => {
+        serverVersion.value = useVersionsStore().serverVersion;
+    })
     userStore.uuid_base64 = generateUUIDBase64Encoded();
     userStore.id = Math.random().toString(36).substring(2, 15);
     const configuration = new Configuration({

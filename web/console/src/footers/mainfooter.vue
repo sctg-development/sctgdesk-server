@@ -5,12 +5,14 @@
   >
     <div class="flex flex-col items-center justify-center">
       <p class="text-sm text-gray-600 dark:text-gray-400">
-        © 2024 Ronan LE MEILLAT for SCTG Development - sctgdesk-api-server v{{ version }}
+        © 2024 Ronan LE MEILLAT for SCTG Development - sctgdesk-api-server v{{ serverVersion }} - latest client version: v{{ clientVersion }}
       </p>
     </div>
     </footer>
 </template>
 <script setup lang="ts">
-import packageJson from '../../package.json';
-const version = packageJson.version;
+import { useVersionsStore } from '@/stores/versionsStore';
+import { ref } from 'vue';
+const serverVersion = ref(useVersionsStore().serverVersion);
+const clientVersion = ref(useVersionsStore().clientVersion);
 </script>

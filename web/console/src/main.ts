@@ -14,6 +14,7 @@ import { addJsonLD } from "./config/StructuredLDJson"
 import { useUserStore } from '@/stores/sctgDeskStore';
 import '@/index.scss'
 import { RouteLocationNormalized } from 'vue-router'
+import { useVersionsStore } from '@/stores/versionsStore';
 
 const baseUrl = import.meta.url;
 // const useImage = (url: string) => {
@@ -74,3 +75,4 @@ createApp(App).use(router)
     .use(pinia)
     .mount('#app')
 addJsonLD();
+useVersionsStore().fetchVersions();

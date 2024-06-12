@@ -1794,7 +1794,7 @@ async fn software_version() -> Json<SoftwareVersionResponse> {
     let version = env::var("MAIN_PKG_VERSION").unwrap();
     let response = SoftwareVersionResponse {
         server: Some(version),
-        client: None,
+        client: Some(extract_version().await.unwrap_or("0.0.0".to_string())),
     };
     Json(response)
 }
