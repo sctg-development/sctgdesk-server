@@ -1907,7 +1907,7 @@ async fn software_releases_latest(request: ExtendedRequest) -> Redirect {
         .await
         .map_err(|e| status::NotFound(Box::new(e)));
     if version.is_err() {
-        return Redirect::to(format!("{}/api/software/releases/0.0.0", host));
+        return Redirect::to(format!("{}/api/software/releases/tag/0.0.0", host));
     }
     let version = version.unwrap();
     let url = format!("{}/api/software/releases/tag/{}", host, version);
