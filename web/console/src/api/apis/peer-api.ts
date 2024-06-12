@@ -17,7 +17,9 @@ import { Configuration } from '../configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from '../base';
+import { CpuCount } from '../models';
 import { HeartbeatRequest } from '../models';
+import { PeersCountResponse } from '../models';
 import { PeersResponse } from '../models';
 import { SystemInfo } from '../models';
 /**
@@ -77,6 +79,98 @@ export const PeerApiAxiosParamCreator = function (configuration?: Configuration)
          */
         peers: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/peers`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that retrieves the count of peers per platform. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `platform`: The platform to filter the peers by (windows, macos, linux, android or all). <br>  ## Returns  If successful, this function returns a `Json<PeersCountResponse>` object, which includes the total number of peers for the specified platform.  <br>
+         * @summary Count Peers per platform
+         * @param {string} platform 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        peersCount: async (platform: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'platform' is not null or undefined
+            if (platform === null || platform === undefined) {
+                throw new RequiredError('platform','Required parameter platform was null or undefined when calling peersCount.');
+            }
+            const localVarPath = `/api/peers/count/{platform}`
+                .replace(`{${"platform"}}`, encodeURIComponent(String(platform)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that retrieves the count of cpus used by the peers. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  ## Returns  If successful, this function returns a `Json<Vec<CpuCount>>` object, which includes the total number of cpus used by the peers.  <br>
+         * @summary Get the List of cpus used by the peers
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        peersCpus: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/peers/cpus`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, 'https://example.com');
             let baseOptions;
@@ -192,6 +286,33 @@ export const PeerApiFp = function(configuration?: Configuration) {
             };
         },
         /**
+         * This function is an API endpoint that retrieves the count of peers per platform. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `platform`: The platform to filter the peers by (windows, macos, linux, android or all). <br>  ## Returns  If successful, this function returns a `Json<PeersCountResponse>` object, which includes the total number of peers for the specified platform.  <br>
+         * @summary Count Peers per platform
+         * @param {string} platform 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async peersCount(platform: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<PeersCountResponse>>> {
+            const localVarAxiosArgs = await PeerApiAxiosParamCreator(configuration).peersCount(platform, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * This function is an API endpoint that retrieves the count of cpus used by the peers. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  ## Returns  If successful, this function returns a `Json<Vec<CpuCount>>` object, which includes the total number of cpus used by the peers.  <br>
+         * @summary Get the List of cpus used by the peers
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async peersCpus(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<Array<CpuCount>>>> {
+            const localVarAxiosArgs = await PeerApiAxiosParamCreator(configuration).peersCpus(options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
          * This function is an API endpoint that allows a connected client to update its system information. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the system information.  ## Returns  If successful, this function returns a `String` with the message \"SYSINFO_UPDATED\".  <br> If the system info is not found, this function returns a `String` with the message \"ID_NOT_FOUND\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the system info is not found.
          * @summary Set the System Info
          * @param {SystemInfo} body 
@@ -234,6 +355,25 @@ export const PeerApiFactory = function (configuration?: Configuration, basePath?
             return PeerApiFp(configuration).peers(options).then((request) => request(axios, basePath));
         },
         /**
+         * This function is an API endpoint that retrieves the count of peers per platform. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `platform`: The platform to filter the peers by (windows, macos, linux, android or all). <br>  ## Returns  If successful, this function returns a `Json<PeersCountResponse>` object, which includes the total number of peers for the specified platform.  <br>
+         * @summary Count Peers per platform
+         * @param {string} platform 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async peersCount(platform: string, options?: AxiosRequestConfig): Promise<AxiosResponse<PeersCountResponse>> {
+            return PeerApiFp(configuration).peersCount(platform, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * This function is an API endpoint that retrieves the count of cpus used by the peers. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  ## Returns  If successful, this function returns a `Json<Vec<CpuCount>>` object, which includes the total number of cpus used by the peers.  <br>
+         * @summary Get the List of cpus used by the peers
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async peersCpus(options?: AxiosRequestConfig): Promise<AxiosResponse<Array<CpuCount>>> {
+            return PeerApiFp(configuration).peersCpus(options).then((request) => request(axios, basePath));
+        },
+        /**
          * This function is an API endpoint that allows a connected client to update its system information. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the system information.  ## Returns  If successful, this function returns a `String` with the message \"SYSINFO_UPDATED\".  <br> If the system info is not found, this function returns a `String` with the message \"ID_NOT_FOUND\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the system info is not found.
          * @summary Set the System Info
          * @param {SystemInfo} body 
@@ -273,6 +413,27 @@ export class PeerApi extends BaseAPI {
      */
     public async peers(options?: AxiosRequestConfig) : Promise<AxiosResponse<PeersResponse>> {
         return PeerApiFp(this.configuration).peers(options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that retrieves the count of peers per platform. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `platform`: The platform to filter the peers by (windows, macos, linux, android or all). <br>  ## Returns  If successful, this function returns a `Json<PeersCountResponse>` object, which includes the total number of peers for the specified platform.  <br>
+     * @summary Count Peers per platform
+     * @param {string} platform 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PeerApi
+     */
+    public async peersCount(platform: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<PeersCountResponse>> {
+        return PeerApiFp(this.configuration).peersCount(platform, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that retrieves the count of cpus used by the peers. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  ## Returns  If successful, this function returns a `Json<Vec<CpuCount>>` object, which includes the total number of cpus used by the peers.  <br>
+     * @summary Get the List of cpus used by the peers
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PeerApi
+     */
+    public async peersCpus(options?: AxiosRequestConfig) : Promise<AxiosResponse<Array<CpuCount>>> {
+        return PeerApiFp(this.configuration).peersCpus(options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * This function is an API endpoint that allows a connected client to update its system information. It is tagged with \"peer\" for OpenAPI documentation.  ## Parameters  - `request`: The request data, which includes the system information.  ## Returns  If successful, this function returns a `String` with the message \"SYSINFO_UPDATED\".  <br> If the system info is not found, this function returns a `String` with the message \"ID_NOT_FOUND\".  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the system info is not found.

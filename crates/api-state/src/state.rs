@@ -31,7 +31,7 @@ use oauth2::ProviderConfig;
 
 use tokio::sync::RwLock;
 use utils::{
-    AbPeer, AbRule, AbTag, AddUserRequest, AddressBook, Group, OidcState, Peer, Token, UpdateUserRequest, UserListResponse
+    AbPeer, AbRule, AbTag, AddUserRequest, AddressBook, CpuCount, Group, OidcState, Peer, Platform, Token, UpdateUserRequest, UserListResponse
 };
 
 pub struct ApiState {
@@ -692,4 +692,13 @@ impl ApiState {
     pub async fn add_shared_address_book(&self, name: &str, owner: UserId) -> Option<String> {
         self.db.add_shared_address_book(name, owner).await
     }
+
+    pub async fn get_peers_count(&self, platform: Platform) -> u32 {
+        self.db.get_peers_count(platform).await
+    }
+
+    pub async fn get_cpus_count(&self) -> Vec<CpuCount>{
+        self.db.get_cpus_count().await
+    }
 }
+

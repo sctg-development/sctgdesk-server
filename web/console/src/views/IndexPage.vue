@@ -111,7 +111,7 @@ This website use:
     </header>
     <main>
       <div v-if="isCurrentPage('Dashboard')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-        Dashboard content
+        <DashboardCard />
       </div>
       <div v-if="isCurrentPage('Devices')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <DevicesCard />
@@ -140,6 +140,7 @@ import { useUserStore } from '@/stores/sctgDeskStore';
 import { LoginApi } from '@/api';
 import DevicesCard from '@/components/DevicesCard.vue';
 import UsersCard from '@/components/UsersCard.vue';
+import DashboardCard from '@/components/DashboardCard.vue';
 import MainFooter from '@/footers/mainfooter.vue';
 import { ref } from 'vue';
 import GroupsCard from '@/components/GroupsCard.vue';

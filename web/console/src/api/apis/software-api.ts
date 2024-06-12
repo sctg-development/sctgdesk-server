@@ -26,7 +26,7 @@ import { SoftwareVersionResponse } from '../models';
 export const SoftwareApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Get the software download url  # Arguments  * `key` - The key to the software download link, it can be `osx`, `w64` or `ios`  # Usage  * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable  <pre> [s3config]<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>
+         * Get the software download url  # Arguments  * `key` - The key to the software download link, it can be `osx`, `w64` or `ios`  # Usage  * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable  <pre> [s3config]<br> Page = \"https://github.com/rustdesk/rustdesk/releases/latest\"<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>
          * @param {string} key 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -65,7 +65,116 @@ export const SoftwareApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * Retrieve the server version
+         * This function is an API endpoint that redirects to the software download page. You must set the `Page` key in the `s3config` of the S3 configuration file.
+         * @summary Redirect to the software download page
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        softwareDownload: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/software/download`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that retrieves the version of the client. It copies the GitHub method of retrieving the latest release version. It is tagged with \"software\" for OpenAPI documentation.  It can be used by replacing the check_software_update() from the client. You can find the client code at rustdesk/src/common.rs ## Returns  Returns in the location header the URL of the latest release. something like https://api-server/api/releases/tag/1.2.6  ## Example  It is easy to modify the client code to use this API endpoint. this is how we can modify the client code to use this API endpoint.  <pre> // see <a href='https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972'>Sample modification on github</a><br> let url=format!(\"{}/api/software/releases/latest\",get_api_server(\"\".to_owned(), \"\".to_owned())).to_owned();<br> log::info!(\"URL for checking software updates: {}\", url);<br> </pre>
+         * @summary Retrieve the client version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        softwareReleasesLatest: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/software/releases/latest`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that simulates the GitHub API for releases.  ## Parameters  - `version`: The version of the release.  ## Returns  Returns a `Json<SoftwareVersionResponse>` object containing the version of the release.
+         * @summary Simulate GitHub API for releases
+         * @param {string} version 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        softwareReleasesTag: async (version: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'version' is not null or undefined
+            if (version === null || version === undefined) {
+                throw new RequiredError('version','Required parameter version was null or undefined when calling softwareReleasesTag.');
+            }
+            const localVarPath = `/api/software/releases/tag/{version}`
+                .replace(`{${"version"}}`, encodeURIComponent(String(version)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that retrieves the version of the server. It is tagged with \"software\" for OpenAPI documentation.  ## Returns  If successful, this function returns a `Json<SoftwareVersionResponse>` object containing the version of the server.
+         * @summary Retrieve the server version
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -107,7 +216,7 @@ export const SoftwareApiAxiosParamCreator = function (configuration?: Configurat
 export const SoftwareApiFp = function(configuration?: Configuration) {
     return {
         /**
-         * Get the software download url  # Arguments  * `key` - The key to the software download link, it can be `osx`, `w64` or `ios`  # Usage  * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable  <pre> [s3config]<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>
+         * Get the software download url  # Arguments  * `key` - The key to the software download link, it can be `osx`, `w64` or `ios`  # Usage  * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable  <pre> [s3config]<br> Page = \"https://github.com/rustdesk/rustdesk/releases/latest\"<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>
          * @param {string} key 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -120,7 +229,48 @@ export const SoftwareApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Retrieve the server version
+         * This function is an API endpoint that redirects to the software download page. You must set the `Page` key in the `s3config` of the S3 configuration file.
+         * @summary Redirect to the software download page
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async softwareDownload(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<void>>> {
+            const localVarAxiosArgs = await SoftwareApiAxiosParamCreator(configuration).softwareDownload(options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * This function is an API endpoint that retrieves the version of the client. It copies the GitHub method of retrieving the latest release version. It is tagged with \"software\" for OpenAPI documentation.  It can be used by replacing the check_software_update() from the client. You can find the client code at rustdesk/src/common.rs ## Returns  Returns in the location header the URL of the latest release. something like https://api-server/api/releases/tag/1.2.6  ## Example  It is easy to modify the client code to use this API endpoint. this is how we can modify the client code to use this API endpoint.  <pre> // see <a href='https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972'>Sample modification on github</a><br> let url=format!(\"{}/api/software/releases/latest\",get_api_server(\"\".to_owned(), \"\".to_owned())).to_owned();<br> log::info!(\"URL for checking software updates: {}\", url);<br> </pre>
+         * @summary Retrieve the client version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async softwareReleasesLatest(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<void>>> {
+            const localVarAxiosArgs = await SoftwareApiAxiosParamCreator(configuration).softwareReleasesLatest(options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * This function is an API endpoint that simulates the GitHub API for releases.  ## Parameters  - `version`: The version of the release.  ## Returns  Returns a `Json<SoftwareVersionResponse>` object containing the version of the release.
+         * @summary Simulate GitHub API for releases
+         * @param {string} version 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async softwareReleasesTag(version: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<SoftwareVersionResponse>>> {
+            const localVarAxiosArgs = await SoftwareApiAxiosParamCreator(configuration).softwareReleasesTag(version, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * This function is an API endpoint that retrieves the version of the server. It is tagged with \"software\" for OpenAPI documentation.  ## Returns  If successful, this function returns a `Json<SoftwareVersionResponse>` object containing the version of the server.
+         * @summary Retrieve the server version
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -141,7 +291,7 @@ export const SoftwareApiFp = function(configuration?: Configuration) {
 export const SoftwareApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
-         * Get the software download url  # Arguments  * `key` - The key to the software download link, it can be `osx`, `w64` or `ios`  # Usage  * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable  <pre> [s3config]<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>
+         * Get the software download url  # Arguments  * `key` - The key to the software download link, it can be `osx`, `w64` or `ios`  # Usage  * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable  <pre> [s3config]<br> Page = \"https://github.com/rustdesk/rustdesk/releases/latest\"<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>
          * @param {string} key 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -150,7 +300,36 @@ export const SoftwareApiFactory = function (configuration?: Configuration, baseP
             return SoftwareApiFp(configuration).software(key, options).then((request) => request(axios, basePath));
         },
         /**
-         * Retrieve the server version
+         * This function is an API endpoint that redirects to the software download page. You must set the `Page` key in the `s3config` of the S3 configuration file.
+         * @summary Redirect to the software download page
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async softwareDownload(options?: AxiosRequestConfig): Promise<AxiosResponse<void>> {
+            return SoftwareApiFp(configuration).softwareDownload(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * This function is an API endpoint that retrieves the version of the client. It copies the GitHub method of retrieving the latest release version. It is tagged with \"software\" for OpenAPI documentation.  It can be used by replacing the check_software_update() from the client. You can find the client code at rustdesk/src/common.rs ## Returns  Returns in the location header the URL of the latest release. something like https://api-server/api/releases/tag/1.2.6  ## Example  It is easy to modify the client code to use this API endpoint. this is how we can modify the client code to use this API endpoint.  <pre> // see <a href='https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972'>Sample modification on github</a><br> let url=format!(\"{}/api/software/releases/latest\",get_api_server(\"\".to_owned(), \"\".to_owned())).to_owned();<br> log::info!(\"URL for checking software updates: {}\", url);<br> </pre>
+         * @summary Retrieve the client version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async softwareReleasesLatest(options?: AxiosRequestConfig): Promise<AxiosResponse<void>> {
+            return SoftwareApiFp(configuration).softwareReleasesLatest(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * This function is an API endpoint that simulates the GitHub API for releases.  ## Parameters  - `version`: The version of the release.  ## Returns  Returns a `Json<SoftwareVersionResponse>` object containing the version of the release.
+         * @summary Simulate GitHub API for releases
+         * @param {string} version 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async softwareReleasesTag(version: string, options?: AxiosRequestConfig): Promise<AxiosResponse<SoftwareVersionResponse>> {
+            return SoftwareApiFp(configuration).softwareReleasesTag(version, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * This function is an API endpoint that retrieves the version of the server. It is tagged with \"software\" for OpenAPI documentation.  ## Returns  If successful, this function returns a `Json<SoftwareVersionResponse>` object containing the version of the server.
+         * @summary Retrieve the server version
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -168,7 +347,7 @@ export const SoftwareApiFactory = function (configuration?: Configuration, baseP
  */
 export class SoftwareApi extends BaseAPI {
     /**
-     * Get the software download url  # Arguments  * `key` - The key to the software download link, it can be `osx`, `w64` or `ios`  # Usage  * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable  <pre> [s3config]<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>
+     * Get the software download url  # Arguments  * `key` - The key to the software download link, it can be `osx`, `w64` or `ios`  # Usage  * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable  <pre> [s3config]<br> Page = \"https://github.com/rustdesk/rustdesk/releases/latest\"<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>
      * @param {string} key 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -178,7 +357,39 @@ export class SoftwareApi extends BaseAPI {
         return SoftwareApiFp(this.configuration).software(key, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Retrieve the server version
+     * This function is an API endpoint that redirects to the software download page. You must set the `Page` key in the `s3config` of the S3 configuration file.
+     * @summary Redirect to the software download page
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SoftwareApi
+     */
+    public async softwareDownload(options?: AxiosRequestConfig) : Promise<AxiosResponse<void>> {
+        return SoftwareApiFp(this.configuration).softwareDownload(options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that retrieves the version of the client. It copies the GitHub method of retrieving the latest release version. It is tagged with \"software\" for OpenAPI documentation.  It can be used by replacing the check_software_update() from the client. You can find the client code at rustdesk/src/common.rs ## Returns  Returns in the location header the URL of the latest release. something like https://api-server/api/releases/tag/1.2.6  ## Example  It is easy to modify the client code to use this API endpoint. this is how we can modify the client code to use this API endpoint.  <pre> // see <a href='https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972'>Sample modification on github</a><br> let url=format!(\"{}/api/software/releases/latest\",get_api_server(\"\".to_owned(), \"\".to_owned())).to_owned();<br> log::info!(\"URL for checking software updates: {}\", url);<br> </pre>
+     * @summary Retrieve the client version
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SoftwareApi
+     */
+    public async softwareReleasesLatest(options?: AxiosRequestConfig) : Promise<AxiosResponse<void>> {
+        return SoftwareApiFp(this.configuration).softwareReleasesLatest(options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that simulates the GitHub API for releases.  ## Parameters  - `version`: The version of the release.  ## Returns  Returns a `Json<SoftwareVersionResponse>` object containing the version of the release.
+     * @summary Simulate GitHub API for releases
+     * @param {string} version 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SoftwareApi
+     */
+    public async softwareReleasesTag(version: string, options?: AxiosRequestConfig) : Promise<AxiosResponse<SoftwareVersionResponse>> {
+        return SoftwareApiFp(this.configuration).softwareReleasesTag(version, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that retrieves the version of the server. It is tagged with \"software\" for OpenAPI documentation.  ## Returns  If successful, this function returns a `Json<SoftwareVersionResponse>` object containing the version of the server.
+     * @summary Retrieve the server version
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof SoftwareApi

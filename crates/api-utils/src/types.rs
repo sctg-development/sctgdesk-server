@@ -671,6 +671,10 @@ pub struct PeersResponse {
     pub data: Vec<Peer>,
 }
 
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct PeersCountResponse {
+    pub total: u32,
+}
 #[derive(Serialize, Deserialize, Clone, JsonSchema, Debug, Default)]
 pub struct PeerInfo {
     pub cpu: Option<String>,
@@ -746,4 +750,14 @@ pub struct AbRuleAddRequest {
 #[derive(Serialize, Deserialize, Clone, JsonSchema)]
 pub struct AbRuleDeleteRequest {
     pub guid: String, // rule guid
+}
+
+pub enum Platform {
+    Windows,MacOS,Linux,Android,All
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct CpuCount {
+    pub cpu: String,
+    pub total: u32,
 }

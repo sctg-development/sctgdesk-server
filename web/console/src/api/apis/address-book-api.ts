@@ -36,7 +36,8 @@ import { AbTagRenameRequest } from '../models';
 export const AddressBookApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Add peer
+         * This function is an API endpoint that adds a peer to an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new peer information.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+         * @summary Add peer
          * @param {AbPeer} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -93,7 +94,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Delete peer
+         * This function is an API endpoint that deletes a peer from an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing an array of peer IDs to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+         * @summary Delete peer
          * @param {Array<string>} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -150,7 +152,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Update peer
+         * This function is an API endpoint that updates a peer in an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the updated peer information.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+         * @summary Update peer
          * @param {AbPeer} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -537,7 +540,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Settings
+         * This function is an API endpoint that retrieves the settings for an address book.<br> TODO: Implement the settings for an address book.
+         * @summary Settings
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -622,7 +626,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Add shared profile
+         * TODO: Add shared profile
+         * @summary Add shared profile
          * @param {AbSharedAddRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -640,6 +645,58 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
                 baseOptions = configuration.baseOptions;
             }
             const localVarRequestOptions :AxiosRequestConfig = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization_admin required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * TODO: Delete shared profiles
+         * @summary Delete shared profiles
+         * @param {Array<string>} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        abSharedDelete: async (body: Array<string>, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling abSharedDelete.');
+            }
+            const localVarPath = `/api/ab/shared`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'DELETE', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -963,7 +1020,8 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
 export const AddressBookApiFp = function(configuration?: Configuration) {
     return {
         /**
-         * Add peer
+         * This function is an API endpoint that adds a peer to an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new peer information.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+         * @summary Add peer
          * @param {AbPeer} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -977,7 +1035,8 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Delete peer
+         * This function is an API endpoint that deletes a peer from an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing an array of peer IDs to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+         * @summary Delete peer
          * @param {Array<string>} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -991,7 +1050,8 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Update peer
+         * This function is an API endpoint that updates a peer in an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the updated peer information.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+         * @summary Update peer
          * @param {AbPeer} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -1091,7 +1151,8 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Settings
+         * This function is an API endpoint that retrieves the settings for an address book.<br> TODO: Implement the settings for an address book.
+         * @summary Settings
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -1116,13 +1177,28 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Add shared profile
+         * TODO: Add shared profile
+         * @summary Add shared profile
          * @param {AbSharedAddRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         async abSharedAdd(body: AbSharedAddRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<AbSharedProfilesResponse>>> {
             const localVarAxiosArgs = await AddressBookApiAxiosParamCreator(configuration).abSharedAdd(body, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
+         * TODO: Delete shared profiles
+         * @summary Delete shared profiles
+         * @param {Array<string>} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abSharedDelete(body: Array<string>, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<void>>> {
+            const localVarAxiosArgs = await AddressBookApiAxiosParamCreator(configuration).abSharedDelete(body, options);
             return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
                 const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
                 return axios.request(axiosRequestArgs);
@@ -1212,7 +1288,8 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
 export const AddressBookApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     return {
         /**
-         * Add peer
+         * This function is an API endpoint that adds a peer to an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new peer information.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+         * @summary Add peer
          * @param {AbPeer} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -1222,7 +1299,8 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abPeerAdd(body, ab, options).then((request) => request(axios, basePath));
         },
         /**
-         * Delete peer
+         * This function is an API endpoint that deletes a peer from an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing an array of peer IDs to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+         * @summary Delete peer
          * @param {Array<string>} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -1232,7 +1310,8 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abPeerDelete(body, ab, options).then((request) => request(axios, basePath));
         },
         /**
-         * Update peer
+         * This function is an API endpoint that updates a peer in an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the updated peer information.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+         * @summary Update peer
          * @param {AbPeer} body 
          * @param {string} ab 
          * @param {*} [options] Override http request option.
@@ -1304,7 +1383,8 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abRules(current, page_size, ab, options).then((request) => request(axios, basePath));
         },
         /**
-         * Settings
+         * This function is an API endpoint that retrieves the settings for an address book.<br> TODO: Implement the settings for an address book.
+         * @summary Settings
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -1321,13 +1401,24 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abShared(options).then((request) => request(axios, basePath));
         },
         /**
-         * Add shared profile
+         * TODO: Add shared profile
+         * @summary Add shared profile
          * @param {AbSharedAddRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         async abSharedAdd(body: AbSharedAddRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<AbSharedProfilesResponse>> {
             return AddressBookApiFp(configuration).abSharedAdd(body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * TODO: Delete shared profiles
+         * @summary Delete shared profiles
+         * @param {Array<string>} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abSharedDelete(body: Array<string>, options?: AxiosRequestConfig): Promise<AxiosResponse<void>> {
+            return AddressBookApiFp(configuration).abSharedDelete(body, options).then((request) => request(axios, basePath));
         },
         /**
          * This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new tag to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.  # Example  POST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
@@ -1394,7 +1485,8 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
  */
 export class AddressBookApi extends BaseAPI {
     /**
-     * Add peer
+     * This function is an API endpoint that adds a peer to an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new peer information.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+     * @summary Add peer
      * @param {AbPeer} body 
      * @param {string} ab 
      * @param {*} [options] Override http request option.
@@ -1405,7 +1497,8 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abPeerAdd(body, ab, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Delete peer
+     * This function is an API endpoint that deletes a peer from an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing an array of peer IDs to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+     * @summary Delete peer
      * @param {Array<string>} body 
      * @param {string} ab 
      * @param {*} [options] Override http request option.
@@ -1416,7 +1509,8 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abPeerDelete(body, ab, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Update peer
+     * This function is an API endpoint that updates a peer in an address book.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the updated peer information.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
+     * @summary Update peer
      * @param {AbPeer} body 
      * @param {string} ab 
      * @param {*} [options] Override http request option.
@@ -1495,7 +1589,8 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abRules(current, page_size, ab, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Settings
+     * This function is an API endpoint that retrieves the settings for an address book.<br> TODO: Implement the settings for an address book.
+     * @summary Settings
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AddressBookApi
@@ -1514,7 +1609,8 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abShared(options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Add shared profile
+     * TODO: Add shared profile
+     * @summary Add shared profile
      * @param {AbSharedAddRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -1522,6 +1618,17 @@ export class AddressBookApi extends BaseAPI {
      */
     public async abSharedAdd(body: AbSharedAddRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<AbSharedProfilesResponse>> {
         return AddressBookApiFp(this.configuration).abSharedAdd(body, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * TODO: Delete shared profiles
+     * @summary Delete shared profiles
+     * @param {Array<string>} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AddressBookApi
+     */
+    public async abSharedDelete(body: Array<string>, options?: AxiosRequestConfig) : Promise<AxiosResponse<void>> {
+        return AddressBookApiFp(this.configuration).abSharedDelete(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new tag to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.  # Example  POST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}

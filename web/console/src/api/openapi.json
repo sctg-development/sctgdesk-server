@@ -519,7 +519,8 @@
         "tags": [
           "user"
         ],
-        "description": "Get Users for client",
+        "summary": "Get Users for client",
+        "description": "This function is an API endpoint that retrieves all users.\n\n## Parameters\n\n- `current`: The current page number for pagination. This parameter is currently unused.\n\n- `pageSize`: The number of items per page for pagination. This parameter is currently unused.\n\n- `accessible`: A boolean value indicating whether the user is accessible. This parameter is currently unused.\n\n- `status`: The status of the user. This parameter is currently unused.\n\n## Returns\n\nIf successful, this function returns a `Json<UserList>` object containing the users.",
         "operationId": "users_client",
         "parameters": [
           {
@@ -588,7 +589,8 @@
         "tags": [
           "user"
         ],
-        "description": "Update current user password",
+        "summary": "Update user",
+        "description": "This function is an API endpoint that updates a user.<br> Normal user can only update themselves, admin can update any user.<br>\n\n## Parameters\n\n- `request`: A JSON object containing the updated user information.\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object containing the updated user information.",
         "operationId": "user_update",
         "requestBody": {
           "content": {
@@ -625,7 +627,8 @@
         "tags": [
           "user"
         ],
-        "description": "Add user",
+        "summary": "Add user",
+        "description": "This function is an API endpoint that adds a new user.\n\n## Parameters\n\n- `request`: A JSON object containing the new user information.\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object containing the updated user information.",
         "operationId": "user_add",
         "requestBody": {
           "content": {
@@ -664,7 +667,8 @@
         "tags": [
           "user"
         ],
-        "description": "Enable users",
+        "summary": "Enable users",
+        "description": "This function is an API endpoint that enables or disables users.\n\n## Parameters\n\n- `request`: A JSON object containing the list of users to enable or disable.\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object containing the updated user information.",
         "operationId": "user_enable",
         "requestBody": {
           "content": {
@@ -728,12 +732,86 @@
         ]
       }
     },
+    "/api/peers/count/{platform}": {
+      "get": {
+        "tags": [
+          "peer"
+        ],
+        "summary": "Count Peers per platform",
+        "description": "This function is an API endpoint that retrieves the count of peers per platform. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n- `platform`: The platform to filter the peers by (windows, macos, linux, android or all). <br>\n\n## Returns\n\nIf successful, this function returns a `Json<PeersCountResponse>` object, which includes the total number of peers for the specified platform.  <br>",
+        "operationId": "peers_count",
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeersCountResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/peers/cpus": {
+      "get": {
+        "tags": [
+          "peer"
+        ],
+        "summary": "Get the List of cpus used by the peers",
+        "description": "This function is an API endpoint that retrieves the count of cpus used by the peers. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n## Returns\n\nIf successful, this function returns a `Json<Vec<CpuCount>>` object, which includes the total number of cpus used by the peers.  <br>",
+        "operationId": "peers_cpus",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CpuCount"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
     "/api/stategies": {
       "get": {
         "tags": [
           "todo"
         ],
-        "description": "List strategies",
+        "summary": "List strategies",
+        "description": "This function is an API endpoint that retrieves the list of all strategies. <br> TODO: This function is currently unused.",
         "operationId": "strategies",
         "responses": {
           "200": {
@@ -882,7 +960,8 @@
         "tags": [
           "todo"
         ],
-        "description": "Get OIDC Providers",
+        "summary": "Get OIDC Providers",
+        "description": "This function is an API endpoint that retrieves all OIDC providers.\n\nTODO: This function is currently unused.",
         "operationId": "oidc_get",
         "responses": {
           "200": {
@@ -909,7 +988,8 @@
         "tags": [
           "todo"
         ],
-        "description": "Add OIDC Provider",
+        "summary": "Add OIDC Provider",
+        "description": "This function is an API endpoint that adds an OIDC provider.\n\nTODO: This function is currently unused.",
         "operationId": "oidc_add",
         "requestBody": {
           "content": {
@@ -948,7 +1028,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Add peer",
+        "summary": "Add peer",
+        "description": "This function is an API endpoint that adds a peer to an address book.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the new peer information.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.",
         "operationId": "ab_peer_add",
         "parameters": [
           {
@@ -993,7 +1074,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Update peer",
+        "summary": "Update peer",
+        "description": "This function is an API endpoint that updates a peer in an address book.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the updated peer information.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.",
         "operationId": "ab_peer_update",
         "parameters": [
           {
@@ -1038,7 +1120,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Delete peer",
+        "summary": "Delete peer",
+        "description": "This function is an API endpoint that deletes a peer from an address book.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing an array of peer IDs to be deleted.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.",
         "operationId": "ab_peer_delete",
         "parameters": [
           {
@@ -1436,7 +1519,8 @@
         "tags": [
           "address book"
         ],
-        "description": "Add shared profile",
+        "summary": "Add shared profile",
+        "description": "TODO: Add shared profile",
         "operationId": "ab_shared_add",
         "requestBody": {
           "content": {
@@ -1470,12 +1554,52 @@
         ]
       }
     },
+    "/api/ab/shared": {
+      "delete": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Delete shared profiles",
+        "description": "TODO: Delete shared profiles",
+        "operationId": "ab_shared_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
     "/api/ab/settings": {
       "post": {
         "tags": [
           "address book"
         ],
-        "description": "Settings",
+        "summary": "Settings",
+        "description": "This function is an API endpoint that retrieves the settings for an address book.<br> TODO: Implement the settings for an address book.",
         "operationId": "ab_settings",
         "responses": {
           "200": {
@@ -1634,7 +1758,7 @@
         "tags": [
           "software"
         ],
-        "description": "Get the software download url\n\n# Arguments\n\n* `key` - The key to the software download link, it can be `osx`, `w64` or `ios`\n\n# Usage\n\n* it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable\n\n<pre> [s3config]<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>",
+        "description": "Get the software download url\n\n# Arguments\n\n* `key` - The key to the software download link, it can be `osx`, `w64` or `ios`\n\n# Usage\n\n* it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable\n\n<pre> [s3config]<br> Page = \"https://github.com/rustdesk/rustdesk/releases/latest\"<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>",
         "operationId": "software",
         "parameters": [
           {
@@ -1668,7 +1792,8 @@
         "tags": [
           "software"
         ],
-        "description": "Retrieve the server version",
+        "summary": "Retrieve the server version",
+        "description": "This function is an API endpoint that retrieves the version of the server. It is tagged with \"software\" for OpenAPI documentation.\n\n## Returns\n\nIf successful, this function returns a `Json<SoftwareVersionResponse>` object containing the version of the server.",
         "operationId": "software_version",
         "responses": {
           "200": {
@@ -1680,6 +1805,71 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/software/releases/latest": {
+      "get": {
+        "tags": [
+          "software"
+        ],
+        "summary": "Retrieve the client version",
+        "description": "This function is an API endpoint that retrieves the version of the client. It copies the GitHub method of retrieving the latest release version. It is tagged with \"software\" for OpenAPI documentation.\n\nIt can be used by replacing the check_software_update() from the client. You can find the client code at rustdesk/src/common.rs ## Returns\n\nReturns in the location header the URL of the latest release. something like https://api-server/api/releases/tag/1.2.6\n\n## Example\n\nIt is easy to modify the client code to use this API endpoint. this is how we can modify the client code to use this API endpoint.\n\n<pre> // see <a href='https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972'>Sample modification on github</a><br> let url=format!(\"{}/api/software/releases/latest\",get_api_server(\"\".to_owned(), \"\".to_owned())).to_owned();<br> log::info!(\"URL for checking software updates: {}\", url);<br> </pre>",
+        "operationId": "software_releases_latest",
+        "responses": {
+          "500": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/software/download": {
+      "get": {
+        "tags": [
+          "software"
+        ],
+        "summary": "Redirect to the software download page",
+        "description": "This function is an API endpoint that redirects to the software download page. You must set the `Page` key in the `s3config` of the S3 configuration file.",
+        "operationId": "software_download",
+        "responses": {
+          "500": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/software/releases/tag/{version}": {
+      "get": {
+        "tags": [
+          "software"
+        ],
+        "summary": "Simulate GitHub API for releases",
+        "description": "This function is an API endpoint that simulates the GitHub API for releases.\n\n## Parameters\n\n- `version`: The version of the release.\n\n## Returns\n\nReturns a `Json<SoftwareVersionResponse>` object containing the version of the release.",
+        "operationId": "software_releases_tag",
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareVersionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
           }
         }
       }
@@ -2295,6 +2485,36 @@
           "ip": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "PeersCountResponse": {
+        "type": "object",
+        "required": [
+          "total"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "CpuCount": {
+        "type": "object",
+        "required": [
+          "cpu",
+          "total"
+        ],
+        "properties": {
+          "cpu": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
           }
         }
       },

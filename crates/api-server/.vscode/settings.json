@@ -13,5 +13,12 @@
             "database": "${workspaceFolder:sctgdesk-api-server}/db_v2.sqlite3"
         }
     ],
-    "sqltools.useNodeRuntime": true
+    "sqltools.useNodeRuntime": true,
+    "terminal.integrated.env.osx": {
+        "DATABASE_URL": "sqlite://${workspaceFolder}/db_v2.sqlite3"
+    },
+    "rust-analyzer.checkOnSave": true,
+    "rust-analyzer.runnables.extraEnv": {
+        "DATABASE_URL": "sqlite://${workspaceFolder}/db_v2.sqlite3"
+    }
 }

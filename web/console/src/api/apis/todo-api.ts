@@ -70,7 +70,8 @@ export const TodoApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * Add OIDC Provider
+         * This function is an API endpoint that adds an OIDC provider.  TODO: This function is currently unused.
+         * @summary Add OIDC Provider
          * @param {EnableUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -121,7 +122,8 @@ export const TodoApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * Get OIDC Providers
+         * This function is an API endpoint that retrieves all OIDC providers.  TODO: This function is currently unused.
+         * @summary Get OIDC Providers
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -163,7 +165,8 @@ export const TodoApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * List strategies
+         * This function is an API endpoint that retrieves the list of all strategies. <br> TODO: This function is currently unused.
+         * @summary List strategies
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -227,7 +230,8 @@ export const TodoApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Add OIDC Provider
+         * This function is an API endpoint that adds an OIDC provider.  TODO: This function is currently unused.
+         * @summary Add OIDC Provider
          * @param {EnableUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -240,7 +244,8 @@ export const TodoApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Get OIDC Providers
+         * This function is an API endpoint that retrieves all OIDC providers.  TODO: This function is currently unused.
+         * @summary Get OIDC Providers
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -252,7 +257,8 @@ export const TodoApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * List strategies
+         * This function is an API endpoint that retrieves the list of all strategies. <br> TODO: This function is currently unused.
+         * @summary List strategies
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -282,7 +288,8 @@ export const TodoApiFactory = function (configuration?: Configuration, basePath?
             return TodoApiFp(configuration).audit(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Add OIDC Provider
+         * This function is an API endpoint that adds an OIDC provider.  TODO: This function is currently unused.
+         * @summary Add OIDC Provider
          * @param {EnableUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -291,7 +298,8 @@ export const TodoApiFactory = function (configuration?: Configuration, basePath?
             return TodoApiFp(configuration).oidcAdd(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Get OIDC Providers
+         * This function is an API endpoint that retrieves all OIDC providers.  TODO: This function is currently unused.
+         * @summary Get OIDC Providers
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -299,7 +307,8 @@ export const TodoApiFactory = function (configuration?: Configuration, basePath?
             return TodoApiFp(configuration).oidcGet(options).then((request) => request(axios, basePath));
         },
         /**
-         * List strategies
+         * This function is an API endpoint that retrieves the list of all strategies. <br> TODO: This function is currently unused.
+         * @summary List strategies
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -327,7 +336,8 @@ export class TodoApi extends BaseAPI {
         return TodoApiFp(this.configuration).audit(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Add OIDC Provider
+     * This function is an API endpoint that adds an OIDC provider.  TODO: This function is currently unused.
+     * @summary Add OIDC Provider
      * @param {EnableUserRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -337,7 +347,8 @@ export class TodoApi extends BaseAPI {
         return TodoApiFp(this.configuration).oidcAdd(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Get OIDC Providers
+     * This function is an API endpoint that retrieves all OIDC providers.  TODO: This function is currently unused.
+     * @summary Get OIDC Providers
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TodoApi
@@ -346,7 +357,8 @@ export class TodoApi extends BaseAPI {
         return TodoApiFp(this.configuration).oidcGet(options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * List strategies
+     * This function is an API endpoint that retrieves the list of all strategies. <br> TODO: This function is currently unused.
+     * @summary List strategies
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TodoApi

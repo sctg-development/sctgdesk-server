@@ -83,7 +83,8 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * Add user
+         * This function is an API endpoint that adds a new user.  ## Parameters  - `request`: A JSON object containing the new user information.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+         * @summary Add user
          * @param {AddUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -134,7 +135,8 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * Enable users
+         * This function is an API endpoint that enables or disables users.  ## Parameters  - `request`: A JSON object containing the list of users to enable or disable.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+         * @summary Enable users
          * @param {EnableUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -185,7 +187,8 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * Update current user password
+         * This function is an API endpoint that updates a user.<br> Normal user can only update themselves, admin can update any user.<br>  ## Parameters  - `request`: A JSON object containing the updated user information.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+         * @summary Update user
          * @param {UpdateUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -307,7 +310,8 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
             };
         },
         /**
-         * Get Users for client
+         * This function is an API endpoint that retrieves all users.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `accessible`: A boolean value indicating whether the user is accessible. This parameter is currently unused.  - `status`: The status of the user. This parameter is currently unused.  ## Returns  If successful, this function returns a `Json<UserList>` object containing the users.
+         * @summary Get Users for client
          * @param {number} current 
          * @param {number} page_size 
          * @param {boolean} [accessible] 
@@ -400,7 +404,8 @@ export const UserApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Add user
+         * This function is an API endpoint that adds a new user.  ## Parameters  - `request`: A JSON object containing the new user information.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+         * @summary Add user
          * @param {AddUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -413,7 +418,8 @@ export const UserApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Enable users
+         * This function is an API endpoint that enables or disables users.  ## Parameters  - `request`: A JSON object containing the list of users to enable or disable.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+         * @summary Enable users
          * @param {EnableUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -426,7 +432,8 @@ export const UserApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Update current user password
+         * This function is an API endpoint that updates a user.<br> Normal user can only update themselves, admin can update any user.<br>  ## Parameters  - `request`: A JSON object containing the updated user information.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+         * @summary Update user
          * @param {UpdateUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -456,7 +463,8 @@ export const UserApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Get Users for client
+         * This function is an API endpoint that retrieves all users.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `accessible`: A boolean value indicating whether the user is accessible. This parameter is currently unused.  - `status`: The status of the user. This parameter is currently unused.  ## Returns  If successful, this function returns a `Json<UserList>` object containing the users.
+         * @summary Get Users for client
          * @param {number} current 
          * @param {number} page_size 
          * @param {boolean} [accessible] 
@@ -491,7 +499,8 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
             return UserApiFp(configuration).currentUser(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Add user
+         * This function is an API endpoint that adds a new user.  ## Parameters  - `request`: A JSON object containing the new user information.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+         * @summary Add user
          * @param {AddUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -500,7 +509,8 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
             return UserApiFp(configuration).userAdd(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Enable users
+         * This function is an API endpoint that enables or disables users.  ## Parameters  - `request`: A JSON object containing the list of users to enable or disable.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+         * @summary Enable users
          * @param {EnableUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -509,7 +519,8 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
             return UserApiFp(configuration).userEnable(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * Update current user password
+         * This function is an API endpoint that updates a user.<br> Normal user can only update themselves, admin can update any user.<br>  ## Parameters  - `request`: A JSON object containing the updated user information.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+         * @summary Update user
          * @param {UpdateUserRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -531,7 +542,8 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
             return UserApiFp(configuration).users(current, page_size, email, name, options).then((request) => request(axios, basePath));
         },
         /**
-         * Get Users for client
+         * This function is an API endpoint that retrieves all users.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `accessible`: A boolean value indicating whether the user is accessible. This parameter is currently unused.  - `status`: The status of the user. This parameter is currently unused.  ## Returns  If successful, this function returns a `Json<UserList>` object containing the users.
+         * @summary Get Users for client
          * @param {number} current 
          * @param {number} page_size 
          * @param {boolean} [accessible] 
@@ -564,7 +576,8 @@ export class UserApi extends BaseAPI {
         return UserApiFp(this.configuration).currentUser(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Add user
+     * This function is an API endpoint that adds a new user.  ## Parameters  - `request`: A JSON object containing the new user information.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+     * @summary Add user
      * @param {AddUserRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -574,7 +587,8 @@ export class UserApi extends BaseAPI {
         return UserApiFp(this.configuration).userAdd(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Enable users
+     * This function is an API endpoint that enables or disables users.  ## Parameters  - `request`: A JSON object containing the list of users to enable or disable.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+     * @summary Enable users
      * @param {EnableUserRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -584,7 +598,8 @@ export class UserApi extends BaseAPI {
         return UserApiFp(this.configuration).userEnable(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Update current user password
+     * This function is an API endpoint that updates a user.<br> Normal user can only update themselves, admin can update any user.<br>  ## Parameters  - `request`: A JSON object containing the updated user information.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
+     * @summary Update user
      * @param {UpdateUserRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -608,7 +623,8 @@ export class UserApi extends BaseAPI {
         return UserApiFp(this.configuration).users(current, page_size, email, name, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Get Users for client
+     * This function is an API endpoint that retrieves all users.  ## Parameters  - `current`: The current page number for pagination. This parameter is currently unused.  - `pageSize`: The number of items per page for pagination. This parameter is currently unused.  - `accessible`: A boolean value indicating whether the user is accessible. This parameter is currently unused.  - `status`: The status of the user. This parameter is currently unused.  ## Returns  If successful, this function returns a `Json<UserList>` object containing the users.
+     * @summary Get Users for client
      * @param {number} current 
      * @param {number} page_size 
      * @param {boolean} [accessible] 

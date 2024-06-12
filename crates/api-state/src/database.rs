@@ -29,8 +29,10 @@ use utils::types::AddressBook;
 use utils::AbPeer;
 use utils::AbRule;
 use utils::AbTag;
+use utils::CpuCount;
 use utils::Group;
 use utils::Peer;
+use utils::Platform;
 use utils::UpdateUserRequest;
 use utils::UserListResponse;
 
@@ -1429,9 +1431,9 @@ impl Database {
         let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
         let user_guid = if (rule.user.is_some()) {
             let uuid = Uuid::parse_str(&rule.user.unwrap());
-            if (uuid.is_err()){
+            if (uuid.is_err()) {
                 None
-            }else{
+            } else {
                 Some(uuid.unwrap().as_bytes().to_vec())
             }
         } else {
@@ -1440,9 +1442,9 @@ impl Database {
 
         let group_guid = if (rule.group.is_some()) {
             let uuid = Uuid::parse_str(&rule.group.unwrap());
-            if (uuid.is_err()){
+            if (uuid.is_err()) {
                 None
-            }else{
+            } else {
                 Some(uuid.unwrap().as_bytes().to_vec())
             }
         } else {
@@ -1469,8 +1471,7 @@ impl Database {
         Some(())
     }
 
-    pub async fn add_shared_address_book(&self, name: &str, owner: UserId) -> Option<String>
-    {
+    pub async fn add_shared_address_book(&self, name: &str, owner: UserId) -> Option<String> {
         let mut conn = self.pool.acquire().await.unwrap();
         let ab_guid = Uuid::new_v4().as_bytes().to_vec();
         let res = sqlx::query!(
@@ -1488,7 +1489,66 @@ impl Database {
             log::error!("add_shared_address_book error: {:?}", res);
             return None;
         }
-        
+
         Some(guid_into_uuid(ab_guid)?)
+    }
+    pub async fn get_peers_count(&self, platform: Platform) -> u32 {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let filter = match platform {
+            Platform::Windows => "windows%",
+            Platform::Linux => "linux%",
+            Platform::MacOS => "macos%",
+            Platform::Android => "android%",
+            Platform::All => "%",
+            _ => "unknown%",
+        };
+        let res = sqlx::query!(
+            r#"
+            SELECT
+                COUNT(*) as count
+            FROM
+                peer
+            WHERE
+                json_extract(info,'$.os') like ?
+        "#,
+            filter
+        )
+        .fetch_one(&mut conn)
+        .await
+        .ok();
+        if res.is_none() {
+            return 0;
+        }
+        let res = res.unwrap();
+        res.count as u32
+    }
+
+    pub async fn get_cpus_count(&self) -> Vec<CpuCount> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let res = sqlx::query!(
+            r#"
+            SELECT 
+                COALESCE(trim(json_extract(info,'$.cpu')),"unknown") as cpu, 
+                COUNT(*) AS machine_count 
+            FROM 
+                peer 
+            GROUP BY 
+                cpu;
+        "#
+        )
+        .fetch_all(&mut conn)
+        .await
+        .ok();
+        if res.is_none() {
+            return Vec::new();
+        }
+        let res = res.unwrap();
+        let mut cpu_counts = Vec::new();
+        for row in res {
+            let cpu = row.cpu;
+            let total = row.machine_count as u32;
+            cpu_counts.push(CpuCount { cpu, total });
+        }
+        cpu_counts
     }
 }
