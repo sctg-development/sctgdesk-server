@@ -29,40 +29,40 @@ async fn main() -> Result<(), rocket::Error> {
         .arg(Arg::new("address")
             .long("address")
             .value_name("ADDRESS")
-            .about("Sets the address for the server")
-            .takes_value(true)
+            .help("Sets the address for the server")
+            .to_owned()
             .default_value("127.0.0.1"))
         .arg(Arg::new("port")
             .long("port")
             .value_name("PORT")
-            .about("Sets the port for the server")
-            .takes_value(true)
+            .help("Sets the port for the server")
+            .to_owned()
             .default_value("21114"))
         .arg(Arg::new("log_level")
             .long("log_level")
             .value_name("LOG_LEVEL")
-            .about("Sets the log level for the server")
-            .takes_value(true)
+            .help("Sets the log level for the server")
+            .to_owned()
             .default_value("debug"))
         .arg(Arg::new("secret_key")
             .long("secret_key")
             .value_name("SECRET_KEY")
-            .about("Sets the secret key for the server")
-            .takes_value(true)
+            .help("Sets the secret key for the server")
+            .to_owned()
             .default_value("wJq+s/xvwZjmMX3ev0p4gQTs9Ej5wt0brsk3ZGhoBTg="))
         .get_matches();
 
     // Get values from command line arguments
-    let address = matches.value_of("address").unwrap();
-    let port = matches.value_of("port").unwrap().parse::<u16>().unwrap();
-    let log_level = match matches.value_of("log_level").unwrap().to_lowercase().as_str() {
+    let address = matches.get_one::<String>("address").unwrap();
+    let port = (matches.get_one::<String>("port").unwrap()).parse::<u16>().unwrap();
+    let log_level = match (matches.get_one::<String>("log_level").unwrap() as &str).to_lowercase().as_str() {
         "off" => LogLevel::Off,
         "critical" => LogLevel::Critical,
         "normal" => LogLevel::Normal,
         "debug" => LogLevel::Debug,
         _ => LogLevel::Debug,
     };
-    let secret_key = matches.value_of("secret_key").unwrap();
+    let secret_key = matches.get_one::<String>("secret_key").unwrap();
 
     // Configure Rocket
     let figment = rocket::Config::figment()
