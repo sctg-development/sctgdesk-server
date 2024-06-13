@@ -6,7 +6,7 @@
     <button :data-tooltip-target="`tp${uniqueId}`" data-tooltip-trigger="click" :data-clipboard-target="`#${uniqueId}`"
         :id="`btn${uniqueId}`">
         <img :id="`img${uniqueId}`" class="inline-block w-5 h-5 ml-2 cursor-pointer" src="@/assets/clippy.svg"
-            alt="Copy to clipboard" />
+            :alt="props.altMsg" />
         <div :id="`tp${uniqueId}`" role="tooltip"
             class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
             {{ props.msg }}
@@ -15,15 +15,17 @@
     </button>
 </template>
 <script setup lang="ts">
-import { onMounted, ref} from 'vue';
+import { onMounted, ref } from 'vue';
 import { generateUniqueId } from '@/utilities/viteHelper';
 import { initFlowbite } from 'flowbite'
 import ClipboardJS from 'clipboard';
 export interface Props {
-  msg?: string
+    msg?: string
+    altMsg?: string
 }
 const props = withDefaults(defineProps<Props>(), {
-  msg: 'Copied !',
+    msg: 'Copied !',
+    altMsg: 'Copy to clipboard'
 })
 
 const uniqueId = generateUniqueId();
