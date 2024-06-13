@@ -74,10 +74,10 @@ This website use:
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="user in users" :key="user.guid">
+                                <tr v-for="(user, index) in users" :key="user.guid">
                                     <td
                                         class="text-dark border-b border-l border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                                        {{ user.guid }}
+                                        <ClipboardButton msg="Copied !">{{ user.guid }}</ClipboardButton>
                                     </td>
                                     <td
                                         class="text-dark border-b border-[#E8E8E8] bg-white dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
@@ -89,7 +89,7 @@ This website use:
                                     </td>
                                     <td
                                         class="text-dark border-b border-[#E8E8E8] bg-white dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                                        {{ user.status ==  1 ? 'Active' : 'Inactive'  }}
+                                        {{ user.status == 1 ? 'Active' : 'Inactive' }}
                                     </td>
                                     <td
                                         class="text-dark border-b border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
@@ -125,24 +125,30 @@ This website use:
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { UserApi, UserListResponse,EnableUserRequest } from '@/api';
+import { UserApi, EnableUserRequest } from '@/api';
 import { useUserStore } from '@/stores/sctgDeskStore';
-import { onMounted, ref } from 'vue';
+import { onBeforeMount, onMounted, onUpdated, ref } from 'vue';
 import AddUser from '@/components/AddUser.vue';
 import EditUser from '@/components/EditUser.vue';
 import { getUsers } from '@/utilities/api';
-
+import ClipboardButton from './ClipboardButton.vue';
 const userStore = useUserStore();
-const users = ref([] as UserListResponse[]);
+const users = ref([]);
 const bModalAddUser = ref(false);
 const bModalEditUser = ref(false);
 const editUserName = ref("");
 const editUserUuid = ref("");
 
+onBeforeMount(() => {
+    refresh_users();
+});
+
+onUpdated(() => {
+
+});
+
 onMounted(() => {
-    getUsers().then((data) => {
-        users.value = data;
-    });
+
 });
 
 /**
@@ -168,9 +174,9 @@ function toggle_edit_user(username?: string, uuid?: string): void {
     refresh_users();
 }
 
-function toggle_user(username: string, uuid: string, activate:boolean): void {
+function toggle_user(username: string, uuid: string, activate: boolean): void {
     const userApi = new UserApi(userStore.api_configuration);
-    const enableUserRequest =  {rows:[uuid],disable: activate}  as EnableUserRequest;
+    const enableUserRequest = { rows: [uuid], disable: activate } as EnableUserRequest;
     userApi.userEnable(enableUserRequest).then((response) => {
         if (response.status == 200 && response.data.msg == "success") {
             // alert(`${activate ? 'Activated' : 'Deactivated'} user ${username}`);
@@ -187,4 +193,5 @@ function refresh_users() {
         users.value = data;
     });
 }
+
 </script>

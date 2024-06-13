@@ -86,7 +86,7 @@ This website use:
                                     <tr v-for="peer in peers" :key="peer.id">
                                         <td
                                             class="text-dark border-b border-l border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                                            {{ peer.id }}
+                                            <ClipboardButton>{{ peer.id }}</ClipboardButton>
                                         </td>
                                         <td
                                             class="text-dark border-b border-[#E8E8E8] bg-white dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
@@ -131,6 +131,7 @@ import { AbPeer } from '@/api';
 import { ref } from 'vue';
 import ViewRules from '@/components/ViewRules.vue';
 import AddRule from '@/components/AddRule.vue';
+import ClipboardButton from '@/components/ClipboardButton.vue';
 const isViewRulesVisible = ref(false);
 const isAddRulesVisible = ref(false);
 

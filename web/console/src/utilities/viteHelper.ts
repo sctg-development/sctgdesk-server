@@ -31,3 +31,12 @@ export function generateUUIDBase64Encoded(): string {
   //equivalent of bash command: uuidgen | base64
   return btoa(generateUUID());
 }
+
+/**
+ * Generates unique id compatible with an HTML id and based on a v4 UUID.
+ *
+ * @return {string} The generated ID.
+ */
+export function generateUniqueId(): string {
+  return "ID"+generateUUID().replace(/-/g, '');
+}

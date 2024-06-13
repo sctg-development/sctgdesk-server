@@ -65,7 +65,7 @@ This website use:
                                 <tr v-for="group in groups" :key="group.guid">
                                     <td
                                         class="text-dark border-b border-l border-[#E8E8E8] bg-[#F3F6FF] dark:bg-dark-3 dark:border-dark dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                                        {{ group.guid }}
+                                        <ClipboardButton>{{ group.guid }}</ClipboardButton>
                                     </td>
                                     <td
                                         class="text-dark border-b border-[#E8E8E8] bg-white dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
@@ -107,6 +107,7 @@ import { Group, GroupApi } from '@/api';
 import { getGroups } from '@/utilities/api';
 import AddGroup from './AddGroup.vue';
 import EditGroup from './EditGroup.vue';
+import ClipboardButton from './ClipboardButton.vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 const bModalAddGroup = ref(false);
 const bModalEditGroup = ref(false);
