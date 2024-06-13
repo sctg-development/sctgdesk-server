@@ -1642,7 +1642,7 @@
           "address book"
         ],
         "summary": "Add shared profile",
-        "description": "TODO: Add shared profile",
+        "description": "This function is an API endpoint that adds a shared profile to an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: A JSON object containing the shared profile to be added.\n\n## Returns\n\nIf successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br>",
         "operationId": "ab_shared_add",
         "requestBody": {
           "content": {
