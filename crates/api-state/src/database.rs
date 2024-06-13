@@ -1713,4 +1713,67 @@ impl Database {
         }
         Some(())
     }
+
+    /// Create a shared address book for a group with one default rule for its owner
+    /// 
+    /// # Arguments
+    /// 
+    /// * `name` - address book name
+    /// * `owner` - group owner uuid in string format
+    /// 
+    /// # Returns
+    /// 
+    /// Option<String> - address book uuid
+    pub async fn create_shared_address_book(&self, name: &str, owner: &str) -> Option<String> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let ab_guid = Uuid::new_v4().as_bytes().to_vec();
+        let rule_guid = Uuid::new_v4().as_bytes().to_vec();
+        let owner_guid = Uuid::parse_str(owner);
+        if owner_guid.is_err() {
+            log::error!("create_shared_address_book error: {:?}", owner_guid);
+            return None;
+        }
+        let owner_guid = owner_guid.unwrap().as_bytes().to_vec();
+
+        let res = sqlx::query!(
+            r#"
+            BEGIN;
+            INSERT OR IGNORE INTO ab(guid, name, owner, personal, info)
+                VALUES (?, ?, ?, 0, '{}');
+            INSERT OR IGNORE INTO ab_rule(guid,ab,user,grp,rule) VALUES(?,?,?,NULL,3);
+            COMMIT;
+        "#,
+            ab_guid,
+            name,
+            owner_guid,
+            rule_guid,
+            ab_guid,
+            owner_guid
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("create_shared_address_book error: {:?}", res);
+            return None;
+        }
+
+        let rule_guid = Uuid::new_v4().as_bytes().to_vec();
+        let res = sqlx::query!(
+            r#"
+            INSERT OR IGNORE INTO ab_rule (guid, ab, user, grp, rule)
+                VALUES (?, ?, ?, NULL, 7)
+        "#,
+            rule_guid,
+            ab_guid,
+            owner_guid
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("create_shared_address_book error: {:?}", res);
+            return None;
+        }
+
+        Some(guid_into_uuid(ab_guid)?)
+    }
 }

@@ -39,6 +39,7 @@ use s3software::extract_version;
 use s3software::get_software_download_page;
 use s3software::{get_s3_config_file, get_signed_release_url_with_config};
 use state::{self};
+use tokio::sync::futures::Notified;
 #[cfg(feature = "ui")]
 use ui;
 use utils::guid_into_uuid;
@@ -2168,16 +2169,42 @@ async fn ab_rule_delete(
 
 /// # Add shared profile
 ///
-/// TODO: Add shared profile
+/// This function is an API endpoint that adds a shared profile to an address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+/// 
+/// ## Parameters
+/// 
+/// - `request`: A JSON object containing the shared profile to be added.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br>
 #[openapi(tag = "address book")]
 #[post("/api/ab/shared/add", format = "application/json", data = "<request>")]
 async fn ab_shared_add(
     state: &State<ApiState>,
-    _user: AuthenticatedAdmin,
+    user: AuthenticatedAdmin,
     request: Json<AbSharedAddRequest>,
 ) -> Result<Json<AbSharedProfilesResponse>, status::Unauthorized<()>> {
     state.check_maintenance().await;
-    let ab_shared_profiles = AbSharedProfilesResponse::default();
+    let name = request.0.name;
+    let note = request.0.note;
+    let owner = guid_into_uuid(user.info.user_id.clone()).unwrap();
+    let ab_uuid = state.create_shared_address_book(name.as_str(),owner.as_str()).await;
+    if ab_uuid.is_none() {
+        return Err(status::Unauthorized::<()>(()));
+    }
+    let ab_uuid = ab_uuid.unwrap();
+    let shared_profile = AbProfile {
+        guid: ab_uuid,
+        name: name,
+        owner: owner,
+        rule: 3,
+        note: note,
+        ..Default::default()
+    };
+    let mut ab_shared_profiles = AbSharedProfilesResponse::default();
+    ab_shared_profiles.data.push(shared_profile);
     Ok(Json(ab_shared_profiles))
 }
 

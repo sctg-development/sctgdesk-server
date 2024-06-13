@@ -717,4 +717,8 @@ impl ApiState {
     pub async fn delete_group(&self, guid: &str) -> Option<()> {
         self.db.delete_group(guid).await
     }
+
+    pub async fn create_shared_address_book(&self, name: &str, owner: &str) -> Option<String> {
+        self.db.create_shared_address_book(name, owner).await
+    }
 }
