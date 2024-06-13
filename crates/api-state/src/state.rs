@@ -678,22 +678,6 @@ impl ApiState {
         self.db.add_ab_rule(rule).await
     }
 
-    /// Add a shared address book given its name and its owner
-    /// It returns the guid of the shared address book
-    ///
-    /// # Arguments
-    ///
-    /// - `name` - The name of the shared address book
-    ///
-    /// - `owner` - The owner of the shared address book
-    ///
-    /// # Returns
-    ///
-    /// - `Option<String>` - The guid of the shared address book
-    pub async fn add_shared_address_book(&self, name: &str, owner: UserId) -> Option<String> {
-        self.db.add_shared_address_book(name, owner).await
-    }
-
     pub async fn get_peers_count(&self, platform: Platform) -> u32 {
         self.db.get_peers_count(platform).await
     }
@@ -718,7 +702,30 @@ impl ApiState {
         self.db.delete_group(guid).await
     }
 
-    pub async fn create_shared_address_book(&self, name: &str, owner: &str) -> Option<String> {
-        self.db.create_shared_address_book(name, owner).await
+    /// Add a shared address book given its name and its owner
+    /// It returns the guid of the shared address book
+    ///
+    /// # Arguments
+    ///
+    /// - `name` - The name of the shared address book
+    ///
+    /// - `owner` - The owner of the shared address book
+    ///
+    /// # Returns
+    ///
+    /// - `Option<String>` - The guid of the shared address book
+    pub async fn add_shared_address_book(&self, name: &str, owner: &str) -> Option<String> {
+        self.db.add_shared_address_book(name, owner).await
+    }
+
+    pub async fn delete_shared_address_book(&self, guid: &str) -> Option<()> {
+        self.db.delete_shared_address_book(guid).await
+    }
+
+    pub async fn delete_shared_address_books(&self, shareds:Vec<String>) -> Option<()> {
+        for shared in shareds {
+            self.db.delete_shared_address_book(shared.as_str()).await;
+        }
+        Some(())
     }
 }

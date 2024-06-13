@@ -2190,7 +2190,7 @@ async fn ab_shared_add(
     let name = request.0.name;
     let note = request.0.note;
     let owner = guid_into_uuid(user.info.user_id.clone()).unwrap();
-    let ab_uuid = state.create_shared_address_book(name.as_str(),owner.as_str()).await;
+    let ab_uuid = state.add_shared_address_book(name.as_str(),owner.as_str()).await;
     if ab_uuid.is_none() {
         return Err(status::Unauthorized::<()>(()));
     }
@@ -2210,7 +2210,16 @@ async fn ab_shared_add(
 
 /// # Delete shared profiles
 ///
-/// TODO: Delete shared profiles
+/// This function is an API endpoint that deletes shared profiles from an address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+/// 
+/// ## Parameters
+/// 
+/// - `request`: A JSON object containing an array of shared profile GUIDs to be deleted.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns an `ActionResponse::Empty` object.
 #[openapi(tag = "address book")]
 #[delete("/api/ab/shared", format = "application/json", data = "<request>")]
 async fn ab_shared_delete(
@@ -2219,6 +2228,8 @@ async fn ab_shared_delete(
     request: Json<Vec<String>>,
 ) -> Result<ActionResponse, status::Unauthorized<()>> {
     state.check_maintenance().await;
+    let shared_profiles_to_delete = request.0;
+    state.delete_shared_address_books(shared_profiles_to_delete).await;
     Ok(ActionResponse::Empty)
 }
 

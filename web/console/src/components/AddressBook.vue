@@ -13,7 +13,7 @@ This website use:
             <div class="container mx-auto">
                 <div class="flex flex-wrap -mx-4">
                     <div class="w-full px-4">
-                        <div class="max-w-full overflow-x-auto">
+                        <div class="max-w-full overflow-x-auto min-h-48">
                             <p>{{ name }}</p>
                             <table class="w-full table-auto">
                                 <thead class="bg-slate-400">
@@ -57,7 +57,7 @@ This website use:
                                                     leave-from-class="transform scale-100 opacity-100"
                                                     leave-to-class="transform scale-95 opacity-0">
                                                     <MenuItems
-                                                        class="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
+                                                        class="absolute right-0 mt-2 w-60 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
                                                         <div class="px-1 py-1">
                                                             <MenuItem v-slot="{ active }" v-if="!props.isPersonal">
                                                             <button :class="[
@@ -73,6 +73,14 @@ This website use:
                                                                 'group flex w-full items-center rounded-md px-2 py-2 text-sm',
                                                             ]" @click="isAddRulesVisible = true">
                                                                 Add rule
+                                                            </button>
+                                                            </MenuItem>
+                                                            <MenuItem v-slot="{ active }" v-if="!props.isPersonal">
+                                                            <button :class="[
+                                                                active ? 'bg-slate-400 text-white' : 'text-gray-900',
+                                                                'group flex w-full items-center rounded-md px-2 py-2 text-sm',
+                                                            ]" @click="deleteAddressBook()">
+                                                                Delete address book
                                                             </button>
                                                             </MenuItem>
                                                         </div>
@@ -123,7 +131,8 @@ This website use:
     <!-- ====== Table Section End -->
     <ViewRules v-if="isViewRulesVisible" :ab="props.ab" @viewRulesOK="isViewRulesVisible = false"
         @viewRulesCancel="isViewRulesVisible = false" />
-    <AddRule v-if="isAddRulesVisible" :ab="props.ab" @addRuleOK="isAddRulesVisible = false" @add-rule-cancel="isAddRulesVisible = false"></AddRule>
+    <AddRule v-if="isAddRulesVisible" :ab="props.ab" @addRuleOK="isAddRulesVisible = false"
+        @add-rule-cancel="isAddRulesVisible = false"></AddRule>
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
@@ -132,8 +141,13 @@ import { ref } from 'vue';
 import ViewRules from '@/components/ViewRules.vue';
 import AddRule from '@/components/AddRule.vue';
 import ClipboardButton from '@/components/ClipboardButton.vue';
+import { useUserStore } from '@/stores/sctgDeskStore';
+import { AddressBookApi } from '@/api';
+
 const isViewRulesVisible = ref(false);
 const isAddRulesVisible = ref(false);
+const emit = defineEmits(['needRefresh'])
+
 
 const props = withDefaults(defineProps<{
     name: string,
@@ -141,10 +155,21 @@ const props = withDefaults(defineProps<{
     peers: AbPeer[],
     isPersonal?: boolean,
     class?: string,
-}>(),{
+}>(), {
     isPersonal: false,
     class: "",
 })
 
-
+function deleteAddressBook() {
+    console.log("Delete address book")
+    if (confirm("Are you sure you want to delete this address book ?")) {
+        const addressBookApi = new AddressBookApi(useUserStore().api_configuration);
+        addressBookApi.abSharedDelete([props.ab]).then(() => {
+            emit('needRefresh');
+            console.log("Address book was deleted");
+        }).catch((error) => {
+            console.error("Error deleting address book", error)
+        })
+    }
+}
 </script>

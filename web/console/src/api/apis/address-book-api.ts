@@ -626,7 +626,7 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * TODO: Add shared profile
+         * This function is an API endpoint that adds a shared profile to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing the shared profile to be added.  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br>
          * @summary Add shared profile
          * @param {AbSharedAddRequest} body 
          * @param {*} [options] Override http request option.
@@ -678,7 +678,7 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * TODO: Delete shared profiles
+         * This function is an API endpoint that deletes shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing an array of shared profile GUIDs to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
          * @summary Delete shared profiles
          * @param {Array<string>} body 
          * @param {*} [options] Override http request option.
@@ -1177,7 +1177,7 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * TODO: Add shared profile
+         * This function is an API endpoint that adds a shared profile to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing the shared profile to be added.  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br>
          * @summary Add shared profile
          * @param {AbSharedAddRequest} body 
          * @param {*} [options] Override http request option.
@@ -1191,7 +1191,7 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * TODO: Delete shared profiles
+         * This function is an API endpoint that deletes shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing an array of shared profile GUIDs to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
          * @summary Delete shared profiles
          * @param {Array<string>} body 
          * @param {*} [options] Override http request option.
@@ -1401,7 +1401,7 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abShared(options).then((request) => request(axios, basePath));
         },
         /**
-         * TODO: Add shared profile
+         * This function is an API endpoint that adds a shared profile to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing the shared profile to be added.  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br>
          * @summary Add shared profile
          * @param {AbSharedAddRequest} body 
          * @param {*} [options] Override http request option.
@@ -1411,7 +1411,7 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abSharedAdd(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * TODO: Delete shared profiles
+         * This function is an API endpoint that deletes shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing an array of shared profile GUIDs to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
          * @summary Delete shared profiles
          * @param {Array<string>} body 
          * @param {*} [options] Override http request option.
@@ -1609,7 +1609,7 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abShared(options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * TODO: Add shared profile
+     * This function is an API endpoint that adds a shared profile to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing the shared profile to be added.  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br>
      * @summary Add shared profile
      * @param {AbSharedAddRequest} body 
      * @param {*} [options] Override http request option.
@@ -1620,7 +1620,7 @@ export class AddressBookApi extends BaseAPI {
         return AddressBookApiFp(this.configuration).abSharedAdd(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * TODO: Delete shared profiles
+     * This function is an API endpoint that deletes shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing an array of shared profile GUIDs to be deleted.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.
      * @summary Delete shared profiles
      * @param {Array<string>} body 
      * @param {*} [options] Override http request option.

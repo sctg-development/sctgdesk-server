@@ -1308,6 +1308,42 @@ impl Database {
         Some(groups)
     }
 
+    /// Delete a shared address book, all rules associated with it and all peers associated with it
+    ///
+    /// # Arguments
+    ///
+    /// * `guid` - address book uuid in string format
+    ///
+    /// # Returns
+    ///
+    /// Option<()>
+    pub async fn delete_shared_address_book(&self, guid: &str) -> Option<()> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let ab_guid = Uuid::parse_str(guid);
+        if ab_guid.is_err() {
+            log::error!("delete_ab error: {:?}", ab_guid);
+            return None;
+        }
+        let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
+        let res = sqlx::query!(
+            r#"
+            BEGIN;
+            DELETE FROM ab_peer WHERE ab = ?;
+            DELETE FROM ab_rule WHERE ab = ?;
+            DELETE FROM ab WHERE guid = ?;
+            COMMIT;
+            "#,
+            ab_guid,ab_guid,ab_guid
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("delete_ab error: {:?}", res);
+            return None;
+        }
+        Some(())
+    }
+
     pub async fn get_shared_address_books(&self, user_id: UserId) -> Option<Vec<AddressBook>> {
         let mut conn = self.pool.acquire().await.unwrap();
         let res = sqlx::query!(
@@ -1471,27 +1507,6 @@ impl Database {
         Some(())
     }
 
-    pub async fn add_shared_address_book(&self, name: &str, owner: UserId) -> Option<String> {
-        let mut conn = self.pool.acquire().await.unwrap();
-        let ab_guid = Uuid::new_v4().as_bytes().to_vec();
-        let res = sqlx::query!(
-            r#"
-            INSERT OR IGNORE INTO ab(guid, name, owner, personal, info)
-                VALUES (?, ?, ?, 0, '{}')
-        "#,
-            ab_guid,
-            name,
-            owner
-        )
-        .execute(&mut conn)
-        .await;
-        if res.is_err() {
-            log::error!("add_shared_address_book error: {:?}", res);
-            return None;
-        }
-
-        Some(guid_into_uuid(ab_guid)?)
-    }
     pub async fn get_peers_count(&self, platform: Platform) -> u32 {
         let mut conn = self.pool.acquire().await.unwrap();
         let filter = match platform {
@@ -1553,13 +1568,13 @@ impl Database {
     }
 
     /// Get a group given its guid
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `guid` - group guid in string format
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Option<Group>
     pub async fn get_group(&self, guid: &str) -> Option<Group> {
         let mut conn = self.pool.acquire().await.unwrap();
@@ -1606,17 +1621,16 @@ impl Database {
         })
     }
 
-    
     /// Create a new group
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `name` - group name
     /// * `team` - team name ( must exist in the database )
     /// * `note` - group note
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Option<()>
     pub async fn create_group(&self, name: &str, team: &str, note: &str) -> Option<()> {
         let mut conn = self.pool.acquire().await.unwrap();
@@ -1642,16 +1656,16 @@ impl Database {
     }
 
     /// Update a group
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `guid` - uuid of the group in string format
     /// * `name` - group name
     /// * `team` - team name ( must exist in the database )
     /// * `note` - group note
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Option<()>
     pub async fn update_group(&self, guid: &str, name: &str, team: &str, note: &str) -> Option<()> {
         let mut conn = self.pool.acquire().await.unwrap();
@@ -1682,13 +1696,13 @@ impl Database {
     }
 
     /// Delete a group
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `guid` - uuid of the group in string format
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Option<()>
     pub async fn delete_group(&self, guid: &str) -> Option<()> {
         let mut conn = self.pool.acquire().await.unwrap();
@@ -1715,22 +1729,22 @@ impl Database {
     }
 
     /// Create a shared address book for a group with one default rule for its owner
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `name` - address book name
     /// * `owner` - group owner uuid in string format
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Option<String> - address book uuid
-    pub async fn create_shared_address_book(&self, name: &str, owner: &str) -> Option<String> {
+    pub async fn add_shared_address_book(&self, name: &str, owner: &str) -> Option<String> {
         let mut conn = self.pool.acquire().await.unwrap();
         let ab_guid = Uuid::new_v4().as_bytes().to_vec();
         let rule_guid = Uuid::new_v4().as_bytes().to_vec();
         let owner_guid = Uuid::parse_str(owner);
         if owner_guid.is_err() {
-            log::error!("create_shared_address_book error: {:?}", owner_guid);
+            log::error!("add_shared_address_book error: {:?}", owner_guid);
             return None;
         }
         let owner_guid = owner_guid.unwrap().as_bytes().to_vec();
@@ -1753,24 +1767,7 @@ impl Database {
         .execute(&mut conn)
         .await;
         if res.is_err() {
-            log::error!("create_shared_address_book error: {:?}", res);
-            return None;
-        }
-
-        let rule_guid = Uuid::new_v4().as_bytes().to_vec();
-        let res = sqlx::query!(
-            r#"
-            INSERT OR IGNORE INTO ab_rule (guid, ab, user, grp, rule)
-                VALUES (?, ?, ?, NULL, 7)
-        "#,
-            rule_guid,
-            ab_guid,
-            owner_guid
-        )
-        .execute(&mut conn)
-        .await;
-        if res.is_err() {
-            log::error!("create_shared_address_book error: {:?}", res);
+            log::error!("add_shared_address_book error: {:?}", res);
             return None;
         }
 
