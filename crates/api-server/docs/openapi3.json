@@ -1682,7 +1682,7 @@
           "address book"
         ],
         "summary": "Delete shared profiles",
-        "description": "TODO: Delete shared profiles",
+        "description": "This function is an API endpoint that deletes shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: A JSON object containing an array of shared profile GUIDs to be deleted.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.",
         "operationId": "ab_shared_delete",
         "requestBody": {
           "content": {
