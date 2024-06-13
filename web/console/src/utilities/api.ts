@@ -1,3 +1,12 @@
+/*!
+=========================================================
+* © 2024 Ronan LE MEILLAT for SCTG Development
+=========================================================
+This website use:
+- Vite, Vue3, FontAwesome 6, TailwindCss 3
+- And many others
+*/
+
 import { Configuration, SoftwareApi, UserApi, UserListResponse } from "@/api";
 import { GroupApi, Group } from '@/api';
 import { useUserStore } from "@/stores/sctgDeskStore";

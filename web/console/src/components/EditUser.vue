@@ -1,3 +1,11 @@
+<!--
+=========================================================
+* © 2024 Ronan LE MEILLAT for SCTG Development
+=========================================================
+This website use:
+- Vite, Vue3, FontAwesome 6, TailwindCss 3
+- And many others
+-->
 <template>
     <Modal @modalOk="updateUser()" @modalCancel="closeModal()" okLabel="Save" title="Edit user">
         <div>

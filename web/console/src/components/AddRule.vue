@@ -1,3 +1,11 @@
+<!--
+=========================================================
+* © 2024 Ronan LE MEILLAT for SCTG Development
+=========================================================
+This website use:
+- Vite, Vue3, FontAwesome 6, TailwindCss 3
+- And many others
+-->
 <template>
     <Modal @modal-ok="addRule()" @modal-cancel="cancel" :title="`Add rule for ${props.ab}`">
         <label for="selectedUser" class="block text-sm font-medium text-gray-700">User</label>
