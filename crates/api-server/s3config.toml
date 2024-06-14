@@ -1,12 +1,27 @@
+# All the fields are required
 [s3config]
+# The latest release page of the software
+# This page must redirect to an URL that contains the version number
+# Example: https://github.com/rustdesk/rustdesk/releases/tag/1.2.3-2
 Page = "https://github.com/rustdesk/rustdesk/releases/latest"
+
+# The endpoint of the S3 compatible storage
 Endpoint = "https://compat.objectstorage.eu-london-1.oraclecloud.com"
+# The region of the S3 compatible storage
 Region = "eu-london-1"
+# The access key of the S3 compatible storage
 AccessKey = "c324ead11faa0d87337c07ddc4a1129fab76188d"
+# The secret key of the S3 compatible storage
 SecretKey = "GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA="
+# The bucket of the S3 compatible storage
 Bucket = "aezoz24elapn"
+# The path of the S3 compatible storage containing the Windows 64-bit version
 Windows64Key = "master/sctgdesk-releases/sctgdesk-1.2.6-x86_64.exe"
+# The path of the S3 compatible storage containing the Windows 32-bit version
 Windows32Key = "master/sctgdesk-releases/sctgdesk-1.2.6-i686.exe"
+# The path of the S3 compatible storage containing the MacOS Intel version
 OSXKey = "master/sctgdesk-releases/sctgdesk-1.2.6.dmg"
+# The path of the S3 compatible storage containing the MacOS Apple silicon version
 OSXArm64Key = "master/sctgdesk-releases/sctgdesk-1.2.6.dmg"
+# The path of the S3 compatible storage containing the IOs version
 IOSKey = "master/sctgdesk-releases/sctgdesk-1.2.6.ipa"
