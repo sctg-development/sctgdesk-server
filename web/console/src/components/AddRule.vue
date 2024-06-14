@@ -22,6 +22,8 @@ This website use:
         <select if="selectedRights" v-model="selectedRights" class="w-full p-2 border border-gray-300 rounded-md">
             <option v-for="right in rights" :key="right.value" :value="right.value">{{ right.name }}</option>
         </select>
+        <span class="text-red-800" v-if="berrorSpanVisible" ref="errorSpan">User must be null for a group rule, group must be null for a user
+            rule</span>
     </Modal>
 </template>
 <script setup lang="ts">
@@ -31,6 +33,8 @@ import { useUserStore } from '@/stores/sctgDeskStore';
 import { getGroups, getUsers } from '@/utilities/api';
 import { AddressBookApi, Group, UserListResponse, AbRuleAddRequest } from '@/api';
 
+const errorSpan = ref<HTMLSpanElement | null>(null);
+const berrorSpanVisible = ref(false);
 const props = defineProps<{
     ab: string,
 }>()
@@ -52,8 +56,12 @@ const selectedGroup = ref<string>('');
 const selectedRights = ref<string>('0');
 
 function addRule() {
+    if ((selectedUser.value === '' && selectedGroup.value === '') || (selectedUser.value !== '' && selectedGroup.value !== '')) {
+        berrorSpanVisible.value = true;
+        return;
+    }
     const addressBookApi = new AddressBookApi(configuration);
-    const request =  {
+    const request = {
         guid: props.ab,
         user: selectedUser.value === '' ? null : selectedUser.value,
         group: selectedGroup.value === '' ? null : selectedGroup.value,
