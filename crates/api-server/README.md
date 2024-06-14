@@ -33,9 +33,9 @@ This server is distributed under the terms of the GNU Affero General Public Lice
 * New address book API
   * Support for personal address book
   * Support for shared address book at group level
-    * read-only, read-write, admin (currently rules need to be set manually in the database)
+    * read-only, read-write, admin
   * Support for shared address book at user level
-    * read-only, read-write, admin (currently rules need to be set manually in the database)
+    * read-only, read-write, admin
 * OpenAPI documentation
 * Web console (work in progress)
 
@@ -51,6 +51,10 @@ The server use Rocket as the web framework. The server is designed to be modular
 
 The server includes basic support for authentication with a username and password. Passwords are stored in the database after being hashed with bcrypt. Additionally, similar to Rustdesk-server-pro, it supports authentication with third-party providers compatible with OAuth2. Currently, only Github and Dex (as a custom provider) are available. For adding a new provider you must implement the `OAuthProvider` and `OAuthProviderFactory` traits. You can look at the [github_provider.rs](https://github.com/sctg-development/sctgdesk-api-server/blob/main/libs/oauth2/src/github_provider.rs) and [dex_provider.rs](https://github.com/sctg-development/sctgdesk-api-server/blob/main/libs/oauth2/src/dex_provider.rs) files for examples.  
 The first time you launch the server it will create a default user with the username `admin` and the password `Hello,world!`. You can change the password after the first login on the webconsole.
+
+### Default admin user
+
+The default admin user is created with the username `admin` and the password `Hello,world!`. You can change the password after the first login on the webconsole.
 
 ## S3 url generation
 
