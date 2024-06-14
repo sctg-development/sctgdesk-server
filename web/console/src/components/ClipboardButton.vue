@@ -11,7 +11,7 @@ This website use:
         <slot>
         </slot>
     </span>
-    <button :data-tooltip-target="`tp${uniqueId}`" data-tooltip-trigger="click" :data-clipboard-target="`#${uniqueId}`"
+    <button ref="btnRef" :data-tooltip-target="`tp${uniqueId}`" data-tooltip-trigger="click" :data-clipboard-target="`#${uniqueId}`"
         :id="`btn${uniqueId}`">
         <img :id="`img${uniqueId}`" class="inline-block w-5 h-5 ml-2 cursor-pointer" src="@/assets/clippy.svg"
             :alt="props.altMsg" />
@@ -38,8 +38,13 @@ const props = withDefaults(defineProps<Props>(), {
 
 const uniqueId = generateUniqueId();
 const spanRef = ref<HTMLSpanElement | null>(null);
+const btnRef = ref<HTMLButtonElement | null>(null);
+
 onMounted(() => {
     initFlowbite();
-    new ClipboardJS(`#btn${uniqueId}`);
+    let clipboard = new ClipboardJS(btnRef.value);
+    clipboard.on('success', function (e) {
+        console.log('Copied !');
+    });
 });
 </script>
