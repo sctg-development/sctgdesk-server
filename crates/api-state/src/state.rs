@@ -728,4 +728,7 @@ impl ApiState {
         }
         Some(())
     }
+    pub async fn update_shared_address_book(&self, guid: &str, name: &str) -> Option<()> {
+        self.db.update_shared_address_book(guid, name).await
+    }
 }

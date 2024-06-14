@@ -79,6 +79,14 @@ This website use:
                                                             <button :class="[
                                                                 active ? 'bg-slate-400 text-white' : 'text-gray-900',
                                                                 'group flex w-full items-center rounded-md px-2 py-2 text-sm',
+                                                            ]" @click="isEditNameVisible = true">
+                                                                Edit address book
+                                                            </button>
+                                                            </MenuItem>
+                                                            <MenuItem v-slot="{ active }" v-if="!props.isPersonal">
+                                                            <button :class="[
+                                                                active ? 'bg-slate-400 text-white' : 'text-gray-900',
+                                                                'group flex w-full items-center rounded-md px-2 py-2 text-sm',
                                                             ]" @click="deleteAddressBook()">
                                                                 Delete address book
                                                             </button>
@@ -133,6 +141,7 @@ This website use:
         @viewRulesCancel="isViewRulesVisible = false" />
     <AddRule v-if="isAddRulesVisible" :ab="props.ab" @addRuleOK="isAddRulesVisible = false"
         @add-rule-cancel="isAddRulesVisible = false"></AddRule>
+    <EditAddressBook v-if="isEditNameVisible" :uuid="props.ab" @update_ab_edit_close="isEditNameVisible = false" @ab_updated="abUpdated()"/>
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
@@ -141,11 +150,13 @@ import { ref } from 'vue';
 import ViewRules from '@/components/ViewRules.vue';
 import AddRule from '@/components/AddRule.vue';
 import ClipboardButton from '@/components/ClipboardButton.vue';
+import EditAddressBook from '@/components/EditAddressBook.vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { AddressBookApi } from '@/api';
 
 const isViewRulesVisible = ref(false);
 const isAddRulesVisible = ref(false);
+const isEditNameVisible = ref(false);
 const emit = defineEmits(['needRefresh'])
 
 
@@ -171,5 +182,10 @@ function deleteAddressBook() {
             console.error("Error deleting address book", error)
         })
     }
+}
+
+function abUpdated() {
+    isEditNameVisible.value = false;
+    emit('needRefresh');
 }
 </script>

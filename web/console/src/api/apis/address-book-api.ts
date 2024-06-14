@@ -26,6 +26,7 @@ import { AbRuleDeleteRequest } from '../models';
 import { AbRulesResponse } from '../models';
 import { AbSettingsResponse } from '../models';
 import { AbSharedAddRequest } from '../models';
+import { AbSharedNameRequest } from '../models';
 import { AbSharedProfilesResponse } from '../models';
 import { AbTag } from '../models';
 import { AbTagRenameRequest } from '../models';
@@ -730,6 +731,58 @@ export const AddressBookApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
+         * This function is an API endpoint that updates the name of a shared profile in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing the updated shared profile information.  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the updated shared profile information.
+         * @summary Update shared profile name
+         * @param {AbSharedNameRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        abSharedName: async (body: AbSharedNameRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling abSharedName.');
+            }
+            const localVarPath = `/api/ab/shared/update/profile`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization_admin required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new tag to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.  # Example  POST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
          * @summary Add a Tag
          * @param {AbTag} body 
@@ -1205,6 +1258,20 @@ export const AddressBookApiFp = function(configuration?: Configuration) {
             };
         },
         /**
+         * This function is an API endpoint that updates the name of a shared profile in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing the updated shared profile information.  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the updated shared profile information.
+         * @summary Update shared profile name
+         * @param {AbSharedNameRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abSharedName(body: AbSharedNameRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<AbSharedProfilesResponse>>> {
+            const localVarAxiosArgs = await AddressBookApiAxiosParamCreator(configuration).abSharedName(body, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
          * This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new tag to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.  # Example  POST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
          * @summary Add a Tag
          * @param {AbTag} body 
@@ -1421,6 +1488,16 @@ export const AddressBookApiFactory = function (configuration?: Configuration, ba
             return AddressBookApiFp(configuration).abSharedDelete(body, options).then((request) => request(axios, basePath));
         },
         /**
+         * This function is an API endpoint that updates the name of a shared profile in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing the updated shared profile information.  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the updated shared profile information.
+         * @summary Update shared profile name
+         * @param {AbSharedNameRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async abSharedName(body: AbSharedNameRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<AbSharedProfilesResponse>> {
+            return AddressBookApiFp(configuration).abSharedName(body, options).then((request) => request(axios, basePath));
+        },
+        /**
          * This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new tag to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.  # Example  POST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}
          * @summary Add a Tag
          * @param {AbTag} body 
@@ -1629,6 +1706,17 @@ export class AddressBookApi extends BaseAPI {
      */
     public async abSharedDelete(body: Array<string>, options?: AxiosRequestConfig) : Promise<AxiosResponse<void>> {
         return AddressBookApiFp(this.configuration).abSharedDelete(body, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that updates the name of a shared profile in an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `request`: A JSON object containing the updated shared profile information.  ## Returns  If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the updated shared profile information.
+     * @summary Update shared profile name
+     * @param {AbSharedNameRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AddressBookApi
+     */
+    public async abSharedName(body: AbSharedNameRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<AbSharedProfilesResponse>> {
+        return AddressBookApiFp(this.configuration).abSharedName(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.  ## Parameters  - `ab`: The identifier of the address book.  - `request`: A JSON object containing the new tag to be added.  ## Returns  If successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>  ## Errors  This function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.  # Example  POST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json  {\"name\": \"tag1\", \"color\": \"#FF0000\"}

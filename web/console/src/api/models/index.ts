@@ -10,6 +10,7 @@ export * from './ab-rule-delete-request';
 export * from './ab-rules-response';
 export * from './ab-settings-response';
 export * from './ab-shared-add-request';
+export * from './ab-shared-name-request';
 export * from './ab-shared-profiles-response';
 export * from './ab-tag';
 export * from './ab-tag-rename-request';

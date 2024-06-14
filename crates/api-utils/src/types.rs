@@ -778,3 +778,10 @@ pub struct UpdateGoupRequest {
     pub allowed_outgoings: Vec<String>,
     pub allowed_incomings: Vec<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default)]
+pub struct AbSharedNameRequest {
+    pub name: Option<String>,
+    pub note: Option<String>,
+    pub guid: String,
+}

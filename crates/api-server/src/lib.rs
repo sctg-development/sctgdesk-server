@@ -49,6 +49,7 @@ use utils::AbRuleAddRequest;
 use utils::AbRuleDeleteRequest;
 use utils::AbRulesResponse;
 use utils::AbSharedAddRequest;
+use utils::AbSharedNameRequest;
 use utils::AddGoupRequest;
 use utils::CpuCount;
 use utils::PeersCountResponse;
@@ -163,6 +164,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 ab_shared,
                 ab_shared_add,
                 ab_shared_delete,
+                ab_shared_name,
                 ab_settings,
                 ab_rules,
                 ab_rule_add,
@@ -2231,6 +2233,44 @@ async fn ab_shared_delete(
     let shared_profiles_to_delete = request.0;
     state.delete_shared_address_books(shared_profiles_to_delete).await;
     Ok(ActionResponse::Empty)
+}
+
+/// # Update shared profile name
+/// 
+/// This function is an API endpoint that updates the name of a shared profile in an address book.
+/// It is tagged with "address book" for OpenAPI documentation.
+/// 
+/// ## Parameters
+/// 
+/// - `request`: A JSON object containing the updated shared profile information.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the updated shared profile information.
+#[openapi(tag = "address book")]
+#[put("/api/ab/shared/update/profile", format = "application/json", data = "<request>")]
+async fn ab_shared_name(
+    state: &State<ApiState>,
+    user: AuthenticatedAdmin,
+    request: Json<AbSharedNameRequest>,
+) -> Result<Json<AbSharedProfilesResponse>, status::Unauthorized<()>> {
+    state.check_maintenance().await;
+    let shared_profile = request.0;
+    let name = shared_profile.name.expect("Currently name is required");
+    state.update_shared_address_book(shared_profile.guid.as_str(), name.as_str()).await;
+    let shared_profiles = state.get_shared_address_books(user.info.user_id).await;
+    let mut ab_shared_profiles = AbSharedProfilesResponse::default();
+    for ab in shared_profiles.expect("shared_profiles is None") {
+        let address_book = AbProfile {
+            guid: ab.ab,
+            name: ab.name.unwrap_or("".to_string()),
+            owner: guid_into_uuid(ab.owner.expect("Invalid owner")).expect("Invalid GUID"),
+            rule: 3,
+            ..Default::default()
+        };
+        ab_shared_profiles.data.push(address_book);
+    }
+    Ok(Json(ab_shared_profiles))
 }
 
 async fn webconsole_index_multi() -> Redirect {

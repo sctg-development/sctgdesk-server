@@ -1773,4 +1773,40 @@ impl Database {
 
         Some(guid_into_uuid(ab_guid)?)
     }
+
+    /// Update a shared address book
+    /// Only the name can be updated
+    /// 
+    /// # Arguments
+    /// 
+    /// * `guid` - address book uuid in string format
+    /// * `name` - address book name
+    /// 
+    /// # Returns
+    /// 
+    /// Option<()>
+    pub async fn update_shared_address_book(&self, guid: &str, name: &str) -> Option<()> {
+        let mut conn = self.pool.acquire().await.unwrap();
+        let ab_guid = Uuid::parse_str(guid);
+        if ab_guid.is_err() {
+            log::error!("update_shared_address_book error: {:?}", ab_guid);
+            return None;
+        }
+        let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
+
+        let res = sqlx::query!(
+            r#"
+            UPDATE ab SET name = ? WHERE guid = ?
+        "#,
+            name,
+            ab_guid
+        )
+        .execute(&mut conn)
+        .await;
+        if res.is_err() {
+            log::error!("update_shared_address_book error: {:?}", res);
+            return None;
+        }
+        Some(())
+    }
 }

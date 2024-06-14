@@ -1,3 +1,4 @@
+use rocket_okapi::JsonSchema;
 // Copyright (c) 2024 Ronan LE MEILLAT for SCTG Development
 //
 // This file is part of the SCTGDesk project.

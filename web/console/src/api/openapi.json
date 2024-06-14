@@ -1715,6 +1715,46 @@
         ]
       }
     },
+    "/api/ab/shared/update/profile": {
+      "put": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Update shared profile name",
+        "description": "This function is an API endpoint that updates the name of a shared profile in an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: A JSON object containing the updated shared profile information.\n\n## Returns\n\nIf successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the updated shared profile information.",
+        "operationId": "ab_shared_name",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbSharedNameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbSharedProfilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
     "/api/ab/settings": {
       "post": {
         "tags": [
@@ -3114,6 +3154,25 @@
           "note": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "AbSharedNameRequest": {
+        "type": "object",
+        "required": [
+          "guid"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "guid": {
+            "type": "string"
           }
         }
       },
