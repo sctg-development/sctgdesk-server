@@ -16,20 +16,9 @@ import '@/index.scss'
 import { RouteLocationNormalized } from 'vue-router'
 import { useVersionsStore } from '@/stores/versionsStore';
 
-const baseUrl = import.meta.url;
-// const useImage = (url: string) => {
-//   return new URL(
-//     `/src/${url.substring(0, 1) === "@" ? url.substring(2) : url}`,
-//     baseUrl
-//   ).href;
-// };
-
-// declare module "@vue/runtime-core" {
-//   interface ComponentCustomProperties {
-//     $require: typeof useImage;
-//   }
-// }
-
+/**
+ * The routes of the application.
+ */
 const routes = [
     {
         path: "/ui/index",
@@ -48,8 +37,15 @@ const routes = [
     },
 ] as RouteRecordRaw[]
 
+
 const router = createRouter({
-    scrollBehavior(to) {
+    /**
+     * Determines the scroll behavior for a given route.
+     *
+     * @param {RouteLocationNormalized} to - The route object containing information about the destination route.
+     * @return {{ el: string } | undefined}- A promise that resolves to an object with the element to scroll to, or undefined if no hash is present in the route.
+     */
+    scrollBehavior(to: RouteLocationNormalized): { el: string } | undefined {
         if (to.hash) {
             return {
                 el: to.hash,
@@ -60,6 +56,9 @@ const router = createRouter({
     routes,
 });
 
+/**
+ * The navigation guard for the application.
+ */
 router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
     const store = useUserStore();
     if (to.name !== 'login' && !store.user && !store.api_configuration) {
@@ -69,10 +68,20 @@ router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, n
     }
 });
 
+/**
+ * The Pinia store for the application.
+ */
 const pinia = createPinia()
 
+/**
+ * The application instance.
+ */
 createApp(App).use(router)
     .use(pinia)
     .mount('#app')
 addJsonLD();
+
+/**
+ * Fetches the versions into the main pinia store.
+ */
 useVersionsStore().fetchVersions();

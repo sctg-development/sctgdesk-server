@@ -8,6 +8,12 @@ This website use:
 */
 import { toSvg as iconSvg} from 'jdenticon';
 
+/**
+ * Generates an avatar image for the given username.
+ *
+ * @param {string} username - The username to generate the avatar for.
+ * @return {string} The data URL of the generated avatar image.
+ */
 export const generateAvatar = (username: string): string => {
     const svg = iconSvg(username, 200);
     return `data:image/svg+xml,${encodeURIComponent(svg)}`;

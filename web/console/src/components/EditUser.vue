@@ -116,7 +116,13 @@ onMounted(() => {
         }
     });
 });
-function updateUser() {
+
+/**
+ * Updates a user with the provided information.
+ *
+ * @return {void} This function does not return anything.
+ */
+function updateUser(): void {
     if (password.value != confirm_password.value) {
         alert("Password and confirm password do not match");
         return;

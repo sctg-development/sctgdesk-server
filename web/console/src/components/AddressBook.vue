@@ -171,7 +171,12 @@ const props = withDefaults(defineProps<{
     class: "",
 })
 
-function deleteAddressBook() {
+/**
+ * Deletes the address book after confirming with the user. 
+ *
+ * @return {void} 
+ */
+function deleteAddressBook(): void {
     console.log("Delete address book")
     if (confirm("Are you sure you want to delete this address book ?")) {
         const addressBookApi = new AddressBookApi(useUserStore().api_configuration);
@@ -184,6 +189,10 @@ function deleteAddressBook() {
     }
 }
 
+/**
+ * Updates the state to hide the edit name display and emits the 'needRefresh' event.
+ *
+ */
 function abUpdated() {
     isEditNameVisible.value = false;
     emit('needRefresh');

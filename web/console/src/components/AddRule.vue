@@ -55,7 +55,12 @@ const selectedUser = ref<string>('');
 const selectedGroup = ref<string>('');
 const selectedRights = ref<string>('0');
 
-function addRule() {
+/**
+ * A function that adds a rule based on the selected user, group, and rights.
+ *
+ * @return {void} This function does not return a value.
+ */
+function addRule(): void {
     if ((selectedUser.value === '' && selectedGroup.value === '') || (selectedUser.value !== '' && selectedGroup.value !== '')) {
         berrorSpanVisible.value = true;
         return;
@@ -72,7 +77,12 @@ function addRule() {
     });
 }
 
-function cancel() {
+/**
+ * Emits the 'addRuleCancel' event to notify that the rule addition process is canceled.
+ *
+ * @return {void} This function does not return a value.
+ */
+function cancel(): void {
     emit('addRuleCancel');
 }
 

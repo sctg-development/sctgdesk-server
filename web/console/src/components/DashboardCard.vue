@@ -55,7 +55,12 @@ const androidPeersCount = ref(0);
 const allPeersCount = ref(0);
 const othersPeersCount = ref(0);
 
-function createPeersChart() {
+/**
+ * Creates a pie chart displaying the count of peers per platform.
+ *
+ * @return {void} the chart is created asynchronousy.
+ */
+function createPeersChart(): void {
     const peerApi = new PeerApi(useUserStore().api_configuration);
     Promise.all([
         peerApi.peersCount("windows"),
@@ -96,7 +101,12 @@ function createPeersChart() {
     });
 }
 
-function createCpusChart() {
+/**
+ * Creates a polar area chart displaying the total CPU usage for each CPU.
+ *
+ * @return {void} .
+ */
+function createCpusChart(): void {
     const peerApi = new PeerApi(useUserStore().api_configuration);
     peerApi.peersCpus().then((response) => {
         const cpus = response.data;

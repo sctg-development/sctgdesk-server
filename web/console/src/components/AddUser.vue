@@ -81,7 +81,15 @@ onMounted(() => {
         grp.value = groups.value[0].name;
     });
 });
-function addUser() {
+
+/**
+ * Adds a new user to the system.
+ *
+ * @return {void} This function does not return anything. It displays an alert if the user does not fill in all fields,
+ * or if the password and confirm password do not match. If the user is successfully added, it logs a message to the console
+ * and closes the modal. Otherwise, it displays an alert indicating that the user failed to be added.
+ */
+function addUser(): void {
     if (name.value == "" || password.value == "" || confirm_password.value == "" || email.value == "") {
         alert("Please fill all fields");
         return;
@@ -110,7 +118,13 @@ function addUser() {
         }
     });
 }
-function closeModal() {
+
+/**
+ * Closes the modal by emitting the 'add_user_close' event.
+ *
+ * @return {void} This function does not return anything.
+ */
+function closeModal(): void {
     emit('add_user_close')
 }
 </script>

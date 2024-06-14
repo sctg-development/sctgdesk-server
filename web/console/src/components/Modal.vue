@@ -69,10 +69,21 @@ const props = withDefaults(defineProps<{
     })
 
 
-function modalOk() {
+/**
+ * Emits the 'modalOk' event.
+ *
+ * @return {void}
+ */
+function modalOk(): void {
     emit('modalOk')
 }
-function modalCancel() {
+
+/**
+ * Emits the 'modalCancel' event.
+ *
+ * @return {void}
+ */
+function modalCancel(): void {
     emit('modalCancel')
 }
 </script>

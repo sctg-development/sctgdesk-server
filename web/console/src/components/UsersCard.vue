@@ -174,6 +174,14 @@ function toggle_edit_user(username?: string, uuid?: string): void {
     refresh_users();
 }
 
+/**
+ * A function that toggles the user activation status.
+ *
+ * @param {string} username - The username of the user to toggle
+ * @param {string} uuid - The unique identifier of the user
+ * @param {boolean} activate - A boolean flag indicating whether to activate or deactivate the user
+ * @return {void} This function does not return anything
+ */
 function toggle_user(username: string, uuid: string, activate: boolean): void {
     const userApi = new UserApi(userStore.api_configuration);
     const enableUserRequest = { rows: [uuid], disable: activate } as EnableUserRequest;
@@ -188,7 +196,12 @@ function toggle_user(username: string, uuid: string, activate: boolean): void {
     });
 }
 
-function refresh_users() {
+/**
+ * Refreshes the user data by fetching it asynchronously and updating the users value.
+ *
+ * @return {void} This function does not return anything directly but updates the users value asynchronously.
+ */
+function refresh_users(): void {
     getUsers().then((data) => {
         users.value = data;
     });
