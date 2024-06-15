@@ -50,6 +50,8 @@ jobs:
     - name: Build project
       run: |
         DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo build --release
+        cd target/release
+        zip -r /tmp/ubuntu_amd64.zip sctgdesk-api-server
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -57,3 +59,14 @@ jobs:
         name: ubuntu_amd64
         path: |
           target/release/sctgdesk-api-server
+
+    - name: Upload Release Assets binaries for ubuntu_amd64
+      uses: softprops/action-gh-release@v2
+      continue-on-error: true
+      with:
+        draft: true
+        tag_name: nightly
+        files: |
+          /tmp/ubuntu_amd64.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
