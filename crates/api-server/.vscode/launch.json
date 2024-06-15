@@ -17,7 +17,7 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "env": {
-                "RUST_BACKTRACE":"0",
+                "RUST_BACKTRACE": "0",
                 "RUST_LOG": "debug",
                 "OAUTH2_CREATE_USER": "1",
                 "OAUTH2_CONFIG_FILE": "${workspaceFolder}/.oauth2.toml",
@@ -41,13 +41,13 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "env": {
-                "RUST_BACKTRACE":"0",
+                "RUST_BACKTRACE": "0",
                 "RUST_LOG": "debug",
                 "OAUTH2_CREATE_USER": "1",
                 "OAUTH2_CONFIG_FILE": "${workspaceFolder}/.oauth2.toml",
                 "S3CONFIG_FILE": "${workspaceFolder}/.s3config.toml",
                 "MAIN_PKG_VERSION": "0.1.0",
-                "VITE_DEVELOPMENT":"http://localhost:5173"
+                "VITE_DEVELOPMENT": "http://localhost:5173"
             },
         },
         {
@@ -68,8 +68,7 @@
             "env": {
                 "RUST_LOG": "debug",
             },
-        }
-        ,
+        },
         {
             "type": "lldb",
             "request": "launch",
@@ -89,6 +88,32 @@
             "env": {
                 "RUST_LOG": "debug"
             },
-        }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug build.rs",
+            "cargo": {
+                "args": [
+                    "build"
+                ],
+                "filter": {
+                    "name": "build",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "0",
+                "RUST_LOG": "debug",
+                "OAUTH2_CREATE_USER": "1",
+                "OAUTH2_CONFIG_FILE": "${workspaceFolder}/.oauth2.toml",
+                "S3CONFIG_FILE": "${workspaceFolder}/.s3config.toml",
+                "MAIN_PKG_VERSION": "0.1.0",
+                "VITE_DEVELOPMENT": "http://localhost:5173",
+                "DATABASE_URL": "sqlite:///Users/rlemeill/Development/sctgdesk-api-server/db_v2.sqlite3"
+            },
+        },
     ]
 }

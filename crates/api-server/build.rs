@@ -16,10 +16,10 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
+use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 use std::str;
-use std::fs;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PackageJson {
@@ -57,20 +57,32 @@ fn main() {
     let mut package: PackageJson = serde_json::from_str(&data).unwrap();
 
     // Construit le chemin du fichier dans le répertoire temporaire
-    let tmp_dir = env::var("TMP").or_else(|_| env::var("TEMP")).or_else(|_| env::var("TMPDIR")).unwrap_or_else(|_| "/tmp".to_string());
+    let tmp_dir = env::var("TMP")
+        .or_else(|_| env::var("TEMP"))
+        .or_else(|_| env::var("TMPDIR"))
+        .unwrap_or_else(|_| "/tmp".to_string());
     let mut path = PathBuf::from(tmp_dir);
     path.push("version-8659B48F-5726-433D-BEC2-C7042FE9D93B.txt");
     // Lit la version à partir du fichier
-    let version = fs::read_to_string(&path).unwrap_or_else(|_| env::var("CARGO_PKG_VERSION").unwrap());
+    let version =
+        fs::read_to_string(&path).unwrap_or_else(|_| env::var("CARGO_PKG_VERSION").unwrap());
 
     package.set_version(&version);
 
     let serialized = serde_json::to_string_pretty(&package).unwrap();
     fs::write("./webconsole/package.json", serialized).unwrap();
 
-    let output = Command::new("npm")
+    let is_windows = cfg!(target_os = "windows");
+
+    let (command, install_args, build_args) = if is_windows {
+        ("cmd.exe", &["/C", "npm install"], &["/C", "npm run build"])
+    } else {
+        ("npm", &["install", ""], &["run", "build"])
+    };
+
+    let output = Command::new((command))
         .current_dir("webconsole")
-        .arg("install")
+        .args(install_args)
         .output()
         .expect("Failed to execute command");
     assert!(
@@ -80,10 +92,9 @@ fn main() {
         str::from_utf8(&output.stderr).unwrap_or("")
     );
 
-    let output = Command::new("npm")
+    let output = Command::new(command)
         .current_dir("webconsole")
-        .arg("run")
-        .arg("build")
+        .args(build_args)
         .output()
         .expect("Failed to execute command");
     assert!(
