@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_call:
 
 permissions:
   contents: write
@@ -174,12 +175,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Upload Release Assets binaries for Macos amd64
+    - name: Upload Release Assets binaries for Ubuntu amd64
       uses: softprops/action-gh-release@v2
       continue-on-error: true
       with:
         files: |
-            /tmp/${{ matrix.os }}_${{ matrix.target }}_${{ github.event.release.tag_name }}.zip
             docs/openapi3.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

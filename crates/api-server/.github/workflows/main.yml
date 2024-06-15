@@ -16,3 +16,6 @@ jobs:
   Build_Windows_binaries:
     uses: ./.github/workflows/windows.yml
     secrets: inherit
+  
+  Build_openapi:
+    uses: ./.github/workflows/build.yaml
