@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  Build_docker_and_Linux_binaries:
+  Build_Linux_binaries:
     uses: ./.github/workflows/ubuntu.yml
     secrets: inherit
     
