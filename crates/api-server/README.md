@@ -157,6 +157,39 @@ Options:
 
 <img width="927" alt="Capture d’écran 2024-05-24 à 12 07 32" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/f447f5fa-bc77-4bc6-858a-c6cadf9b7f6c">
 
+## Building
+
+First you need to install the Rust toolchain. You can install it by following the instructions at [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install). 
+
+You also need to install the SQLite3 development libraries. On Ubuntu, you can install them with the following command:
+
+```bash
+sudo apt install libsqlite3-dev
+```
+on MacOS:
+```bash
+brew install sqlite3
+```
+on Windows:
+```bash
+choco install sqlite
+```
+
+You also need nodejs and npm to build the webconsole. You can install them by following the instructions at [https://nodejs.org/en/download/](https://nodejs.org/en/download/).
+
+
+To build the server on *nix, execute the following command:
+
+```bash
+DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 && cargo build --release
+```
+
+To build the server on Windows, execute the following command:
+
+```bash
+set "DATABASE_URL=sqlite://%CD%/db_v2.sqlite3" && cargo build --release --target x86_64-pc-windows-msvc
+```
+
 ## Integration with Rustdesk-Server
 
 The server can be integrated with the Rustdesk-server you can easily integrate it by modifying the [main.rs](https://github.com/sctg-development/sctgdesk-server/blob/tcpserver-master-build/src/main.rs) file of the Rustdesk-server. :
