@@ -1,0 +1,58 @@
+name: Build for Ubuntu 22.04
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl build-essential debhelper devscripts pkg-config libssl-dev libsqlite3-dev zip
+
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+            path: ~/.cargo/registry
+            key: ubuntu-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo index
+      uses: actions/cache@v4
+      with:
+            path: ~/.cargo/git
+            key: ubuntu-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Cache cargo build
+      uses: actions/cache@v4
+      with:
+            path: target
+            key: ubuntu-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+          node-version: '20'
+
+    - name: Build project
+      run: |
+        DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo build --release
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ubuntu_amd64
+        path: |
+          target/release/sctgdesk-api-server

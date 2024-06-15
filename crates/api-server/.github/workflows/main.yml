@@ -1,0 +1,18 @@
+name: Main Workflow
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  Build_docker_and_Linux_binaries:
+    uses: ./.github/workflows/ubuntu.yml
+    secrets: inherit
+    
+  Build_MacOS_binaries:
+    uses: ./.github/workflows/macos-build.yml
+    secrets: inherit
+  
+  Build_Windows_binaries:
+    uses: ./.github/workflows/windows.yml
+    secrets: inherit

@@ -1,0 +1,70 @@
+name: Build for MacOS Intel and Apple Silicon
+on:
+  workflow_call:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ${{ matrix.job.sys }}
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - { sys: macos-13 , arch: intel }
+          - { sys: macos-latest , arch: apple_silicon }
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry
+        key: ${{ matrix.job.arch }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo index
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/git
+        key: ${{ matrix.job.arch }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Cache cargo build
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ matrix.job.arch }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Build
+      run: |
+        DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo build --release
+        cd target/release
+        zip -r /tmp/macos_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip sctgdesk-api-server
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}
+        path: |
+          target/release/sctgdesk-api-server
+
+    - name: Upload Release Assets binaries for Macos amd64
+      uses: softprops/action-gh-release@v2
+      continue-on-error: true
+      with:
+        files: |
+            /tmp/macos_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

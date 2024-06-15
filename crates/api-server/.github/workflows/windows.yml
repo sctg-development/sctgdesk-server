@@ -1,0 +1,80 @@
+name: Build for Windows 64-bit # and 32-bit
+on:
+  workflow_call:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - { vcpkg_triplet: x64-windows-static-release , arch: x86_64 }
+          # - { vcpkg_triplet: x86-windows-static-release , arch: i686 }
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install SQLite
+      run: |
+        choco install sqlite
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+        target: ${{ matrix.job.arch }}-pc-windows-msvc
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Cache cargo index
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Cache cargo build
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Build
+      continue-on-error: true
+      shell: cmd
+      run: |
+        set "DATABASE_URL=sqlite://%CD%/db_v2.sqlite3"
+        set "DATABASE_URL=sqlite://%CD%/db_v2.sqlite3" && cargo build --release --target ${{ matrix.job.arch }}-pc-windows-msvc
+        cd target\${{ matrix.job.arch }}-pc-windows-msvc\release
+        7z a -tzip /tmp/windows_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip sctgdesk-api-server.exe
+
+
+    - name: Upload Release Assets binaries for Windows
+      uses: softprops/action-gh-release@v2
+      continue-on-error: true
+      with:
+        files: |
+            /tmp/windows_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows_${{ matrix.job.arch }}
+        path: |
+          target/${{ matrix.job.arch }}-pc-windows-msvc/release/sctgdesk-api-server.exe
