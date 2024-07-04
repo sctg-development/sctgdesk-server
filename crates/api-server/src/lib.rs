@@ -38,8 +38,9 @@ use rocket::{Request, Response};
 use s3software::extract_version;
 use s3software::get_software_download_page;
 use s3software::{get_s3_config_file, get_signed_release_url_with_config};
+
 use state::{self};
-use tokio::sync::futures::Notified;
+
 #[cfg(feature = "ui")]
 use ui;
 use utils::guid_into_uuid;
@@ -65,7 +66,7 @@ use base64::prelude::{Engine as _, BASE64_STANDARD};
 use rocket::{
     self, figment::Figment, get, post, response::status, serde::json::Json, Build, Rocket, State,
 };
-use state::{ApiState, UserPasswordInfo};
+pub use state::{ApiState, UserPasswordInfo};
 use utils::{
     include_png_as_base64, unwrap_or_return, uuid_into_guid, AbTagRenameRequest, AddUserRequest,
     AddressBook, EnableUserRequest, GroupsResponse, OidcSettingsResponse, PeersResponse,
