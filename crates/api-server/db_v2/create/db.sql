@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS "user" (
                                     role tinyint not null, 
                                     info JSON not null DEFAULT '{}', strategy blob, "tfa" blob null) without rowid;
 -- $2b$12$.SfrHeV5frv0FQTM8X33OerLMu1YthqJdMP1oqpFUGh7dfgr41iGG = bcrypt('Hello,world!')
-INSERT OR IGNORE INTO user VALUES(X'018f2556230179eb91a2cffe5ced4236','admin',NULL,NULL,'$2b$12$.SfrHeV5frv0FQTM8X33OerLMu1YthqJdMP1oqpFUGh7dfgr41iGG','',1,X'018f255622fb73ee9afdbbcdc0cc387b','2024-04-28 15:32:33',X'018f255622f77778a006702ca5c23714',1,'{"email_alarm_notification":true}',NULL,NULL);
+INSERT OR IGNORE INTO user VALUES(X'018f2556230179eb91a2cffe5ced4236','admin','admin@example.org',NULL,'$2b$12$.SfrHeV5frv0FQTM8X33OerLMu1YthqJdMP1oqpFUGh7dfgr41iGG','',1,X'018f255622fb73ee9afdbbcdc0cc387b','2024-04-28 15:32:33',X'018f255622f77778a006702ca5c23714',1,'{"email_alarm_notification":true}',NULL,NULL);
 CREATE TABLE IF NOT EXISTS grp (
                                     guid blob primary key not null,
                                     team blob not null,
