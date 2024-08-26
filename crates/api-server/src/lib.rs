@@ -1045,6 +1045,7 @@ async fn oidc_auth(
             oauth2::Provider::Azure => todo!(),
             oauth2::Provider::Auth0 => todo!(),
             oauth2::Provider::Dex => Arc::new(oauth2::dex_provider::DexProvider::new()),
+            oauth2::Provider::Oauth2 => Arc::new(oauth2::oauth2_provider::Oauth2Provider::new()),
         }
     };
 

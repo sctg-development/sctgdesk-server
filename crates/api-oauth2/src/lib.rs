@@ -16,6 +16,7 @@
 pub mod dex_provider;
 pub mod github_provider;
 pub mod oauth_provider;
+pub mod oauth2_provider;
 use serde::{Deserialize, Serialize};
 use std::{fs, str::FromStr};
 mod errors;
@@ -43,6 +44,7 @@ pub enum Provider {
     Azure,
     Auth0,
     Dex,
+    Oauth2,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -67,6 +69,7 @@ impl FromStr for Provider {
             "azure" => Ok(Provider::Azure),
             "auth0" => Ok(Provider::Auth0),
             "custom" => Ok(Provider::Dex),
+            "oauth2" => Ok(Provider::Oauth2),
             _ => Err(()),
         }
     }
@@ -84,6 +87,7 @@ impl Into<String> for Provider {
             Provider::Azure => "Azure".to_string(),
             Provider::Auth0 => "Auth0".to_string(),
             Provider::Dex => "Dex".to_string(),
+            Provider::Oauth2 => "Oauth2".to_string(),
         }
     }
 }
