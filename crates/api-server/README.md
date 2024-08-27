@@ -4,7 +4,6 @@
 [**Download full server**](https://github.com/sctg-development/sctgdesk-server/releases)  
 [**API Documentation**](https://sctg-development.github.io/sctgdesk-api-server/)  
 
-
 # sctgdesk-api-server
 
 ## Disclaimer
@@ -104,11 +103,13 @@ Each time you modify the code, the server will automatically rebuild and reload 
 The server can be run as a standalone server. To run the server, execute the following command:
 
 In  development mode:
+
 ```bash
 DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo run --release
 ```
 
 In production mode:
+
 ```bash
 sctgdesk-api-server --help
 Runs the SCTGDesk API Server
@@ -123,6 +124,7 @@ Options:
   -h, --help                     Print help
   -V, --version                  Print version
 ```
+
 ## Screenshots
 
 ### Webconsole
@@ -143,8 +145,6 @@ Options:
 
 <img width="621" alt="add rules" src="https://github.com/sctg-development/sctgdesk-api-server/assets/165936401/355f3903-2b54-4b08-abd0-e33c84a260ed">
 
-
-
 ### Api documentation
 
 <img width="1502" alt="apidoc" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/88fe7910-fe62-43e5-a16c-70dc1201e040">
@@ -159,24 +159,27 @@ Options:
 
 ## Building
 
-First you need to install the Rust toolchain. You can install it by following the instructions at [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install). 
+First you need to install the Rust toolchain. You can install it by following the instructions at [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install).
 
 You also need to install the SQLite3 development libraries. On Ubuntu, you can install them with the following command:
 
 ```bash
 sudo apt install libsqlite3-dev
 ```
+
 on MacOS:
+
 ```bash
 brew install sqlite3
 ```
+
 on Windows:
+
 ```bash
 choco install sqlite
 ```
 
 You also need nodejs and npm to build the webconsole. You can install them by following the instructions at [https://nodejs.org/en/download/](https://nodejs.org/en/download/).
-
 
 To build the server on *nix, execute the following command:
 
@@ -256,4 +259,4 @@ if you want a ready to use integrated server with Rustdesk-Server, you can use m
                     -d '{"name":"testuser","password":"test","confirm-password":"test","email":"string","is_admin":false,"group_name":"Default"}' 
     ```
 
-* Use Rapidoc to test the API at http://127.0.0.1:21114/api/doc
+* Use Rapidoc to test the API at <http://127.0.0.1:21114/api/doc>
