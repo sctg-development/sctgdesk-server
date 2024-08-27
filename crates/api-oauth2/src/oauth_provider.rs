@@ -78,3 +78,14 @@ pub fn decode_oauth_id_token(id_token: &str) -> Result<(String, String), Oauth2E
         serde_json::from_slice(&claims).map_err(|_| Oauth2Error::DecodeIdTokenError)?;
     Ok((claims.name, claims.email))
 }
+
+/// Decode the standard Oauth2 id token
+pub fn decode_oauth2_id_token(id_token: &str) -> Result<(String, String), Oauth2Error> {
+    let parts: Vec<&str> = id_token.split('.').collect();
+    let claims = BASE64_URL_SAFE_NO_PAD
+        .decode(parts[1])
+        .map_err(|_| Oauth2Error::DecodeIdTokenError)?;
+    let claims: serde_json::Value =
+        serde_json::from_slice(&claims).map_err(|_| Oauth2Error::DecodeIdTokenError)?;
+    Ok((claims["name"].as_str().unwrap().to_string(), claims["email"].as_str().unwrap().to_string()))
+}
