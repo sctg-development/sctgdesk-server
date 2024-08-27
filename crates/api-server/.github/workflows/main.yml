@@ -4,6 +4,13 @@ on:
     types: [published]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  packages: write
+  attestations: write
+  
 jobs:
   Build_Linux_binaries:
     uses: ./.github/workflows/ubuntu.yml
