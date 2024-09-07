@@ -69,4 +69,4 @@ jobs:
         echo $TAG_NAME
         mv /tmp/macos_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip /tmp/macos_${{ matrix.job.arch }}_${TAG_NAME}.zip
         gh release create $TAG_NAME -t "$TAG_NAME}" -n "$TAG_NAME" || true
-        gh release upload $TAG_NAME /tmp/macos_${{ matrix.job.arch }}_${TAG_NAME}.zip
+        gh release upload $TAG_NAME /tmp/macos_${{ matrix.job.arch }}_${TAG_NAME}.zip --clobber
