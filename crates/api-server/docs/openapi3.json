@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "sctgdesk-api-server",
-    "version": "0.1.0"
+    "version": "1.1.99-42"
   },
   "paths": {
     "/{_path}": {
@@ -757,6 +757,44 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AddUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Delete user",
+        "description": "This function is an API endpoint that deletes a user.\n\n## Parameters\n\n- `request`: A JSON object containing the list of users to delete.\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object containing the number of users deleted.",
+        "operationId": "user_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteUserRequest"
               }
             }
           },
@@ -2550,6 +2588,20 @@
           },
           "group_name": {
             "type": "string"
+          }
+        }
+      },
+      "DeleteUserRequest": {
+        "type": "object",
+        "required": [
+          "rows"
+        ],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
