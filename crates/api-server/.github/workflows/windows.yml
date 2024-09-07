@@ -69,16 +69,6 @@ jobs:
         cd target\${{ matrix.job.arch }}-pc-windows-msvc\release
         7z a -tzip /tmp/windows_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip sctgdesk-api-server.exe
 
-
-    - name: Upload Release Assets binaries for Windows
-      uses: softprops/action-gh-release@v2
-      continue-on-error: true
-      with:
-        files: |
-            /tmp/windows_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
@@ -86,13 +76,12 @@ jobs:
         path: |
           target/${{ matrix.job.arch }}-pc-windows-msvc/release/sctgdesk-api-server.exe
 
-    - name: Upload Release Assets binaries for windows
-      uses: softprops/action-gh-release@v2
-      continue-on-error: true
-      with:
-        draft: true
-        tag_name: nightly
-        files: |
-          /tmp/windows_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip
+    - name: Create Release with gh
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+          export TAG_NAME=${{ github.event.release.tag_name }}
+          export TAG_NAME=${TAG_NAME:-"nightly"}
+          mv /tmp/macos_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip /tmp/windows_${{ matrix.job.arch }}_${TAG_NAME}.zip
+          gh release create $TAGNAME -t "$TAGNAME}" -n "$TAGNAME"
+          gh release upload $TAGNAME /tmp/windows_${{ matrix.job.arch }}_${TAG_NAME}.zip

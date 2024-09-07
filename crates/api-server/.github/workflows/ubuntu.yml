@@ -66,23 +66,13 @@ jobs:
         name: ubuntu_amd64
         path: |
           target/release/sctgdesk-api-server
-
-    - name: Upload Release Assets binaries for Macos amd64
-      uses: softprops/action-gh-release@v2
-      continue-on-error: true
-      with:
-        files: |
-            /tmp/ubuntu_amd64_${{ github.event.release.tag_name }}.zip
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             
-    - name: Upload Release Assets binaries for ubuntu_amd64
-      uses: softprops/action-gh-release@v2
-      continue-on-error: true
-      with:
-        draft: true
-        tag_name: nightly
-        files: |
-          /tmp/ubuntu_amd64.zip
+    - name: Create Release with gh
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+            export TAG_NAME=${{ github.event.release.tag_name }}
+            export TAG_NAME=${TAG_NAME:-"nightly"}
+            mv /tmp/ubuntu_amd64_${{ github.event.release.tag_name }}.zip /tmp/ubuntu_amd64_${TAG_NAME}.zip
+            gh release create $TAGNAME -t "$TAGNAME}" -n "$TAGNAME"
+            gh release upload $TAGNAME /tmp/ubuntu_amd64_${TAG_NAME}.zip
