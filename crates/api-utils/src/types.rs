@@ -785,3 +785,8 @@ pub struct AbSharedNameRequest {
     pub note: Option<String>,
     pub guid: String,
 }
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct DeleteUserRequest {
+    pub rows: Vec<String>,
+}

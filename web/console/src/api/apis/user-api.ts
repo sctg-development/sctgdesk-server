@@ -20,6 +20,7 @@ import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } fr
 import { AddUserRequest } from '../models';
 import { CurrentUserRequest } from '../models';
 import { CurrentUserResponse } from '../models';
+import { DeleteUserRequest } from '../models';
 import { EnableUserRequest } from '../models';
 import { UpdateUserRequest } from '../models';
 import { UserList } from '../models';
@@ -102,6 +103,58 @@ export const UserApiAxiosParamCreator = function (configuration?: Configuration)
                 baseOptions = configuration.baseOptions;
             }
             const localVarRequestOptions :AxiosRequestConfig = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication authorization_admin required
+            // http bearer authentication required
+            if (configuration && configuration.accessToken) {
+                const accessToken = typeof configuration.accessToken === 'function'
+                    ? await configuration.accessToken()
+                    : await configuration.accessToken;
+                localVarHeaderParameter["Authorization"] = "Bearer " + accessToken;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            const query = new URLSearchParams(localVarUrlObj.search);
+            for (const key in localVarQueryParameter) {
+                query.set(key, localVarQueryParameter[key]);
+            }
+            for (const key in options.params) {
+                query.set(key, options.params[key]);
+            }
+            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            const needsSerialization = (typeof body !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(body !== undefined ? body : {}) : (body || "");
+
+            return {
+                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * This function is an API endpoint that deletes a user.  ## Parameters  - `request`: A JSON object containing the list of users to delete.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the number of users deleted.
+         * @summary Delete user
+         * @param {DeleteUserRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        userDelete: async (body: DeleteUserRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling userDelete.');
+            }
+            const localVarPath = `/api/user`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions :AxiosRequestConfig = { method: 'DELETE', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -418,6 +471,20 @@ export const UserApiFp = function(configuration?: Configuration) {
             };
         },
         /**
+         * This function is an API endpoint that deletes a user.  ## Parameters  - `request`: A JSON object containing the list of users to delete.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the number of users deleted.
+         * @summary Delete user
+         * @param {DeleteUserRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userDelete(body: DeleteUserRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<UsersResponse>>> {
+            const localVarAxiosArgs = await UserApiAxiosParamCreator(configuration).userDelete(body, options);
+            return (axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+                const axiosRequestArgs :AxiosRequestConfig = {...localVarAxiosArgs.options, url: basePath + localVarAxiosArgs.url};
+                return axios.request(axiosRequestArgs);
+            };
+        },
+        /**
          * This function is an API endpoint that enables or disables users.  ## Parameters  - `request`: A JSON object containing the list of users to enable or disable.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
          * @summary Enable users
          * @param {EnableUserRequest} body 
@@ -509,6 +576,16 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
             return UserApiFp(configuration).userAdd(body, options).then((request) => request(axios, basePath));
         },
         /**
+         * This function is an API endpoint that deletes a user.  ## Parameters  - `request`: A JSON object containing the list of users to delete.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the number of users deleted.
+         * @summary Delete user
+         * @param {DeleteUserRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async userDelete(body: DeleteUserRequest, options?: AxiosRequestConfig): Promise<AxiosResponse<UsersResponse>> {
+            return UserApiFp(configuration).userDelete(body, options).then((request) => request(axios, basePath));
+        },
+        /**
          * This function is an API endpoint that enables or disables users.  ## Parameters  - `request`: A JSON object containing the list of users to enable or disable.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.
          * @summary Enable users
          * @param {EnableUserRequest} body 
@@ -585,6 +662,17 @@ export class UserApi extends BaseAPI {
      */
     public async userAdd(body: AddUserRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<UsersResponse>> {
         return UserApiFp(this.configuration).userAdd(body, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * This function is an API endpoint that deletes a user.  ## Parameters  - `request`: A JSON object containing the list of users to delete.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the number of users deleted.
+     * @summary Delete user
+     * @param {DeleteUserRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UserApi
+     */
+    public async userDelete(body: DeleteUserRequest, options?: AxiosRequestConfig) : Promise<AxiosResponse<UsersResponse>> {
+        return UserApiFp(this.configuration).userDelete(body, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * This function is an API endpoint that enables or disables users.  ## Parameters  - `request`: A JSON object containing the list of users to enable or disable.  ## Returns  If successful, this function returns a `Json<UsersResponse>` object containing the updated user information.

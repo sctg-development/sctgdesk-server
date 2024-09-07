@@ -386,7 +386,7 @@ impl ApiState {
         self.db.create_user(username, password, admin).await
     }
 
-    pub async fn ui_delete_user(&self, user_id: UserId) -> Option<()> {
+    pub async fn user_delete(&self, user_id: &str) -> Option<()> {
         self.db.delete_user(user_id).await
     }
 

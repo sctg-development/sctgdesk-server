@@ -460,15 +460,32 @@ impl Database {
         Some(user_id.0 as UserId)
     }
 
-    pub async fn delete_user(&self, user_id: UserId) -> Option<()> {
+    /// Delete a user and its address book
+    pub async fn delete_user(&self, uuid: &str) -> Option<()> {
         let mut tx = self.pool.begin().await.unwrap();
+        let user_id = Uuid::parse_str(uuid);
+        if user_id.is_err() {
+            log::error!("delete user error: {:?}", uuid);
+            return None;
+        }
+        let user_id = user_id.unwrap().as_bytes().to_vec();
         let res = sqlx::query!(
             r#"
             DELETE FROM
                 user
             WHERE
-                guid = ?
+                guid = ?;
+            DELETE FROM
+                ab_legacy
+            WHERE
+                user_guid = ?;
+            DELETE FROM
+                ab
+            WHERE
+                owner = ?;
         "#,
+            user_id,
+            user_id,
             user_id
         )
         .execute(&mut tx)
@@ -1004,6 +1021,8 @@ impl Database {
     ) -> Option<()> {
         let mut conn = self.pool.acquire().await.unwrap();
         let user_guid = Uuid::new_v4().as_bytes().to_vec();
+        // Create a personal address book name based on the user name
+        let ab_name = format!("{}'s Personal Address Book", name);
         // Check if the group exists
         let res = sqlx::query!(
             r#"
@@ -1036,7 +1055,7 @@ impl Database {
                     ?,
                     (SELECT guid FROM team  WHERE name = 'Default'), 1, ?, ?, ?, ?);
             INSERT OR IGNORE INTO ab(guid, name, owner, personal, info)
-                VALUES (?,"Personal Address Book",?,1,'{}');
+                VALUES (?,?,?,1,'{}');
             "#,
             user_guid,
             group_guid,
@@ -1045,6 +1064,7 @@ impl Database {
             password_hashed,
             email,
             ab_guid,
+            ab_name,
             user_guid
         )
         .execute(&mut conn)

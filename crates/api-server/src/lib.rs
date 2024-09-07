@@ -69,7 +69,7 @@ use rocket::{
 pub use state::{ApiState, UserPasswordInfo};
 use utils::{
     include_png_as_base64, unwrap_or_return, uuid_into_guid, AbTagRenameRequest, AddUserRequest,
-    AddressBook, EnableUserRequest, GroupsResponse, OidcSettingsResponse, PeersResponse,
+    AddressBook, EnableUserRequest, DeleteUserRequest, GroupsResponse, OidcSettingsResponse, PeersResponse,
     SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList,
 };
 use utils::{
@@ -141,6 +141,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 users,
                 users_client,
                 user_add,
+                user_delete,
                 user_enable,
                 user_update,
                 peers,
@@ -1722,6 +1723,45 @@ async fn user_add(
     let response = UsersResponse {
         msg: "success".to_string(),
         total: 1,
+        data: "[{}]".to_string(),
+    };
+
+    Ok(Json(response))
+}
+
+/// # Delete user
+/// 
+/// This function is an API endpoint that deletes a user.
+/// 
+/// ## Parameters
+/// 
+/// - `request`: A JSON object containing the list of users to delete.
+/// 
+/// ## Returns
+/// 
+/// If successful, this function returns a `Json<UsersResponse>` object containing the number of users deleted.
+#[openapi(tag = "user")]
+#[delete("/api/user", format = "application/json", data = "<request>")]
+async fn user_delete(
+    state: &State<ApiState>,
+    _user: AuthenticatedAdmin,
+    request: Json<DeleteUserRequest>,
+) -> Result<Json<UsersResponse>, status::Unauthorized<()>> {
+    log::debug!("create_user");
+    state.check_maintenance().await;
+
+    let delete_users = request.0;
+
+    let mut count = 0;
+    for uuid in delete_users.rows {
+        let res = state.user_delete(uuid.as_str()).await;
+        if res.is_some() {
+            count += 1;
+        }
+    }
+    let response = UsersResponse {
+        msg: "success".to_string(),
+        total: count,
         data: "[{}]".to_string(),
     };
 

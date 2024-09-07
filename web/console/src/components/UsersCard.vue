@@ -101,14 +101,17 @@ This website use:
                                     </td>
                                     <td
                                         class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                                        <a @click="toggle_edit_user(user.name, user.guid)"
+                                        <a v-if="userStore.user.admin" @click="toggle_edit_user(user.name, user.guid)"
                                             class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium m-1">
                                             Edit
                                         </a>
-                                        <a @click="toggle_user(user.name, user.guid, user.status == 1 ? false : true)"
+                                        <a v-if="userStore.user.admin"
+                                            @click="toggle_user(user.name, user.guid, user.status == 1 ? false : true)"
                                             class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium m-1">
                                             {{ user.status == 1 ? 'Deactivate' : 'Activate' }}
                                         </a>
+                                        <a v-if="userStore.user.admin" @click="delete_user(user.guid)"
+                                            class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium m-1">Delete</a>
                                     </td>
                                 </tr>
                             </tbody>
@@ -125,7 +128,7 @@ This website use:
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { UserApi, EnableUserRequest } from '@/api';
+import { UserApi, EnableUserRequest, DeleteUserRequest } from '@/api';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { onBeforeMount, onMounted, onUpdated, ref } from 'vue';
 import AddUser from '@/components/AddUser.vue';
@@ -207,4 +210,25 @@ function refresh_users(): void {
     });
 }
 
+/**
+ * Deletes a user using the UserApi service.
+ *
+ * @param {string} uuid The GUID of the user to delete.
+ * @return {void} This function does not return anything.
+ */
+function delete_user(uuid: string): void {
+    if (confirm("Are you sure you want to delete this user?")) {
+        const userApi = new UserApi(userStore.api_configuration);
+        const delete_user_request: DeleteUserRequest = { rows: [uuid] };
+        userApi.userDelete(delete_user_request).then((response) => {
+            if (response.status == 200 && response.data.msg == "success") {
+                alert("User deleted successfully");
+                refresh_users();
+            }
+            else {
+                alert("Failed to delete user");
+            }
+        });
+    }
+}
 </script>
