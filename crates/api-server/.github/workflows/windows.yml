@@ -77,12 +77,13 @@ jobs:
           target/${{ matrix.job.arch }}-pc-windows-msvc/release/sctgdesk-api-server.exe
 
     - name: Create Release with gh
+      shell: bash
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
           export TAG_NAME=${{ github.event.release.tag_name }}
           export TAG_NAME=${TAG_NAME:-"nightly"}
           echo $TAG_NAME
-          mv /tmp/macos_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip /tmp/windows_${{ matrix.job.arch }}_${TAG_NAME}.zip
+          mv /tmp/windows_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip /tmp/windows_${{ matrix.job.arch }}_${TAG_NAME}.zip
           gh release create $TAG_NAME -t "$TAG_NAME" -n "$TAG_NAME" || true
           gh release upload $TAG_NAME /tmp/windows_${{ matrix.job.arch }}_${TAG_NAME}.zip --clobber
