@@ -75,12 +75,12 @@ fn main() {
     let is_windows = cfg!(target_os = "windows");
 
     let (command, install_args, build_args) = if is_windows {
-        ("cmd.exe", &["/C", "npm install"], &["/C", "npm run build"])
+        ("cmd.exe", &["/C", "npm install --force"], &["/C", "npm run build"])
     } else {
-        ("npm", &["install", ""], &["run", "build"])
+        ("npm", &["install", "--force"], &["run", "build"])
     };
 
-    let output = Command::new((command))
+    let output = Command::new(command)
         .current_dir("webconsole")
         .args(install_args)
         .output()
