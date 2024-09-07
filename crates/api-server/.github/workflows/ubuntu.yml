@@ -75,5 +75,5 @@ jobs:
             export TAG_NAME=${TAG_NAME:-"nightly"}
             echo $TAG_NAME
             mv /tmp/ubuntu_amd64_${{ github.event.release.tag_name }}.zip /tmp/ubuntu_amd64_${TAG_NAME}.zip
-            gh release create $TAG_NAME -t "$TAG_NAME}" -n "$TAG_NAME"
+            gh release create $TAG_NAME -t "$TAG_NAME}" -n "$TAG_NAME" || true
             gh release upload $TAG_NAME /tmp/ubuntu_amd64_${TAG_NAME}.zip
