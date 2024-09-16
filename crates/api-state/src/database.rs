@@ -1560,11 +1560,14 @@ impl Database {
 
     pub async fn get_cpus_count(&self) -> Vec<CpuCount> {
         let mut conn = self.pool.acquire().await.unwrap();
+        // for avoiding compiltion error you can use the following query
+        // INSERT OR IGNORE INTO peer (guid, id, uuid, pk, created_at, "user", status, note, region, strategy, info, last_online) VALUES
+        //     (x'95CC7775BA37481DAD7214A4F6CE5A94', 'TESTUSER', randomblob(16), randomblob(16), '1901-01-01 12:00:00', randomblob(16), 0, '', NULL, randomblob(16), '{}', '1901-01-01 12:00:00');
         let res = sqlx::query!(
             r#"
             SELECT 
                 COALESCE(trim(json_extract(info,'$.cpu')),"unknown") as cpu, 
-                COUNT(*) AS machine_count 
+                COUNT(*) AS machine_count
             FROM 
                 peer 
             GROUP BY 

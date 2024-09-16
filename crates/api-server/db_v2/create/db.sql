@@ -56,9 +56,6 @@ CREATE TABLE IF NOT EXISTS peer (
                                     region text null,
                                     strategy blob, 
                                     info JSON not null DEFAULT '{}', "last_online" datetime not null default('2011-11-16 11:55:19')) without rowid;
--- Needed for compile time (sqlx)
-INSERT OR IGNORE INTO peer (guid, id, uuid, pk, created_at, "user", status, note, region, strategy, info, last_online) VALUES
-  (x'018f255622f77778a006702ca5c23715', 'TESTUSER', randomblob(16), randomblob(16), '1901-01-01 12:00:00', randomblob(16), 0, '', NULL, randomblob(16), '{}', '1901-01-01 12:00:00');
 CREATE TABLE IF NOT EXISTS "user" (
                                     guid blob primary key not null,
                                     name varchar(100) not null,
