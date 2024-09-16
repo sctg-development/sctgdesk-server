@@ -1,6 +1,6 @@
 [package]
 name = "sctgdesk-api-server"
-version = "1.1.99-42"
+version = "1.1.99-43"
 edition = "2021"
 build = "build.rs"
 # [workspace]
@@ -14,9 +14,9 @@ build = "build.rs"
 log = "0.4"
 include_dir = "0.7"
 tokio = { version = "1", features = ["full"] }
-bcrypt = "0.13"
+bcrypt = "0.15"
 rocket = { version = "0.5", features = ["json", "secrets"] }
-sqlx = { version = "0.6", features = ["sqlite", "runtime-tokio-rustls", "macros", "chrono", "json"] }
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio-rustls", "macros", "chrono", "json"] }
 reqwest = { version = "0.12", features = ["json"] }
 rocket_okapi = { version = "0.8", features = [ "rapidoc", "swagger" ]}
 serde = { version = "1.0", features = ["derive"] }
@@ -25,7 +25,7 @@ state = { path = "libs/state" }
 utils = { path = "libs/utils" }
 oauth2 = { path = "libs/oauth2" }
 s3software = { path = "libs/s3software" }
-uuid = { version = "1.0", features = ["v4"] }
+uuid = { version = "1.10", features = ["v4"] }
 base64 = "0.22"
 url = { version = "2", features = ["serde"] }
 urlencoding = "2.1"

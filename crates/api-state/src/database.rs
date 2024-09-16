@@ -98,7 +98,7 @@ impl Database {
                 type='table'
         "#
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await;
         if res.is_err() {
             log::debug!("init_db error: {:?}", res);
@@ -112,7 +112,7 @@ impl Database {
 
         // query_file! macro use path relative to Cargo.toml
         sqlx::query_file!("../../db_v2/create/db.sql")
-            .execute(&mut conn)
+            .execute(&mut *conn)
             .await
             .unwrap();
         // Load and run migrations
@@ -145,7 +145,7 @@ impl Database {
         "#,
                 username
             )
-            .fetch_one(&mut conn.conn)
+            .fetch_one(&mut *conn.conn)
             .await
             .ok()
         );
@@ -180,7 +180,7 @@ impl Database {
         "#,
                 user_id
             )
-            .fetch_one(&mut conn.conn)
+            .fetch_one(&mut *conn.conn)
             .await
             .ok()
         );
@@ -223,7 +223,7 @@ impl Database {
         "#,
                 username
             )
-            .fetch_one(&mut conn.conn)
+            .fetch_one(&mut *conn.conn)
             .await
             .ok()
         );
@@ -251,7 +251,7 @@ impl Database {
         "#,
             user_id
         )
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await
         .ok()?;
 
@@ -304,7 +304,7 @@ impl Database {
             new_password_hashed,
             user_id
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await
         .ok()?
         .rows_affected();
@@ -331,7 +331,7 @@ impl Database {
             new_password_hashed,
             username
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await
         .ok()?
         .rows_affected();
@@ -364,7 +364,7 @@ impl Database {
 
         let query = query_builder.build();
 
-        let res = query.execute(&mut tx).await.ok()?.rows_affected();
+        let res = query.execute(&mut *tx).await.ok()?.rows_affected();
 
         if res != values_count {
             return None;
@@ -393,7 +393,7 @@ impl Database {
                     ON ab_legacy.user_guid = user.guid
             "#
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await
         .ok()?;
 
@@ -421,7 +421,7 @@ impl Database {
             "#,
             username
         )
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await
         .ok()?;
 
@@ -447,12 +447,12 @@ impl Database {
             username,
             password_hashed
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await
         .ok()?;
 
         let user_id: (Vec<u8>,) = sqlx::query_as("SELECT last_insert_rowid()")
-            .fetch_one(&mut tx)
+            .fetch_one(&mut *tx)
             .await
             .ok()?;
 
@@ -488,7 +488,7 @@ impl Database {
             user_id,
             user_id
         )
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await
         .ok()?
         .rows_affected();
@@ -517,7 +517,7 @@ impl Database {
                 r#"SELECT info as "info!: String" FROM peer WHERE uuid = ?"#,
                 uuid_decoded
             )
-            .fetch_one(&mut tx)
+            .fetch_one(&mut *tx)
             .await;
             if res.is_err() {
                 log::debug!("peer select error: {:?}", res);
@@ -535,7 +535,7 @@ impl Database {
                 systeminfo_string,
                 uuid_decoded
             )
-            .execute(&mut tx)
+            .execute(&mut *tx)
             .await
             .ok()?
             .rows_affected();
@@ -632,7 +632,7 @@ impl Database {
             name,
             user_guid
         )
-        .execute(&mut conn.conn)
+        .execute(&mut *conn.conn)
         .await;
         if res.is_err() {
             log::error!(
@@ -646,7 +646,7 @@ impl Database {
             "#,
             id
         )
-        .fetch_one(&mut conn.conn)
+        .fetch_one(&mut *conn.conn)
         .await;
 
         if res.is_err() {
@@ -680,7 +680,7 @@ impl Database {
         "#,
             user_id
         )
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await
         .ok();
     }
@@ -704,7 +704,7 @@ impl Database {
         "#,
             user_id
         )
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("get_ab_personal_guid error: {:?}", res);
@@ -757,7 +757,7 @@ impl Database {
             "",
             ab_peer_json
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("add_peer_to_ab error: {:?}", res);
@@ -785,7 +785,7 @@ impl Database {
         "#,
             ab_guid
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("get_peers_from_ab error: {:?}", res);
@@ -816,7 +816,7 @@ impl Database {
             ab_guid,
             id
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("delete_peer_from_ab error: {:?}", res);
@@ -845,7 +845,7 @@ impl Database {
             ab_guid,
             id
         )
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("get_ab_peer error: {:?}", res);
@@ -875,7 +875,7 @@ impl Database {
             tag.name,
             tag.color
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("add_tag_to_ab error: {:?}", res);
@@ -904,7 +904,7 @@ impl Database {
         "#,
             ab_guid
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("get_ab_tags error: {:?}", res);
@@ -944,7 +944,7 @@ impl Database {
             ab_guid,
             tag
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("get_ab_tags error: {:?}", res);
@@ -978,7 +978,7 @@ impl Database {
             ab_guid,
             old_name
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("rename_ab_tag error: {:?}", res);
@@ -1002,7 +1002,7 @@ impl Database {
             ab_guid,
             tag
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("delete_tag_from_ab error: {:?}", res);
@@ -1035,7 +1035,7 @@ impl Database {
         "#,
             group_name
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("add_user error: {:?}", res);
@@ -1067,7 +1067,7 @@ impl Database {
             ab_name,
             user_guid
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("add_user error: {:?}", res);
@@ -1099,7 +1099,7 @@ impl Database {
             status,
             guid
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("change_user_status error: {:?}", res);
@@ -1159,7 +1159,7 @@ impl Database {
             page_size,
             offset
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("get_all_users error: {:?}", res);
@@ -1240,7 +1240,7 @@ impl Database {
         for param in query_params {
             res = res.bind(param);
         }
-        let res = res.bind(user_id).execute(&mut conn).await;
+        let res = res.bind(user_id).execute(&mut *conn).await;
         if res.is_err() {
             log::error!("user_update error: {:?}", res);
             return None;
@@ -1263,7 +1263,7 @@ impl Database {
                 peer
         "#
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await
         .ok()?;
 
@@ -1307,7 +1307,7 @@ impl Database {
             page_size,
             offset
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await
         .ok()?;
         let mut groups: Vec<Group> = Vec::new();
@@ -1355,7 +1355,7 @@ impl Database {
             "#,
             ab_guid,ab_guid,ab_guid
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("delete_ab error: {:?}", res);
@@ -1387,12 +1387,12 @@ impl Database {
             user_id,
             user_id
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await
         .ok()?;
         let mut address_books: Vec<AddressBook> = Vec::new();
         for row in res {
-            let access_level = row.rule.unwrap_or(0) as u32;
+            let access_level = row.rule as u32;
             address_books.push(AddressBook {
                 ab: guid_into_uuid(row.guid).unwrap_or("".to_string()),
                 name: Some(row.name),
@@ -1430,7 +1430,7 @@ impl Database {
         "#,
             ab_guid
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("get_ab_rules error: {:?}", res);
@@ -1443,8 +1443,8 @@ impl Database {
             let user = row.username;
             let group = row.groupname;
             let ab_rule = AbRule {
-                user: user,
-                group: group,
+                user: Some(user),
+                group: Some(group),
                 rule: row.rule as u32,
                 guid: uuid,
             };
@@ -1467,7 +1467,7 @@ impl Database {
         "#,
             rule_guid
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("delete_ab_rule error: {:?}", res);
@@ -1485,9 +1485,9 @@ impl Database {
             return None;
         }
         let ab_guid = ab_guid.unwrap().as_bytes().to_vec();
-        let user_guid = if (rule.user.is_some()) {
+        let user_guid = if rule.user.is_some() {
             let uuid = Uuid::parse_str(&rule.user.unwrap());
-            if (uuid.is_err()) {
+            if uuid.is_err() {
                 None
             } else {
                 Some(uuid.unwrap().as_bytes().to_vec())
@@ -1496,9 +1496,9 @@ impl Database {
             None
         };
 
-        let group_guid = if (rule.group.is_some()) {
+        let group_guid = if rule.group.is_some() {
             let uuid = Uuid::parse_str(&rule.group.unwrap());
-            if (uuid.is_err()) {
+            if uuid.is_err() {
                 None
             } else {
                 Some(uuid.unwrap().as_bytes().to_vec())
@@ -1518,7 +1518,7 @@ impl Database {
             group_guid,
             rule.rule
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("add_ab_rule error: {:?}", res);
@@ -1548,7 +1548,7 @@ impl Database {
         "#,
             filter
         )
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await
         .ok();
         if res.is_none() {
@@ -1571,7 +1571,7 @@ impl Database {
                 cpu;
         "#
         )
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await
         .ok();
         if res.is_none() {
@@ -1580,8 +1580,8 @@ impl Database {
         let res = res.unwrap();
         let mut cpu_counts = Vec::new();
         for row in res {
-            let cpu = row.cpu;
-            let total = row.machine_count as u32;
+            let cpu = row.cpu.unwrap_or_else(|| "unknown".to_string());
+            let total = row.machine_count.unwrap_or(0) as u32;
             cpu_counts.push(CpuCount { cpu, total });
         }
         cpu_counts
@@ -1620,7 +1620,7 @@ impl Database {
         "#,
             group_guid
         )
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("get_group error: {:?}", res);
@@ -1666,7 +1666,7 @@ impl Database {
             name,
             note
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("create_group error: {:?}", res);
@@ -1706,7 +1706,7 @@ impl Database {
             note,
             group_guid
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("update_group error: {:?}", res);
@@ -1739,7 +1739,7 @@ impl Database {
         "#,
             group_guid
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("delete_group error: {:?}", res);
@@ -1784,7 +1784,7 @@ impl Database {
             ab_guid,
             owner_guid
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("add_shared_address_book error: {:?}", res);
@@ -1821,7 +1821,7 @@ impl Database {
             name,
             ab_guid
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await;
         if res.is_err() {
             log::error!("update_shared_address_book error: {:?}", res);
