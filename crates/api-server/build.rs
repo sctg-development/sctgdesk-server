@@ -54,7 +54,7 @@ impl PackageJson {
 #[tokio::main]
 async fn main() {
     let db_path = env::var("DATABASE_URL").unwrap_or("sqlite://db_v2.sqlite3".to_string());
-    let mut conn = SqliteConnection::connect(&format!("sqlite://{}", db_path))
+    let mut conn = SqliteConnection::connect(&format!("{}", db_path))
         .await
         .expect("Failed to open database");
     conn.execute(
