@@ -67,8 +67,7 @@ jobs:
         set "DATABASE_URL=sqlite://%CD%/db_v2.sqlite3"
         set "DATABASE_URL=sqlite://%CD%/db_v2.sqlite3" && cargo build --release --target ${{ matrix.job.arch }}-pc-windows-msvc
         cd target\${{ matrix.job.arch }}-pc-windows-msvc\release
-        7z a -tzip \tmp\windows_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip sctgdesk-api-server.exe
-        dir \tmp
+        7z a -tzip windows_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip sctgdesk-api-server.exe
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -86,6 +85,6 @@ jobs:
           export TAG_NAME=${TAG_NAME:-"nightly"}
           echo $TAG_NAME
           ls -l /tmp
-          mv /tmp/windows_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip /tmp/windows_${{ matrix.job.arch }}_${TAG_NAME}.zip
+          mv windows_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip windows_${{ matrix.job.arch }}_${TAG_NAME}.zip
           gh release create $TAG_NAME -t "$TAG_NAME" -n "$TAG_NAME" || true
-          gh release upload $TAG_NAME /tmp/windows_${{ matrix.job.arch }}_${TAG_NAME}.zip --clobber
+          gh release upload $TAG_NAME windows_${{ matrix.job.arch }}_${TAG_NAME}.zip --clobber

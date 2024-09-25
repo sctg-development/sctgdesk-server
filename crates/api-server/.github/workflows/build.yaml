@@ -163,28 +163,20 @@ jobs:
     - name: Publish CI binary (${{ matrix.target }})
       continue-on-error: true
       run: |
-        zip -r /tmp/${{ matrix.os }}_${{ matrix.target }}_${{ github.event.release.tag_name }}.zip target/${{ matrix.target }}/release/sctgdesk-api-server
+        zip -r ${{ matrix.os }}_${{ matrix.target }}_${{ github.event.release.tag_name }}.zip target/${{ matrix.target }}/release/sctgdesk-api-server
 
-    - name: Upload Release Assets binaries for ${{ matrix.os }} ${{ matrix.target }}
-      uses: softprops/action-gh-release@v2
-      continue-on-error: true
-      with:
-        draft: true
-        tag_name: nightly
-        files: |
-          /tmp/${{ matrix.os }}_${{ matrix.target }}_${{ github.event.release.tag_name }}.zip
-          docs/openapi3.json
+    - name: Create Release with gh
+      shell: bash
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Upload Release Assets binaries for Ubuntu amd64
-      uses: softprops/action-gh-release@v2
-      continue-on-error: true
-      with:
-        files: |
-            docs/openapi3.json
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+          export TAG_NAME=${{ github.event.release.tag_name }}
+          export TAG_NAME=${TAG_NAME:-"nightly"}
+          echo $TAG_NAME
+          mv ${{ matrix.os }}_${{ matrix.target }}_${{ github.event.release.tag_name }}.zip ${{ matrix.os }}_${{ matrix.target }}_${TAG_NAME}.zip
+          gh release create $TAG_NAME -t "$TAG_NAME" -n "$TAG_NAME" || true
+          gh release upload $TAG_NAME ${{ matrix.os }}_${{ matrix.target }}_${TAG_NAME}.zip --clobber
+          gh release upload $TAG_NAME docs/openapi3.json --clobber
 
     - name: Commit and push to GitHub
       continue-on-error: true
