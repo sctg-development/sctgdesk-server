@@ -84,7 +84,7 @@ jobs:
           export TAG_NAME=${{ github.event.release.tag_name }}
           export TAG_NAME=${TAG_NAME:-"nightly"}
           echo $TAG_NAME
-          ls -l /tmp
-          mv windows_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip windows_${{ matrix.job.arch }}_${TAG_NAME}.zip
+          ls .
+          mv target/${{ matrix.job.arch }}-pc-windows-msvc/release/sctgdesk-api-server.exe windows_${{ matrix.job.arch }}_${TAG_NAME}.exe
           gh release create $TAG_NAME -t "$TAG_NAME" -n "$TAG_NAME" || true
-          gh release upload $TAG_NAME windows_${{ matrix.job.arch }}_${TAG_NAME}.zip --clobber
+          gh release upload $TAG_NAME windows_${{ matrix.job.arch }}_${TAG_NAME}.exe --clobber
