@@ -1560,9 +1560,12 @@ impl Database {
 
     pub async fn get_cpus_count(&self) -> Vec<CpuCount> {
         let mut conn = self.pool.acquire().await.unwrap();
-        // for avoiding compiltion error you can use the following query
+        // for avoiding compiltion error you can use the following query it is included in the build.rs
         // INSERT OR IGNORE INTO peer (guid, id, uuid, pk, created_at, "user", status, note, region, strategy, info, last_online) VALUES
         //     (x'95CC7775BA37481DAD7214A4F6CE5A94', 'TESTUSER', randomblob(16), randomblob(16), '1901-01-01 12:00:00', randomblob(16), 0, '', NULL, randomblob(16), '{}', '1901-01-01 12:00:00');
+        // Note: that the build.rs will not remove the peer from the database
+        // for removing the peer from the database you can use the following query
+        // DELETE FROM peer WHERE guid = x'95CC7775BA37481DAD7214A4F6CE5A94';
         let res = sqlx::query!(
             r#"
             SELECT 

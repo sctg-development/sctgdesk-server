@@ -54,18 +54,7 @@ impl PackageJson {
 #[tokio::main]
 async fn main() {
     let db_path = env::var("DATABASE_URL").unwrap_or("sqlite://db_v2.sqlite3".to_string());
-    let mut conn = SqliteConnection::connect(&format!("{}", db_path))
-        .await
-        .expect("Failed to open database");
-    conn.execute(
-        r#"
-        INSERT OR IGNORE INTO peer (guid, id, uuid, pk, created_at, "user", status, note, region, strategy, info, last_online) VALUES
-        (x'95CC7775BA37481DAD7214A4F6CE5A94', 'TESTUSER', randomblob(16), randomblob(16), '1901-01-01 12:00:00', randomblob(16), 0, '', NULL, randomblob(16), '{}', '1901-01-01 12:00:00');
-        "#
-    )
-    .await
-    .expect("Failed to insert test data");
-    println!("cargo:rerun-if-changed=build.rs");
+
     println!("cargo:rerun-if-changed=webconsole");
 
     let data = fs::read_to_string("./webconsole/package.json").unwrap();
@@ -118,9 +107,15 @@ async fn main() {
         str::from_utf8(&output.stdout).unwrap_or(""),
         str::from_utf8(&output.stderr).unwrap_or("")
     );
+
+    // Delete test data if it exists
+    let mut conn = SqliteConnection::connect(&format!("{}", db_path))
+    .await
+    .expect("Failed to open database");
     conn.execute(
         r#"
         DELETE FROM peer WHERE guid = x'95CC7775BA37481DAD7214A4F6CE5A94';
+        PRAGMA journal_mode=DELETE;
         "#
     )
     .await
