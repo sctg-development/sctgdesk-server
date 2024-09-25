@@ -74,11 +74,10 @@ jobs:
       with:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
     - name: Build
-      uses: actions-rs/cargo@v1
-      with:
-        command: build
-        args: --release --target ${{ matrix.target }}
+      run: |
+         DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo build --release --target ${{ matrix.target }}
     
     - name: Extract openapi3.json
       run: |
