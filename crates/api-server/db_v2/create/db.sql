@@ -247,3 +247,7 @@ CREATE INDEX IF NOT EXISTS index_ab_peer_ab_deleted_at on ab_peer (ab, deleted_a
 CREATE INDEX IF NOT EXISTS index_ab_rule_user on ab_rule ("user");
 CREATE INDEX IF NOT EXISTS index_ab_rule_grp on ab_rule (grp);
 CREATE INDEX IF NOT EXISTS index_ab_rule_ab_created_at on ab_rule (ab, created_at);
+
+-- Needed for compilation time sqlx check
+-- INSERT OR IGNORE INTO peer (guid, id, uuid, pk, created_at, "user", status, note, region, strategy, info, last_online) VALUES
+--   (x'018f255622f77778a006702ca5c23715', 'TESTUSER', randomblob(16), randomblob(16), '1901-01-01 12:00:00', randomblob(16), 0, '', NULL, randomblob(16), '{}', '1901-01-01 12:00:00');

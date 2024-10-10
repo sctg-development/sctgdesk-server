@@ -62,9 +62,10 @@ pub struct GithubUser {
     pub blog: String,
     pub location: Option<String>,
     pub email: Option<String>,
-    pub hireable: Option<String>,
+    pub hireable: Option<bool>,
     pub bio: Option<String>,
     pub twitter_username: Option<String>,
+    pub notification_email: Option<String>,
     pub public_repos: u64,
     pub public_gists: u64,
     pub followers: u64,
@@ -141,32 +142,45 @@ impl OAuthProvider for GithubProvider {
                 .error_for_status()
                 .map_err(|_| Oauth2Error::ExchangeCodeError)?;
 
-            let body_text = response.text().await.map_err(|_| Oauth2Error::ExchangeCodeError)?;
-            let body: GithubTokenResponse = serde_json::from_str(&body_text)
+            let body_text = response
+                .text()
+                .await
                 .map_err(|_| Oauth2Error::ExchangeCodeError)?;
+            let body: GithubTokenResponse =
+                serde_json::from_str(&body_text).map_err(|_| Oauth2Error::ExchangeCodeError)?;
 
             // Get the user info with:
             // Authorization: Bearer OAUTH-TOKEN
             // GET https://api.github.com/user
-            let response  = reqwest::Client::new()
+            let response = reqwest::Client::new()
                 .get("https://api.github.com/user")
                 .header("Accept", "application/json")
-                .header("User-Agent", format!("SCTGDesk/{}", env!("CARGO_PKG_VERSION")))
+                .header(
+                    "User-Agent",
+                    format!("SCTGDesk/{}", env!("CARGO_PKG_VERSION")),
+                )
                 .header("Authorization", format!("Bearer {}", body.access_token))
                 .send()
                 .await
                 .map_err(|_| Oauth2Error::ExchangeCodeError)?;
 
-            let user_info_text = response.text().await.map_err(|_| Oauth2Error::ExchangeCodeError)?;
-            log::debug!("User info:\n {}", user_info_text);
-            let user_info: GithubUser = serde_json::from_str(&user_info_text)
+            let user_info_text = response
+                .text()
+                .await
                 .map_err(|_| Oauth2Error::ExchangeCodeError)?;
+            log::debug!("User info:\n {}", user_info_text);
+            let user_info: GithubUser = serde_json::from_str(&user_info_text).map_err(|e| {
+                log::debug!("Failed to deserialize Github user info\nGithub probably changed its json response\nYou may need to correct the struct GithubUser: {}", e);
+                Oauth2Error::ExchangeCodeError
+            })?;
 
             if true {
                 Ok(OAuthResponse {
                     access_token: body.access_token,
                     username: user_info.login,
-                    email: user_info.email.unwrap_or("tobefilled@world.com".to_string()),
+                    email: user_info
+                        .email
+                        .unwrap_or("tobefilled@world.com".to_string()),
                 })
             } else {
                 Err(Oauth2Error::ExchangeCodeError)
