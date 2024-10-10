@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "sctgdesk-api-server",
-    "version": "1.1.99-43"
+    "version": "1.1.99-44"
   },
   "paths": {
     "/{_path}": {
