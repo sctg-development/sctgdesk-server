@@ -218,6 +218,9 @@ module.exports = {
       borderWidth: {
         3: '3px',
         6: '6px'
+      },
+      spacing: {
+        'n1': '0.19rem', // a bit less than p-1
       }
     }
   },

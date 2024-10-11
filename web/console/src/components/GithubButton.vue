@@ -18,7 +18,7 @@ This website use:
             <span>Stars</span>
         </a>
         <a :href="`https://github.com/${props.owner}/${props.repo}`"
-            class="bg-transparent hover:bg-gray-400 text-gray-800 font-semibold hover:text-white py-[0.18rem] px-2 border border-gray-300 hover:border-transparent rounded-r">
+            class="bg-transparent hover:bg-gray-400 text-gray-800 font-semibold hover:text-white py-n1 px-2 border border-gray-300 hover:border-transparent rounded-r">
             {{ users.length }}
         </a>
         <div>&nbsp;{{ props.posttext }}&nbsp;</div>
