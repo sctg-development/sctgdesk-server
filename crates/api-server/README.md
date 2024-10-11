@@ -90,8 +90,14 @@ For regenerating the api code, run the following command **after** the server is
 To start the ui development server, run the following commands:
 
 ```bash
-cd webconsole && npm i && npm run devserver &
-VITE_DEVELOPMENT="http://localhost:5173" sctgdesk-api-server
+sqlite3 db_v2.sqlite3 <<EOF
+INSERT OR IGNORE INTO peer (guid, id, uuid, pk, created_at, "user", status, note, region, strategy, info, last_online) VALUES
+  (x'018f255622f77778a006702ca5c23715', 'TESTUSER', randomblob(16), randomblob(16), '1901-01-01 12:00:00', randomblob(16), 0, '', NULL, randomblob(16), '{}', '1901-01-01 12:00:00');
+EOF
+cargo build
+cd webconsole && npm ci && npm run devserver &
+cd ..
+VITE_DEVELOPMENT="http://localhost:5173" target/debug/sctgdesk-api-server
 ```
 
 It will start a nodejs ui development server on port 5173. Sctgdesk-api-server will proxy the requests to ui development server rather than serving embedded static files. Access the development ui at `http://localhost:21114/ui` .
