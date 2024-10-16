@@ -6,6 +6,10 @@
 
 # sctgdesk-api-server
 
+## Star the project
+
+**If you appreciate my work, please consider giving it a star! 🤩**
+
 ## Disclaimer
 
 First of all this project was not developped to be a replacement of Rustdesk-server-pro. It was developped for our requirements and to be used with Rustdesk.  
