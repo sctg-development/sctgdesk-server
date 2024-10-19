@@ -106,7 +106,7 @@ jobs:
                 window.addEventListener('DOMContentLoaded', (event) => {
                     const rapidocEl = document.getElementById('rapidoc');
                     const spec_url = "data:application/json;base64,$(base64 -w 0 docs/openapi3.json)";
-                    const targets = ['c','javascript_fetch','go','php'];
+                    const targets = ['c','javascript_fetch','go','php','rust','python','shell_curl'];
                     fetch(spec_url)
                         .then((res) => res.json())
                         .then((data) => {

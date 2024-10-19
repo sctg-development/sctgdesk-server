@@ -184,7 +184,8 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
         .mount("/",routes![
             favicon,
             webconsole_vue,
-            openapi_snippet
+            openapi_snippet,
+            openapi_snippet_map,
         ])
         .mount(
             "/api/doc/",
@@ -2350,6 +2351,15 @@ impl<'r> Responder<'r, 'r> for StaticFileResponse {
 #[get("/js/openapisnippet.min.js")]
 async fn openapi_snippet() -> Option<StaticFileResponse> {
     let content = include_str!("../rapidoc/openapisnippet.min.js");
+    Some(StaticFileResponse(
+        content.as_bytes().to_vec(),
+        ContentType::JavaScript,
+    ))
+}
+
+#[get("/js/openapisnippet.min.js.map")]
+async fn openapi_snippet_map() -> Option<StaticFileResponse> {
+    let content = include_str!("../rapidoc/openapisnippet.min.js.map");
     Some(StaticFileResponse(
         content.as_bytes().to_vec(),
         ContentType::JavaScript,
