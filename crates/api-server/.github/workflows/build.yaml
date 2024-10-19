@@ -186,7 +186,7 @@ jobs:
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
-        git add -v -f docs/openapi3.json docs/index.html docs/openapisnippet.min.js
+        git add -v -f docs/openapi3.json docs/index.html docs/openapisnippet.min.js docs/openapisnippet.min.js.map
         git commit -m "Update GitHub Pages" docs/*
         git push origin HEAD
 
