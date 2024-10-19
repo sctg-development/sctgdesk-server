@@ -15,22 +15,24 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    env:
+      TARGET: x86_64-unknown-linux-musl
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Set up environment
       run: |
         sudo apt-get update
-        sudo apt-get install -y curl build-essential debhelper devscripts pkg-config libssl-dev libsqlite3-dev zip
+        sudo apt-get install -y curl build-essential debhelper devscripts pkg-config libssl-dev libsqlite3-dev zip musl-dev musl-tools
 
     - name: Install Rust toolchain
-      uses: actions-rs/toolchain@v1
+      uses: crusty-pie/toolchain@main
       with:
-          profile: minimal
-          toolchain: stable
-          override: true
+        profile: minimal
+        toolchain: stable
+        override: true
 
     - name: Cache cargo registry
       uses: actions/cache@v4
@@ -56,8 +58,8 @@ jobs:
 
     - name: Build project
       run: |
-        DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo build --release
-        cd target/release
+        DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo build --target=${{env.TARGET}} --release
+        cd target/${{env.TARGET}}/release
         zip -r /tmp/ubuntu_amd64_${{ github.event.release.tag_name }}.zip sctgdesk-api-server
 
     - name: Upload artifact
@@ -65,7 +67,7 @@ jobs:
       with:
         name: ubuntu_amd64
         path: |
-          target/release/sctgdesk-api-server
+          target/${{env.TARGET}}/release/sctgdesk-api-server
             
     - name: Create Release with gh
       env:
