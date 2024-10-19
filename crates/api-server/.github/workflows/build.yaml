@@ -85,6 +85,8 @@ jobs:
         target/${{ matrix.target }}/release/sctgdesk-api-server &
         sleep 5
         curl http://127.0.0.1:21114/openapi.json > docs/openapi3.json
+        curl http://127.0.0.1:21114/js/openapisnippet.min.js > docs/openapisnippet.min.js
+        curl http://127.0.0.1:21114/js/openapisnippet.min.js.map > docs/openapisnippet.min.js.map
         kill $!
     
     - name: Create Rapidoc index.html
@@ -175,7 +177,10 @@ jobs:
           gh release create $TAG_NAME -t "$TAG_NAME" -n "$TAG_NAME" || true
           gh release upload $TAG_NAME ${{ matrix.os }}_${{ matrix.target }}_${TAG_NAME}.zip --clobber
           gh release upload $TAG_NAME docs/openapi3.json --clobber
-
+          gh release upload $TAG_NAME docs/openapisnippet.min.js --clobber
+          gh release upload $TAG_NAME docs/openapisnippet.min.js.map --clobber
+          gh release upload $TAG_NAME docs/index.html --clobber
+          
     - name: Commit and push to GitHub
       continue-on-error: true
       run: |
