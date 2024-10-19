@@ -33,6 +33,7 @@ jobs:
         profile: minimal
         toolchain: stable
         override: true
+        targets: ${{env.TARGET}}
 
     - name: Cache cargo registry
       uses: actions/cache@v4
