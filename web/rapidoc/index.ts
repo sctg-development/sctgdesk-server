@@ -69,7 +69,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
                             label: snippet.title,
                             source: snippet.content
                         });
-                        console.log(JSON.stringify(code_samples[code_samples.length - 1], null, 2));
+                        // console.log(JSON.stringify(code_samples[code_samples.length - 1], null, 2));
                     }
                     if (pathItem !== undefined && pathItem['x-code-samples' as keyof typeof pathItem] === undefined) {
                         (pathItem as any)['x-code-samples'] = code_samples;
