@@ -1,0 +1,46 @@
+{
+  "name": "sctgdesk-rapidoc",
+  "version": "1.0.0",
+  "description": "webpacked snippets for sctgdesk-server api documentation",
+  "main": "index.js",
+  "scripts": {
+    "generate-openapi": "openapi-typescript  ../docs/openapi3.json -o openapi3.ts ",
+    "build": "webpack",
+    "test": "exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sctg-development/sctgdesk-api-server.git"
+  },
+  "author": "Ronan LE MEILLLAT",
+  "license": "AGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/sctg-development/sctgdesk-api-server/issues"
+  },
+  "homepage": "https://github.com/sctg-development/sctgdesk-api-server#readme",
+  "dependencies": {
+    "@sctg/openapi-snippet": "^0.14.0",
+    "rapidoc": "^9.3.8"
+  },
+  "devDependencies": {
+    "@babel/plugin-syntax-import-attributes": "^7.25.7",
+    "@babel/preset-env": "^7.25.8",
+    "@babel/preset-typescript": "^7.25.7",
+    "babel-loader": "^9.2.1",
+    "buffer": "^6.0.3",
+    "https-browserify": "^1.0.0",
+    "openapi-sampler": "^1.5.1",
+    "openapi-typescript": "^7.4.1",
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10",
+    "querystring-es3": "^0.2.1",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.6.3",
+    "url": "^0.11.4",
+    "util": "^0.12.5",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4"
+  }
+}

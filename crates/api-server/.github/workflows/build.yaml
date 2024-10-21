@@ -85,8 +85,8 @@ jobs:
         target/${{ matrix.target }}/release/sctgdesk-api-server &
         sleep 5
         curl http://127.0.0.1:21114/openapi.json > docs/openapi3.json
-        curl http://127.0.0.1:21114/js/openapisnippet.min.js > docs/openapisnippet.min.js
-        curl http://127.0.0.1:21114/js/openapisnippet.min.js.map > docs/openapisnippet.min.js.map
+        curl http://127.0.0.1:21114/js/sctgdesk-server.min.js > docs/sctgdesk-server.min.js
+        curl http://127.0.0.1:21114/js/sctgdesk-server.min.js.map > docs/sctgdesk-server.min.js.map
         kill $!
     
     - name: Create Rapidoc index.html
@@ -99,44 +99,8 @@ jobs:
         <head>
             <meta charset="utf-8" />
             <!-- Important: rapi-doc uses utf8 charecters -->
-            <script
-            type="module"
-            src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"
-            ></script>
-            <script src="openapisnippet.min.js"></script>
-            <script>
-                window.addEventListener('DOMContentLoaded', (event) => {
-                    const rapidocEl = document.getElementById('rapidoc');
-                    const spec_url = "data:application/json;base64,$(base64 -w 0 docs/openapi3.json)";
-                    const targets = ['c','javascript_fetch','go','php','rust','python','shell_curl'];
-                    fetch(spec_url)
-                        .then((res) => res.json())
-                        .then((data) => {
-                            if (data['host'] === undefined) {
-                                data['host'] = window.location.host;
-                            }
-                            if (data['basePath'] === undefined) {
-                                data['basePath'] = '/';
-                            }
-                            for (let path in data.paths) {
-                                for (let method in data.paths[path]) {
-                                    const snippets = OpenAPISnippets.getEndpointSnippets(data,path,method,targets);
-                                    const pathItem = data.paths[path][method];
-                                    const code_samples = [];
-                                    for (let snippet of snippets.snippets) {
-                                        code_samples.push({
-                                            lang: snippet.id,
-                                            label: snippet.title,
-                                            source: snippet.content
-                                        });
-                                    }
-                                    pathItem['x-code-samples'] = code_samples;
-                                }
-                            }
-                            rapidocEl.loadSpec(data);
-                        });
-                });
-            </script>
+            <script>window.SPEC_URL = "data:application/json;base64,$(base64 -w 0 docs/openapi3.json)";</script>
+            <script src="sctgdesk-server.min.js"></script>
         </head>
         <body>
             <rapi-doc
@@ -177,8 +141,8 @@ jobs:
           gh release create $TAG_NAME -t "$TAG_NAME" -n "$TAG_NAME" || true
           gh release upload $TAG_NAME ${{ matrix.os }}_${{ matrix.target }}_${TAG_NAME}.zip --clobber
           gh release upload $TAG_NAME docs/openapi3.json --clobber
-          gh release upload $TAG_NAME docs/openapisnippet.min.js --clobber
-          gh release upload $TAG_NAME docs/openapisnippet.min.js.map --clobber
+          gh release upload $TAG_NAME docs/sctgdesk-server.min.js --clobber
+          gh release upload $TAG_NAME docs/sctgdesk-server.min.js.map --clobber
           gh release upload $TAG_NAME docs/index.html --clobber
           
     - name: Commit and push to GitHub
@@ -186,7 +150,7 @@ jobs:
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
-        git add -v -f docs/openapi3.json docs/index.html docs/openapisnippet.min.js docs/openapisnippet.min.js.map
+        git add -v -f docs/openapi3.json docs/index.html docs/sctgdesk-server.min.js docs/sctgdesk-server.min.js.map
         git commit -m "Update GitHub Pages" docs/*
         git push origin HEAD
 

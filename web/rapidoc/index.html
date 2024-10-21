@@ -5,43 +5,9 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- OpenAPI Snippet is coming from https://github.com/TEA-ching/openapi-snippet -->
-    <script src="/js/openapisnippet.min.js"></script>
-    <script type="module" src="rapidoc-min.js"></script>
+    <script>window.SPEC_URL = "{{SPEC_URL}}";</script>
+    <script src="/js/sctgdesk-server.min.js"></script>
     <title>{{TITLE}}</title>
-    <script>
-        window.addEventListener('DOMContentLoaded', (event) => {
-            const rapidocEl = document.getElementById('rapidoc');
-            const spec_url = "{{SPEC_URL}}";
-            const targets = ['c','javascript_fetch','go','php','rust','python','shell_curl'];
-            fetch(spec_url)
-                .then((res) => res.json())
-                .then((data) => {
-                    if (data['host'] === undefined) {
-                        data['host'] = window.location.host;
-                    }
-                    if (data['basePath'] === undefined) {
-                        data['basePath'] = '/';
-                    }
-                    for (let path in data.paths) {
-                        for (let method in data.paths[path]) {
-                            const snippets = OpenAPISnippets.getEndpointSnippets(data,path,method,targets);
-                            const pathItem = data.paths[path][method];
-                            const code_samples = [];
-                            for (let snippet of snippets.snippets) {
-                                code_samples.push({
-                                    lang: snippet.id,
-                                    label: snippet.title,
-                                    source: snippet.content
-                                });
-                            }
-                            pathItem['x-code-samples'] = code_samples;
-                        }
-                    }
-                    rapidocEl.loadSpec(data);
-                });
-        });
-    </script>
 </head>
 
 <body>
@@ -80,7 +46,9 @@
         {{OPERATIONS_TOP}}
         {{TAGS}}
         {{ENDPOINTS}}
-        <p slot="footer" style="margin:0; padding:16px 36px; background-color:orangered; color:#fff; text-align:center; height: 1em;">{{FOOTER}}</p>
+        <p slot="footer"
+            style="margin:0; padding:16px 36px; background-color:orangered; color:#fff; text-align:center; height: 1em;">
+            {{FOOTER}}</p>
     </rapi-doc>
 </body>
 

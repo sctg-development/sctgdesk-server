@@ -2348,18 +2348,18 @@ impl<'r> Responder<'r, 'r> for StaticFileResponse {
     }
 }
 
-#[get("/js/openapisnippet.min.js")]
+#[get("/js/sctgdesk-server.min.js")]
 async fn openapi_snippet() -> Option<StaticFileResponse> {
-    let content = include_str!("../rapidoc/openapisnippet.min.js");
+    let content = include_str!("../rapidoc/dist/sctgdesk-server.min.js");
     Some(StaticFileResponse(
         content.as_bytes().to_vec(),
         ContentType::JavaScript,
     ))
 }
 
-#[get("/js/openapisnippet.min.js.map")]
+#[get("/js/sctgdesk-server.min.js.map")]
 async fn openapi_snippet_map() -> Option<StaticFileResponse> {
-    let content = include_str!("../rapidoc/openapisnippet.min.js.map");
+    let content = include_str!("../rapidoc/dist/sctgdesk-server.min.js.map");
     Some(StaticFileResponse(
         content.as_bytes().to_vec(),
         ContentType::JavaScript,
