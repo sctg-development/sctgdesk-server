@@ -10,6 +10,7 @@ This website use:
     <div v-if="users.length > 0" class="flex items-center">
         <div>{{ props.pretext }}&nbsp;</div>
         <a :href="`https://github.com/${props.owner}/${props.repo}`"
+            :target="props.target"
             class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-2 rounded-l inline-flex items-center">
             <svg class="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
                 <path
@@ -79,12 +80,17 @@ const props = withDefaults(defineProps<{
      * The text to display after the stargazers count (defaults to 'on GitHub').
      */
     posttext?: string;
+    /**
+     * The link target (defaults to '_blank').
+     */
+    target?: string;
 }>(),
     {
         owner: 'sctg-development',
         repo: 'sctgdesk-server',
         pretext: 'Give us a star',
-        posttext: 'on GitHub'
+        posttext: 'on GitHub',
+        target: '_blank'
     })
 
 const users = ref<GitHubUsers>([]);
