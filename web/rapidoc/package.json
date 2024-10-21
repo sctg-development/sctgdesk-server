@@ -20,7 +20,7 @@
   "homepage": "https://github.com/sctg-development/sctgdesk-api-server#readme",
   "dependencies": {
     "@sctg/openapi-snippet": "^0.14.0",
-    "rapidoc": "^9.3.8"
+    "@sctg/rapidoc": "9.3.8-a"
   },
   "devDependencies": {
     "@babel/plugin-syntax-import-attributes": "^7.25.7",
@@ -28,6 +28,7 @@
     "@babel/preset-typescript": "^7.25.7",
     "babel-loader": "^9.2.1",
     "buffer": "^6.0.3",
+    "har-validator-compiled": "^1.0.0",
     "https-browserify": "^1.0.0",
     "openapi-sampler": "^1.5.1",
     "openapi-typescript": "^7.4.1",
@@ -41,6 +42,7 @@
     "url": "^0.11.4",
     "util": "^0.12.5",
     "webpack": "^5.95.0",
+    "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^5.1.4"
   }
 }

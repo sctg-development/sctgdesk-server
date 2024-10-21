@@ -6,7 +6,7 @@
 import { OpenAPISnippets } from '@sctg/openapi-snippet';
 import type { paths, components } from 'openapi3';
 
-import 'rapidoc';
+import '@sctg/rapidoc';
 type OpenAPI3 = {
     openapi: string;
     info: {
@@ -17,6 +17,31 @@ type OpenAPI3 = {
     components: components;
     host?: string;
     basePath?: string;
+}
+
+function getPrismLanguage(lang: string): string {
+    if (lang === 'shell_curl') {
+        return 'bash';
+    }
+    if (lang === 'javascript_fetch') {
+        return 'javascript';
+    }
+    if (lang === 'c') {
+        return 'c';
+    }
+    if (lang === 'php') {
+        return 'php';
+    }
+    if (lang === 'go') {
+        return 'go';
+    }
+    if (lang === 'rust') {
+        return 'rust';
+    }
+    if (lang === 'python') {
+        return 'python';
+    }
+    return lang;
 }
 
 window.addEventListener('DOMContentLoaded', (event) => {
@@ -40,10 +65,11 @@ window.addEventListener('DOMContentLoaded', (event) => {
                     const code_samples = [];
                     for (let snippet of snippets.snippets) {
                         code_samples.push({
-                            lang: snippet.id,
+                            lang: getPrismLanguage(snippet.id),
                             label: snippet.title,
                             source: snippet.content
                         });
+                        console.log(JSON.stringify(code_samples[code_samples.length - 1], null, 2));
                     }
                     if (pathItem !== undefined && pathItem['x-code-samples' as keyof typeof pathItem] === undefined) {
                         (pathItem as any)['x-code-samples'] = code_samples;
