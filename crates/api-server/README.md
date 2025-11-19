@@ -4,6 +4,9 @@
 [**Download full server**](https://github.com/sctg-development/sctgdesk-server/releases)  
 [**API Documentation**](https://sctg-development.github.io/sctgdesk-api-server/)  
 
+![](https://tokeisrv.sctg.eu.org/b1/github.com/sctg-development/sctgdesk-api-server?type=Rust,TypeScript,TSX,C&category=code)
+![](https://tokeisrv.sctg.eu.org/b1/github.com/sctg-development/sctgdesk-api-server?type=TSX,Rust,TypeScript&category=comments) 
+
 # sctgdesk-api-server
 
 ## Star the project
