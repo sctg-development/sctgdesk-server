@@ -11,6 +11,8 @@ const commonConfig = {
   resolve: {
     alias: { process: "process/browser" },
     fallback: {
+      crypto: require.resolve("crypto-browserify"),
+      vm: require.resolve("vm-browserify"),
       stream: require.resolve("stream-browserify"),
       buffer: require.resolve("buffer/"),
       url: require.resolve("url/"),
@@ -52,6 +54,7 @@ const commonConfig = {
     new webpack.ProvidePlugin({
       OpenAPISnippets: "./index.js", // Exposer OpenAPISnippets en tant que variable globale
       process: "process/browser",
+      Buffer: ["buffer", "Buffer"],
     }),
   ],
   // mode: 'production', // Mode production pour minifier le code

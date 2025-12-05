@@ -1,6 +1,6 @@
 {
   "name": "sctgdesk-rapidoc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "webpacked snippets for sctgdesk-server api documentation",
   "main": "index.js",
   "scripts": {
@@ -19,30 +19,32 @@
   },
   "homepage": "https://github.com/sctg-development/sctgdesk-api-server#readme",
   "dependencies": {
-    "@sctg/openapi-snippet": "^0.14.0",
-    "@sctg/rapidoc": "9.3.8-a"
+    "@sctg/openapi-snippet": "^0.15.0",
+    "@sctg/rapidoc": "9.3.8-b"
   },
   "devDependencies": {
-    "@babel/plugin-syntax-import-attributes": "^7.25.7",
-    "@babel/preset-env": "^7.25.8",
-    "@babel/preset-typescript": "^7.25.7",
-    "babel-loader": "^9.2.1",
+    "@babel/plugin-syntax-import-attributes": "^7.27.1",
+    "@babel/preset-env": "^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
+    "babel-loader": "^10.0.0",
     "buffer": "^6.0.3",
     "har-validator-compiled": "^1.0.0",
     "https-browserify": "^1.0.0",
     "openapi-sampler": "^1.5.1",
-    "openapi-typescript": "^7.4.1",
+    "openapi-typescript": "^7.10.1",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
     "querystring-es3": "^0.2.1",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
-    "ts-loader": "^9.5.1",
-    "typescript": "^5.6.3",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
     "url": "^0.11.4",
     "util": "^0.12.5",
-    "webpack": "^5.95.0",
-    "webpack-bundle-analyzer": "^4.10.2",
-    "webpack-cli": "^5.1.4"
+    "crypto-browserify": "^3.12.0",
+    "vm-browserify": "^1.1.0",
+    "webpack": "^5.103.0",
+    "webpack-bundle-analyzer": "^5.0.1",
+    "webpack-cli": "^6.0.1"
   }
 }
