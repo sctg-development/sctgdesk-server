@@ -57,6 +57,7 @@ local-ip-address = "0.6"
 dns-lookup = "2.0"
 ping = "0.5"
 sctgdesk-api-server = { path = "crates/api-server" }
+flate2 = "1.0"
 
 rocket = { version = "0.5", features = ["json", "secrets"] }
 num_cpus = "1.16"

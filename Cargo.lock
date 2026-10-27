@@ -2016,6 +2016,7 @@ dependencies = [
  "clap 2.34.0",
  "deadpool",
  "dns-lookup",
+ "flate2",
  "flexi_logger 0.29.0",
  "hbb_common",
  "ipnetwork",

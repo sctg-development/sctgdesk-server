@@ -301,6 +301,8 @@ export LOGGED_IN_ONLY=Y
 
 [**FAQ**](https://github.com/rustdesk/rustdesk/wiki/FAQ)
 
+[**How to migrate OSS to Pro**](https://rustdesk.com/docs/en/self-host/rustdesk-server-pro/installscript/#convert-from-open-source)
+
 Self-host your own RustDesk server, it is free and open source.
 
 ## How to build manually
@@ -333,7 +335,7 @@ If you want extra features, [RustDesk Server Pro](https://rustdesk.com/pricing.h
 
 If you want to develop your own server, [rustdesk-server-demo](https://github.com/rustdesk/rustdesk-server-demo) might be a better and simpler start for you than this repo.
 
-## Docker images
+## Installation
 
 Docker images are automatically generated and published on every github release.
 
