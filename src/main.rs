@@ -2,7 +2,7 @@
 // https://blog.csdn.net/bytxl/article/details/44344855
 
 use flexi_logger::*;
-use hbb_common::{bail, config::RENDEZVOUS_PORT,config::API_PORT, ResultType};
+use hbb_common::{bail, config::RENDEZVOUS_PORT, ResultType};
 use hbbs::{common::*, *};
 use rocket::{
     config::LogLevel,
@@ -13,6 +13,7 @@ use std::thread;
 use sctgdesk_api_server::build_rocket;
 
 const RMEM: usize = 0;
+const API_PORT: i32 = 21114;
 
 fn get_rocket_log_level() -> LogLevel {
     let log_level_env = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());

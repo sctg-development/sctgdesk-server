@@ -61,7 +61,13 @@ sctgdesk-api-server = { path = "crates/api-server" }
 rocket = { version = "0.5", features = ["json", "secrets"] }
 num_cpus = "1.16"
 
-reqwest = { version = "0.12", default-features = false, features = ["json","rustls-tls"] }
+
+[target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
+# https://github.com/rustdesk/rustdesk-server-pro/issues/189, using native-tls for better tls support
+reqwest = { git = "https://github.com/rustdesk-org/reqwest", features = ["blocking", "socks", "json", "native-tls", "gzip"], default-features=false }
+
+[target.'cfg(not(any(target_os = "macos", target_os = "windows")))'.dependencies]
+reqwest = { git = "https://github.com/rustdesk-org/reqwest", features = ["blocking", "socks", "json", "rustls-tls", "rustls-tls-native-roots", "gzip"], default-features=false }
 
 [build-dependencies]
 hbb_common = { path = "libs/hbb_common" }
@@ -69,3 +75,13 @@ hbb_common = { path = "libs/hbb_common" }
 [workspace]
 members = ["libs/hbb_common", "crates/*"]
 exclude = ["ui"]
+
+#https://github.com/johnthagen/min-sized-rust
+#https://doc.rust-lang.org/cargo/reference/profiles.html#default-profiles
+[profile.release]
+lto = true
+codegen-units = 1
+panic = 'abort'
+strip = true
+#opt-level = 'z' # only have smaller size after strip # Default is 3, better performance
+#rpath = true # Not needed

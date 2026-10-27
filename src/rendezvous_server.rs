@@ -100,7 +100,7 @@ type Sender = mpsc::UnboundedSender<Data>;
 type Receiver = mpsc::UnboundedReceiver<Data>;
 static ROTATION_RELAY_SERVER: AtomicUsize = AtomicUsize::new(0);
 type RelayServers = Vec<String>;
-static CHECK_RELAY_TIMEOUT: u64 = 3_000;
+const CHECK_RELAY_TIMEOUT: u64 = 3_000;
 static ALWAYS_USE_RELAY: AtomicBool = AtomicBool::new(false);
 
 #[derive(Clone)]
@@ -1530,7 +1530,7 @@ async fn create_udp_listener(port: i32, rmem: usize) -> ResultType<FramedSocket>
 
 #[inline]
 async fn create_tcp_listener(port: i32) -> ResultType<TcpListener> {
-    let s = listen_any(port as _, true).await?;
+    let s = listen_any(port as _).await?;
     log::debug!("listen on tcp {:?}", s.local_addr());
     Ok(s)
 }
