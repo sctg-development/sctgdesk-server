@@ -40,3 +40,11 @@ Rebasing 176 commits that include many "wip" ones rewrites public history and wa
 - One-time cost: isolating our changes in `hbb_common` (three-way diff from the 2024 base) before the submodule switch.
 - `Cargo.lock` will conflict at every sync. Policy: never hand-merge it; take upstream's version, re-apply our dependency changes, run `cargo update -p <crate>` as needed.
 - Because upstream CI files (`.github/workflows/build.yaml`, `main.yml`) overlap with ours, our workflows get distinct names to avoid permanent conflicts.
+
+## Update (2026-10-27, Phase 4)
+
+The audit's question "is anything of ours worth keeping in `hbb_common`?" has its answer: only `API_PORT`, which moved to
+`src/main.rs`. The server therefore uses `rustdesk/hbb_common` **directly** as a submodule (option 2), not a fork
+(option 3): there is no `sctg-development/hbb_common`. It is pinned to the commit that carries the key exchange
+version 1 (`edefa08`), newer than the one upstream's own server pins. If we ever need a change in `hbb_common`, a fork
+is created at that point.
