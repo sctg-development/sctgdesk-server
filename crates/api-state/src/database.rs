@@ -106,12 +106,12 @@ impl Database {
         }
         let res = res.unwrap();
         if res.len() > 0 {
-            let migrator = sqlx::migrate!("../../db_v2/migrations/");
+            let migrator = sqlx::migrate!("../api-server/db_v2/migrations/");
             migrator.run(pool).await.unwrap();
         }
 
         // query_file! macro use path relative to Cargo.toml
-        sqlx::query_file!("../../db_v2/create/db.sql")
+        sqlx::query_file!("../api-server/db_v2/create/db.sql")
             .execute(&mut *conn)
             .await
             .unwrap();

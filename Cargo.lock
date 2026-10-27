@@ -1880,6 +1880,7 @@ dependencies = [
  "once_cell",
  "ping",
  "regex",
+ "reqwest",
  "rocket",
  "rust-ini",
  "sctgdesk-api-server",
@@ -2721,7 +2722,6 @@ dependencies = [
 [[package]]
 name = "oauth2"
 version = "0.1.0"
-source = "git+https://github.com/sctg-development/sctgdesk-api-server.git?branch=main#b5e300cc37d2c690e48f7bcebbfe34ae988c15cd"
 dependencies = [
  "base64 0.22.1",
  "log",
@@ -3679,12 +3679,12 @@ checksum = "e86697c916019a8588c99b5fac3cead74ec0b4b819707a682fd4d23fa0ce1ba1"
 [[package]]
 name = "s3software"
 version = "0.1.0"
-source = "git+https://github.com/sctg-development/sctgdesk-api-server.git?branch=main#b5e300cc37d2c690e48f7bcebbfe34ae988c15cd"
 dependencies = [
  "aws-config",
  "aws-sdk-s3",
  "log",
  "regex",
+ "reqwest",
  "serde",
  "tokio",
  "toml 0.5.11",
@@ -3758,7 +3758,6 @@ dependencies = [
 [[package]]
 name = "sctgdesk-api-server"
 version = "1.1.99-47"
-source = "git+https://github.com/sctg-development/sctgdesk-api-server.git?branch=main#b5e300cc37d2c690e48f7bcebbfe34ae988c15cd"
 dependencies = [
  "base64 0.22.1",
  "bcrypt",
@@ -4273,7 +4272,6 @@ dependencies = [
 [[package]]
 name = "state"
 version = "0.1.0"
-source = "git+https://github.com/sctg-development/sctgdesk-api-server.git?branch=main#b5e300cc37d2c690e48f7bcebbfe34ae988c15cd"
 dependencies = [
  "base64 0.22.1",
  "bcrypt",
@@ -4916,7 +4914,6 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 [[package]]
 name = "utils"
 version = "0.1.0"
-source = "git+https://github.com/sctg-development/sctgdesk-api-server.git?branch=main#b5e300cc37d2c690e48f7bcebbfe34ae988c15cd"
 dependencies = [
  "base64 0.22.1",
  "chrono",

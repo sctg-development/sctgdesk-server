@@ -109,7 +109,7 @@ pub async fn get_s3_config_file() -> Result<Config, Box<dyn Error>> {
     // If file does not exist create it
     if !std::path::Path::new(&config_filename).exists() {
         log::error!("S3 config file does not exist, creating it, we recommend you to fill it with your own values, you can change the file path by setting the S3CONFIG_FILE environment variable.");
-        let s3_config = include_str!("../../../s3config.toml");
+        let s3_config = include_str!("../../api-server/s3config.toml");
         fs::write(&config_filename, s3_config).expect("Failed to write s3 config file");
     }
     let config_file_content =

@@ -15,10 +15,10 @@ reqwest = { version = "0.12", default-features = false, features = ["json","rust
 rocket_okapi = { version = "0.8", features = [ "rapidoc", "swagger" ]}
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-state = { path = "libs/state" }
-utils = { path = "libs/utils" }
-oauth2 = { path = "libs/oauth2" }
-s3software = { path = "libs/s3software" }
+state = { path = "../api-state" }
+utils = { path = "../api-utils" }
+oauth2 = { path = "../api-oauth2" }
+s3software = { path = "../api-s3software" }
 uuid = { version = "1.10", features = ["v4"] }
 base64 = "0.22"
 url = { version = "2", features = ["serde"] }

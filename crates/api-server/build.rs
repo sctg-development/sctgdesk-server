@@ -55,9 +55,9 @@ impl PackageJson {
 async fn main() {
     let db_path = env::var("DATABASE_URL").unwrap_or("sqlite://db_v2.sqlite3".to_string());
 
-    println!("cargo:rerun-if-changed=webconsole");
+    println!("cargo:rerun-if-changed=../../web/console");
 
-    let data = fs::read_to_string("./webconsole/package.json").unwrap();
+    let data = fs::read_to_string("../../web/console/package.json").unwrap();
     let mut package: PackageJson = serde_json::from_str(&data).unwrap();
 
     // Construit le chemin du fichier dans le répertoire temporaire
@@ -74,7 +74,7 @@ async fn main() {
     package.set_version(&version);
 
     let serialized = serde_json::to_string_pretty(&package).unwrap();
-    fs::write("./webconsole/package.json", serialized).unwrap();
+    fs::write("../../web/console/package.json", serialized).unwrap();
 
     let is_windows = cfg!(target_os = "windows");
 
@@ -86,7 +86,7 @@ async fn main() {
 
     // Install npm dependencies for webconsole
     let output = Command::new(command)
-        .current_dir("webconsole")
+        .current_dir("../../web/console")
         .args(install_args)
         .output()
         .expect("Failed to execute command");
@@ -99,7 +99,7 @@ async fn main() {
 
     // Build webconsole
     let output = Command::new(command)
-        .current_dir("webconsole")
+        .current_dir("../../web/console")
         .args(build_args)
         .output()
         .expect("Failed to execute command");
@@ -112,7 +112,7 @@ async fn main() {
 
     // Install npm dependencies for rapidoc
         let output = Command::new(command)
-        .current_dir("rapidoc")
+        .current_dir("../../web/rapidoc")
         .args(install_args)
         .output()
         .expect("Failed to execute command");
@@ -125,7 +125,7 @@ async fn main() {
 
     // Build rapidoc
     let output = Command::new(command)
-        .current_dir("rapidoc")
+        .current_dir("../../web/rapidoc")
         .args(build_args)
         .output()
         .expect("Failed to execute command");

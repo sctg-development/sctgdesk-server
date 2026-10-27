@@ -56,7 +56,7 @@ ipnetwork = "0.20"
 local-ip-address = "0.6"
 dns-lookup = "2.0"
 ping = "0.5"
-sctgdesk-api-server = { git = "https://github.com/sctg-development/sctgdesk-api-server.git", branch = "main" }
+sctgdesk-api-server = { path = "crates/api-server" }
 
 rocket = { version = "0.5", features = ["json", "secrets"] }
 num_cpus = "1.16"
@@ -67,5 +67,5 @@ reqwest = { version = "0.12", default-features = false, features = ["json","rust
 hbb_common = { path = "libs/hbb_common" }
 
 [workspace]
-members = ["libs/hbb_common"]
+members = ["libs/hbb_common", "crates/*"]
 exclude = ["ui"]
