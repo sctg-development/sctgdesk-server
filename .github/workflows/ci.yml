@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, tcpserver-master-build, "feat/**", "chore/**"]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  # The server crates need a database at compile time (sqlx macros).
+  DATABASE_URL: sqlite://${{ github.workspace }}/db_v2.sqlite3
+  # Rust jobs do not need Node.js; the web job builds the console and API docs.
+  SCTGDESK_SKIP_WEB_BUILD: "1"
+
+jobs:
+  rust:
+    name: fmt, clippy, build, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+
+      # Only our crates are checked: the root crate and libs/hbb_common are upstream code
+      # and are kept untouched to make upstream merges cheap (see docs/adr/0005).
+      - name: rustfmt (crates/*)
+        run: |
+          for c in crates/*/; do
+            cargo fmt --manifest-path "$c/Cargo.toml" -- --check
+          done
+      - name: clippy (crates/*, deny-by-default lints only)
+        run: |
+          for c in crates/*/; do
+            cargo clippy --locked --manifest-path "$c/Cargo.toml"
+          done
+      - name: build
+        run: cargo build --workspace --locked
+      # oauth2: its unit tests do not compile (tracked in an issue).
+      # test_nat64: upstream hbb_common test that needs DNS64 and network access.
+      - name: test
+        run: cargo test --workspace --exclude oauth2 --locked --no-fail-fast -- --skip test_nat64
+
+  web:
+    name: web console and API docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: web/console
+        working-directory: web/console
+        run: |
+          npm install --force
+          npm run build
+      - name: web/rapidoc
+        working-directory: web/rapidoc
+        run: |
+          npm install --force
+          npm run build
+
+  audit:
+    name: cargo audit (informational)
+    runs-on: ubuntu-latest
+    # 30+ advisories are known (see the audit); this job reports them without blocking merges
+    # until they are triaged. Remove continue-on-error once the backlog is cleared.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+      - run: cargo audit

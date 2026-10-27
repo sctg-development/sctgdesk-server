@@ -1,0 +1,3373 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "sctgdesk-api-server",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/{_path}": {
+      "options": {
+        "tags": [
+          "Cors"
+        ],
+        "summary": "Answers to OPTIONS requests",
+        "operationId": "options",
+        "parameters": [
+          {
+            "name": "_path",
+            "in": "path",
+            "required": true,
+            "allow_reserved": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/login": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "summary": "User Login",
+        "description": "This function is an API endpoint that allows a user to log in without oauth. It is tagged with \"login\" for OpenAPI documentation. <br>\n\n## Parameters\n\n- `request`: The request data, which includes the user's username and password.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<LoginReply>` object, which includes the user's information and access token.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the user is not authorized or if the system is in maintenance mode.",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginReply"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/login-options": {
+      "get": {
+        "tags": [
+          "login"
+        ],
+        "summary": "Login Options",
+        "description": "This is called by the client for knowing the Oauth2 provider(s) available You must provide a list of Oauth2 providers in the `oauth2.toml` config file The config file can be overridden by the `OAUTH2_CONFIG_FILE` environment variable\n\nThis function is an API endpoint that is called by the client to get the list of available OAuth2 providers. The list of providers is defined in the `oauth2.toml` config file, which can be overridden by the `OAUTH2_CONFIG_FILE` environment variable. It is tagged with \"login\" for OpenAPI documentation.\n\n## Limitations\n\nIt needs to be completed for mapping the username and email from the OAuth2 provider to the SCTGDesk user.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<Vec<String>>` object, which includes the list of available OAuth2 providers.  <br> If the config file is not found or cannot be read, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the config file is not found or cannot be read.\n\n# Example\n\nGET /api/login-options",
+        "operationId": "login_options",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/ab": {
+      "get": {
+        "tags": [
+          "address book legacy"
+        ],
+        "summary": "Get the User's Legacy Address Book",
+        "description": "This function is an API endpoint that allows an authenticated user to retrieve their legacy address book. <br> The Legacy Address Book is the address book that was used in the previous version of SCTGDesk. <br> Rustdesk client uses the legacy address book if it cannot find the new one <br> It is tagged with \"address book legacy\" for OpenAPI documentation.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<AbGetResponse>` object, which includes the legacy address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the user is not authorized.",
+        "operationId": "ab_get",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbGetResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "address book legacy"
+        ],
+        "description": "Set the user's address book",
+        "operationId": "ab",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/get": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Get the User's Address Book",
+        "description": "This function is an API endpoint that allows an authenticated user to retrieve their address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<AbGetResponse>` object, which includes the address book information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the user is not authorized.\n\n# Example\n\nPOST /api/ab/get",
+        "operationId": "ab_post",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbGetResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/currentUser": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Get the Current User",
+        "description": "This function is an API endpoint that allows an authenticated user to retrieve their current user information. It is tagged with \"user\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the current user information.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<CurrentUserResponse>` object, which includes the current user information.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the user is not authorized.",
+        "operationId": "current_user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CurrentUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/audit": {
+      "post": {
+        "tags": [
+          "todo"
+        ],
+        "description": "Audit",
+        "operationId": "audit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuditRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "summary": "Log the User Out",
+        "description": "This function is an API endpoint that allows an authenticated user to log out. It is tagged with \"login\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the current user information.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<LogoutReply>` object, which includes a success message.  <br> If the user is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the user is not authorized.",
+        "operationId": "logout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CurrentUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutReply"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/heartbeat": {
+      "post": {
+        "tags": [
+          "peer"
+        ],
+        "summary": "Heartbeat",
+        "description": "This function is an API endpoint that is frequently hit by the client at the /api/heartbeat endpoint. It updates the `last_online` field of the peer. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the heartbeat information.\n\n## Returns\n\nThis function always returns a `String` with the message \"OK\".  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode.",
+        "operationId": "heartbeat",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeartbeatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sysinfo": {
+      "post": {
+        "tags": [
+          "peer"
+        ],
+        "summary": "Set the System Info",
+        "description": "This function is an API endpoint that allows a connected client to update its system information. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the system information.\n\n## Returns\n\nIf successful, this function returns a `String` with the message \"SYSINFO_UPDATED\".  <br> If the system info is not found, this function returns a `String` with the message \"ID_NOT_FOUND\".  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the system info is not found.",
+        "operationId": "sysinfo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemInfo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groups": {
+      "get": {
+        "tags": [
+          "group"
+        ],
+        "summary": "Get the List of Groups",
+        "description": "This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of groups. It is tagged with \"group\" for OpenAPI documentation.\n\n## Parameters\n\n- `current`: The current page number.\n\n- `pageSize`: The number of groups per page.\n\n## Returns\n\nIf successful, this function returns a `Json<GroupsResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If no groups are found, this function returns a `status::NotFound` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if no groups are found.\n\n# Example\n\nGET /api/groups?current=1&pageSize=10",
+        "operationId": "groups",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/group/{guid}": {
+      "get": {
+        "tags": [
+          "group"
+        ],
+        "summary": "Get a Group",
+        "description": "This function is an API endpoint that allows an authenticated admin to retrieve a group. It is tagged with \"group\" for OpenAPI documentation.\n\n## Parameters\n\n- `guid`: The GUID of the group to retrieve.\n\n## Returns\n\nIf successful, this function returns a `Json<Group>` object If the group is not found, this function returns a `status::NotFound` error.",
+        "operationId": "group_get",
+        "parameters": [
+          {
+            "name": "guid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "group"
+        ],
+        "summary": "Delete a group",
+        "description": "This function is an API endpoint that allows an authenticated admin to delete a group. It is tagged with \"group\" for OpenAPI documentation.\n\n## Parameters\n\n- `guid`: The GUID of the group to retrieve.\n\n## Returns",
+        "operationId": "group_delete",
+        "parameters": [
+          {
+            "name": "guid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/group": {
+      "put": {
+        "tags": [
+          "group"
+        ],
+        "summary": "Update a group",
+        "description": "This function is an API endpoint that allows an authenticated admin to update a group.<br> Todo allow to use different team\n\n## Parameters\n\n- `guid`: The request data, which includes the details of the group to be updated.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br>",
+        "operationId": "group_update",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGoupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "group"
+        ],
+        "summary": "Add a Group",
+        "description": "This function is an API endpoint that allows an authenticated admin to add a new group. It is tagged with \"group\" for OpenAPI documentation..<br> Todo allow to use different team\n\n## Parameters\n\n- `request`: The request data, which includes the details of the group to be added.  <br>\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object, which includes a success message, the total number of groups, and the list of groups.  <br> If the admin is not authorized, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the admin is not authorized.\n\n# Example\n\nPOST /api/group {\"name\":\"new group\",\"password\":\"string\",\"confirm-password\":\"string\",\"email\":\"string\",\"is_admin\":false,\"group_name\":\"string\"}",
+        "operationId": "group_add",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddGoupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/user-list": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Get the List of Users",
+        "description": "This function is an API endpoint that allows an authenticated admin to retrieve a paginated list of users. It is tagged with \"user\" for OpenAPI documentation.\n\n## Parameters\n\n- `current`: The current page number.\n\n- `pageSize`: The number of users per page.\n\n- `email`: The email to filter the users by.\n\n- `name`: The name to filter the users by.\n\n## Returns\n\nIf successful, this function returns a `Json<UserList>` object, which includes a success message, the total number of users, and the list of users.  <br> If no users are found, this function returns a `status::NotFound` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if no users are found.\n\n# Example\n\nGET /api/user-list?current=1&pageSize=10&email=test@test.com&name=Test",
+        "operationId": "users",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Get Users for client",
+        "description": "This function is an API endpoint that retrieves all users.\n\n## Parameters\n\n- `current`: The current page number for pagination. This parameter is currently unused.\n\n- `pageSize`: The number of items per page for pagination. This parameter is currently unused.\n\n- `accessible`: A boolean value indicating whether the user is accessible. This parameter is currently unused.\n\n- `status`: The status of the user. This parameter is currently unused.\n\n## Returns\n\nIf successful, this function returns a `Json<UserList>` object containing the users.",
+        "operationId": "users_client",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "accessible",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0,
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/user": {
+      "put": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Update user",
+        "description": "This function is an API endpoint that updates a user.<br> Normal user can only update themselves, admin can update any user.<br>\n\n## Parameters\n\n- `request`: A JSON object containing the updated user information.\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object containing the updated user information.",
+        "operationId": "user_update",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Add user",
+        "description": "This function is an API endpoint that adds a new user.\n\n## Parameters\n\n- `request`: A JSON object containing the new user information.\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object containing the updated user information.",
+        "operationId": "user_add",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Delete user",
+        "description": "This function is an API endpoint that deletes a user.\n\n## Parameters\n\n- `request`: A JSON object containing the list of users to delete.\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object containing the number of users deleted.",
+        "operationId": "user_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/enable-users": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Enable users",
+        "description": "This function is an API endpoint that enables or disables users.\n\n## Parameters\n\n- `request`: A JSON object containing the list of users to enable or disable.\n\n## Returns\n\nIf successful, this function returns a `Json<UsersResponse>` object containing the updated user information.",
+        "operationId": "user_enable",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnableUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/peers": {
+      "get": {
+        "tags": [
+          "peer"
+        ],
+        "summary": "Get Peers",
+        "description": "This function is an API endpoint that retrieves the list of all peers in the network. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<PeersResponse>` object, which includes a success message, the total number of peers, and the list of peers.  <br> If no peers are found, this function returns a `status::NotFound` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if no peers are found.\n\n# Example\n\nGET /api/peers",
+        "operationId": "peers",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeersResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/peers/count/{platform}": {
+      "get": {
+        "tags": [
+          "peer"
+        ],
+        "summary": "Count Peers per platform",
+        "description": "This function is an API endpoint that retrieves the count of peers per platform. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n- `platform`: The platform to filter the peers by (windows, macos, linux, android or all). <br>\n\n## Returns\n\nIf successful, this function returns a `Json<PeersCountResponse>` object, which includes the total number of peers for the specified platform.  <br>",
+        "operationId": "peers_count",
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeersCountResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/peers/cpus": {
+      "get": {
+        "tags": [
+          "peer"
+        ],
+        "summary": "Get the List of cpus used by the peers",
+        "description": "This function is an API endpoint that retrieves the count of cpus used by the peers. It is tagged with \"peer\" for OpenAPI documentation.\n\n## Parameters\n\n## Returns\n\nIf successful, this function returns a `Json<Vec<CpuCount>>` object, which includes the total number of cpus used by the peers.  <br>",
+        "operationId": "peers_cpus",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CpuCount"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/stategies": {
+      "get": {
+        "tags": [
+          "todo"
+        ],
+        "summary": "List strategies",
+        "description": "This function is an API endpoint that retrieves the list of all strategies. <br> TODO: This function is currently unused.",
+        "operationId": "strategies",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/oidc/auth": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "description": "OIDC Auth request\n\nThis entrypoint is called by the client for getting the authorization url for the Oauth2 provider he chooses\n\nFor testing you can generate a valid uuid field with the following command: `uuidgen | base64` # OIDC Auth Request\n\nThis function is an API endpoint that is called by the client to get the authorization URL for the chosen OAuth2 provider. It is tagged with \"login\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request data, which includes the chosen OAuth2 provider and a UUID.  <br> For testing you can generate a valid uuid field with the following command: `uuidgen | base64`\n\n## Returns\n\nIf successful, this function returns a `Json<OidcAuthUrl>` object, which includes the authorization URL and a session code.  <br> If the UUID is invalid or the OAuth2 provider is not found, this function returns an `OidcAuthUrl` object with an empty URL and an error code.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the UUID is invalid or the OAuth2 provider is not found.\n\n# Example\n\nPOST /api/oidc/auth { \"op\": \"github\", \"uuid\": \"generated_uuid_base64_encoded\" }",
+        "operationId": "oidc_auth",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OidcAuthRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcAuthUrl"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/oidc/auth-query": {
+      "get": {
+        "tags": [
+          "login"
+        ],
+        "summary": "OIDC State",
+        "description": "This function is an API endpoint that checks the state of an OpenID Connect (OIDC) session. It is tagged with \"login\" for OpenAPI documentation.\n\n## Parameters\n\n- `code`: The authorization code received from the OIDC provider.\n\n- `id`: The identifier of the OIDC session.\n\n- `uuid`: The UUID of the OIDC session.\n\n## Returns\n\nIf successful, this function returns a `Json<Option<OidcResponse>>` object.  <br> If the session does not exist, this function returns `Json(None)`.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the session does not exist.\n\n# Example\n\nGET /api/oidc/auth-query?code=authorization_code&id=session_id&uuid=session_uuid",
+        "operationId": "oidc_state",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uuid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcResponse",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/oidc/callback": {
+      "get": {
+        "tags": [
+          "login"
+        ],
+        "summary": "OIDC Auth Callback",
+        "description": "This function is an API endpoint that serves as the OAuth2 callback. It exchanges the authorization code for an access token and stores it in the state. It is tagged with \"login\" for OpenAPI documentation.\n\n## Parameters\n\n- `code`: The authorization code received from the OIDC provider.\n\n- `state`: The state parameter received from the OIDC provider. This is the session code.\n\n## Returns\n\nIf successful, this function returns \"OK\".  <br> If the session does not exist or the code exchange fails, this function returns \"ERROR\".  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the session does not exist or the code exchange fails.\n\n# Example\n\nGET /api/oidc/callback?code=authorization_code&state=session_code",
+        "operationId": "oidc_callback",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/oidc/settings": {
+      "get": {
+        "tags": [
+          "todo"
+        ],
+        "summary": "Get OIDC Providers",
+        "description": "This function is an API endpoint that retrieves all OIDC providers.\n\nTODO: This function is currently unused.",
+        "operationId": "oidc_get",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OidcSettingsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "todo"
+        ],
+        "summary": "Add OIDC Provider",
+        "description": "This function is an API endpoint that adds an OIDC provider.\n\nTODO: This function is currently unused.",
+        "operationId": "oidc_add",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnableUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnableUserRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/ab/peer/add/{ab}": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Add peer",
+        "description": "This function is an API endpoint that adds a peer to an address book.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the new peer information.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.",
+        "operationId": "ab_peer_add",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbPeer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/peer/update/{ab}": {
+      "put": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Update peer",
+        "description": "This function is an API endpoint that updates a peer in an address book.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the updated peer information.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.",
+        "operationId": "ab_peer_update",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbPeer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/peer/{ab}": {
+      "delete": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Delete peer",
+        "description": "This function is an API endpoint that deletes a peer from an address book.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing an array of peer IDs to be deleted.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.",
+        "operationId": "ab_peer_delete",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/peers": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "List peers",
+        "description": "This function is an API endpoint that lists the peers in an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `current`: The current page number for pagination. This parameter is currently unused.\n\n- `pageSize`: The number of items per page for pagination. This parameter is currently unused.\n\n- `ab`: The identifier of the address book.\n\n## Returns\n\nIf successful, this function returns a `Json<AbPeersResponse>` object containing the peers in the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.",
+        "operationId": "ab_peers",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "ab",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbPeersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/personal": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Get Personal Address Book",
+        "description": "This function is an API endpoint that retrieves the personal address book of the authenticated user. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<AbPersonal>` object.  <br> If the user is not authorized to access their personal address book, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the user is not authorized to access their personal address book.\n\n# Example\n\nPOST /api/ab/personal",
+        "operationId": "ab_personal",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbPersonal"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/tags/{ab}": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Get the Tags",
+        "description": "This function is an API endpoint that retrieves all tags from an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n## Returns\n\nIf successful, this function returns a JSON array of `AbTag` objects.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::NotFound` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.\n\n# Example\n\nPOST /api/ab/tags/018fab24-0ae5-731c-be23-88aa4518ea26",
+        "operationId": "ab_tags",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AbTag"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/tag/add/{ab}": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Add a Tag",
+        "description": "This function is an API endpoint that adds a new tag to an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the new tag to be added.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag already exists or the user is not authorized to add it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the tag already exists or the user is not authorized to add it.\n\n# Example\n\nPOST /api/ab/tag/add/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json\n\n{\"name\": \"tag1\", \"color\": \"#FF0000\"}",
+        "operationId": "ab_tag_add",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbTag"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/tag/update/{ab}": {
+      "put": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Update a Tag",
+        "description": "This function is an API endpoint that updates a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the updated tag.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to update it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to update it.\n\n# Example\n\nPUT /api/ab/tag/update/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json\n\n{\"name\": \"tag1\", \"color\": \"#FF0000\"}",
+        "operationId": "ab_tag_update",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbTag"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/tag/rename/{ab}": {
+      "put": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Rename a Tag",
+        "description": "This function is an API endpoint that renames a tag in an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing the old and new names of the tag.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.  <br> If the tag does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the tag does not exist or the user is not authorized to access it.\n\n# Example\n\nPUT /api/ab/tag/rename/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json\n\n{\"old\": \"tag1\", \"new\": \"tag2\"}",
+        "operationId": "ab_tag_rename",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbTagRenameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/tag/{ab}": {
+      "delete": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Delete a Tag",
+        "description": "This function is an API endpoint that deletes a tag from an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `ab`: The identifier of the address book.\n\n- `request`: A JSON object containing an array of tag names to be deleted.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.  <br> If the request is empty or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the request is empty or the user is not authorized to access it.\n\n# Example\n\nDELETE /api/ab/tag/018fab24-0ae5-731c-be23-88aa4518ea26 Content-Type: application/json\n\n[\"tag1\", \"tag2\"]",
+        "operationId": "ab_tag_delete",
+        "parameters": [
+          {
+            "name": "ab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/shared/profiles": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Get Shared Profiles",
+        "description": "This function is an API endpoint that retrieves the shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- none\n\n## Returns\n\nIf successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br> rule: 1: read, 2: write, 3: full control  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.\n\n# Example\n\n{\"data\":[{\"guid\":\"018fab24-0ae5-731c-be23-88aa4518ea26\",\"name\":\"shared profile\",\"owner\":\"admin\",\"rule\":3}],\"total\":2}",
+        "operationId": "ab_shared",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbSharedProfilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/shared/add": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Add shared profile",
+        "description": "This function is an API endpoint that adds a shared profile to an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: A JSON object containing the shared profile to be added.\n\n## Returns\n\nIf successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br>",
+        "operationId": "ab_shared_add",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbSharedAddRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbSharedProfilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/ab/shared": {
+      "delete": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Delete shared profiles",
+        "description": "This function is an API endpoint that deletes shared profiles from an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: A JSON object containing an array of shared profile GUIDs to be deleted.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` object.",
+        "operationId": "ab_shared_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/ab/shared/update/profile": {
+      "put": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Update shared profile name",
+        "description": "This function is an API endpoint that updates the name of a shared profile in an address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: A JSON object containing the updated shared profile information.\n\n## Returns\n\nIf successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the updated shared profile information.",
+        "operationId": "ab_shared_name",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbSharedNameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbSharedProfilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/ab/settings": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Settings",
+        "description": "This function is an API endpoint that retrieves the settings for an address book.<br> TODO: Implement the settings for an address book.",
+        "operationId": "ab_settings",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbSettingsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/rules": {
+      "get": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "List the rules",
+        "description": "This function is an API endpoint that lists the rules attached to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `current`: The current page number for pagination. This parameter is currently unused.\n\n- `pageSize`: The number of items per page for pagination. This parameter is currently unused.\n\n- `ab`: The identifier of the shared address book.\n\n## Returns\n\nIf successful, this function returns a `Json<AbRulesResponse>` object containing the rules for the address book.  <br> If the address book does not exist or the user is not authorized to access it, this function returns a `status::Unauthorized` error.  <br>\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode, or if the address book does not exist or the user is not authorized to access it.",
+        "operationId": "ab_rules",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          {
+            "name": "ab",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbRulesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization": []
+          }
+        ]
+      }
+    },
+    "/api/ab/rule": {
+      "post": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Add a Rule",
+        "description": "This function is an API endpoint that adds a new rule to a shared address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request containing the details of the rule to be added.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully added. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode.",
+        "operationId": "ab_rule_add",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbRuleAddRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "address book"
+        ],
+        "summary": "Delete a Rule",
+        "description": "This function is an API endpoint that deletes a rule from a shared address book. It is tagged with \"address book\" for OpenAPI documentation.\n\n## Parameters\n\n- `request`: The request containing the GUID of the rule to be deleted.\n\n## Returns\n\nIf successful, this function returns an `ActionResponse::Empty` indicating that the rule was successfully deleted. <br> If the system is in maintenance mode, this function returns a `status::Unauthorized` error.\n\n## Errors\n\nThis function will return an error if the system is in maintenance mode.",
+        "operationId": "ab_rule_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbRuleDeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "# [422 Unprocessable Entity](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422)\nThis response is given when you request body is not correctly formatted. "
+          },
+          "200": {
+            "description": "\\\n            # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  \n            This response is given when the request is successful.  \n            The body is empty if there is no error,  \n            The body contains a json object with the error {\"error\":\"Error message\"}   \n            "
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "authorization_admin": []
+          }
+        ]
+      }
+    },
+    "/api/software/client-download-link/{key}": {
+      "get": {
+        "tags": [
+          "software"
+        ],
+        "description": "Get the software download url\n\n# Arguments\n\n* `key` - The key to the software download link, it can be `osx`, `w64` or `ios`\n\n# Usage\n\n* it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable\n\n<pre> [s3config]<br> Page = \"https://github.com/rustdesk/rustdesk/releases/latest\"<br> Endpoint = \"https://compat.objectstorage.eu-london-1.oraclecloud.com\"<br> Region = \"eu-london-1\"<br> AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"<br> SecretKey = \"GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA=\"<br> Bucket = \"aezoz24elapn\"<br> Windows64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-x86_64.exe\"<br> Windows32Key = \"master/sctgdesk-releases/sctgdesk-1.2.4-i686.exe\"<br> OSXKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> OSXArm64Key = \"master/sctgdesk-releases/sctgdesk-1.2.4.dmg\"<br> IOSKey = \"master/sctgdesk-releases/sctgdesk-1.2.4.ipa\"<br> </pre>",
+        "operationId": "software",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/software/version/server": {
+      "get": {
+        "tags": [
+          "software"
+        ],
+        "summary": "Retrieve the server version",
+        "description": "This function is an API endpoint that retrieves the version of the server. It is tagged with \"software\" for OpenAPI documentation.\n\n## Returns\n\nIf successful, this function returns a `Json<SoftwareVersionResponse>` object containing the version of the server.",
+        "operationId": "software_version",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareVersionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/software/releases/latest": {
+      "get": {
+        "tags": [
+          "software"
+        ],
+        "summary": "Retrieve the client version",
+        "description": "This function is an API endpoint that retrieves the version of the client. It copies the GitHub method of retrieving the latest release version. It is tagged with \"software\" for OpenAPI documentation.\n\nIt can be used by replacing the check_software_update() from the client. You can find the client code at rustdesk/src/common.rs ## Returns\n\nReturns in the location header the URL of the latest release. something like https://api-server/api/releases/tag/1.2.6\n\n## Example\n\nIt is easy to modify the client code to use this API endpoint. this is how we can modify the client code to use this API endpoint.\n\n<pre> // see <a href='https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972'>Sample modification on github</a><br> let url=format!(\"{}/api/software/releases/latest\",get_api_server(\"\".to_owned(), \"\".to_owned())).to_owned();<br> log::info!(\"URL for checking software updates: {}\", url);<br> </pre>",
+        "operationId": "software_releases_latest",
+        "responses": {
+          "500": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/software/download": {
+      "get": {
+        "tags": [
+          "software"
+        ],
+        "summary": "Redirect to the software download page",
+        "description": "This function is an API endpoint that redirects to the software download page. You must set the `Page` key in the `s3config` of the S3 configuration file.",
+        "operationId": "software_download",
+        "responses": {
+          "500": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/software/releases/tag/{version}": {
+      "get": {
+        "tags": [
+          "software"
+        ],
+        "summary": "Simulate GitHub API for releases",
+        "description": "This function is an API endpoint that simulates the GitHub API for releases.\n\n## Parameters\n\n- `version`: The version of the release.\n\n## Returns\n\nReturns a `Json<SoftwareVersionResponse>` object containing the version of the release.",
+        "operationId": "software_releases_tag",
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareVersionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "webconsole"
+        ],
+        "operationId": "webconsole_index",
+        "responses": {
+          "500": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/index.html": {
+      "get": {
+        "tags": [
+          "webconsole"
+        ],
+        "operationId": "webconsole_index_html",
+        "responses": {
+          "500": {
+            "description": ""
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LoginReply": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "type",
+          "user"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserInfo"
+          },
+          "access_token": {
+            "$ref": "#/components/schemas/Token"
+          }
+        }
+      },
+      "UserInfo": {
+        "type": "object",
+        "required": [
+          "admin",
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "admin": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Token": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "maxItems": 32,
+        "minItems": 32
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "password",
+          "username",
+          "uuid"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string"
+          }
+        }
+      },
+      "AbGetResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "string"
+          }
+        }
+      },
+      "AbRequest": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "string"
+          }
+        }
+      },
+      "CurrentUserResponse": {
+        "type": "object",
+        "required": [
+          "admin",
+          "error",
+          "name"
+        ],
+        "properties": {
+          "error": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "admin": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CurrentUserRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "uuid"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditRequest": {
+        "type": "object",
+        "properties": {
+          "Id": {
+            "default": 0,
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0
+          },
+          "action": {
+            "default": "",
+            "type": "string"
+          },
+          "id": {
+            "default": "",
+            "type": "string"
+          },
+          "ip": {
+            "default": "",
+            "type": "string"
+          },
+          "uuid": {
+            "default": "",
+            "type": "string"
+          }
+        }
+      },
+      "LogoutReply": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "string"
+          }
+        }
+      },
+      "HeartbeatRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "modified_at",
+          "uuid",
+          "ver"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "modified_at": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "uuid": {
+            "type": "string"
+          },
+          "ver": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "SystemInfo": {
+        "type": "object",
+        "properties": {
+          "cpu": {
+            "type": "string",
+            "nullable": true
+          },
+          "hostname": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "memory": {
+            "type": "string",
+            "nullable": true
+          },
+          "os": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "uuid": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "string",
+            "nullable": true
+          },
+          "ip": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "GroupsResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "msg",
+          "total"
+        ],
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          }
+        }
+      },
+      "Group": {
+        "type": "object",
+        "required": [
+          "access_to",
+          "accessed_from",
+          "created_at",
+          "guid",
+          "info",
+          "name",
+          "team"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "team": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "access_to": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accessed_from": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "info": {
+            "type": "string"
+          }
+        }
+      },
+      "UsersResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "msg",
+          "total"
+        ],
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "string"
+          }
+        }
+      },
+      "AddGoupRequest": {
+        "type": "object",
+        "required": [
+          "allowed_incomings",
+          "allowed_outgoings",
+          "name",
+          "note"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "allowed_outgoings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowed_incomings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "UpdateGoupRequest": {
+        "type": "object",
+        "required": [
+          "allowed_incomings",
+          "allowed_outgoings",
+          "guid",
+          "name",
+          "note"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "allowed_outgoings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowed_incomings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "UserList": {
+        "type": "object",
+        "required": [
+          "data",
+          "msg",
+          "total"
+        ],
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserListResponse"
+            }
+          }
+        }
+      },
+      "UserListResponse": {
+        "type": "object",
+        "required": [
+          "email",
+          "group_name",
+          "guid",
+          "is_admin",
+          "name",
+          "status"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "group_name": {
+            "type": "string"
+          },
+          "is_admin": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AddUserRequest": {
+        "type": "object",
+        "required": [
+          "confirm-password",
+          "email",
+          "group_name",
+          "is_admin",
+          "name",
+          "password"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "confirm-password": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "is_admin": {
+            "type": "boolean"
+          },
+          "group_name": {
+            "type": "string"
+          }
+        }
+      },
+      "DeleteUserRequest": {
+        "type": "object",
+        "required": [
+          "rows"
+        ],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EnableUserRequest": {
+        "type": "object",
+        "required": [
+          "disable",
+          "rows"
+        ],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "disable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "required": [
+          "uuid"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "confirm-password": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_admin": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "group_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "PeersResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "msg",
+          "total"
+        ],
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Peer"
+            }
+          }
+        }
+      },
+      "Peer": {
+        "type": "object",
+        "required": [
+          "guid",
+          "id",
+          "info",
+          "last_online",
+          "status",
+          "strategy_name"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "strategy_name": {
+            "type": "string"
+          },
+          "last_online": {
+            "type": "string"
+          },
+          "info": {
+            "$ref": "#/components/schemas/PeerInfo"
+          }
+        }
+      },
+      "PeerInfo": {
+        "type": "object",
+        "properties": {
+          "cpu": {
+            "type": "string",
+            "nullable": true
+          },
+          "hostname": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "memory": {
+            "type": "string",
+            "nullable": true
+          },
+          "os": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "uuid": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "string",
+            "nullable": true
+          },
+          "ip": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PeersCountResponse": {
+        "type": "object",
+        "required": [
+          "total"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "CpuCount": {
+        "type": "object",
+        "required": [
+          "cpu",
+          "total"
+        ],
+        "properties": {
+          "cpu": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "OidcAuthUrl": {
+        "type": "object",
+        "required": [
+          "code",
+          "url"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "OidcAuthRequest": {
+        "type": "object",
+        "required": [
+          "deviceInfo",
+          "id",
+          "op",
+          "uuid"
+        ],
+        "properties": {
+          "deviceInfo": {
+            "$ref": "#/components/schemas/OidcDeviceInfo"
+          },
+          "id": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string"
+          }
+        }
+      },
+      "OidcDeviceInfo": {
+        "type": "object",
+        "required": [
+          "name",
+          "os",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "os": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "OidcResponse": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "secret",
+          "tfa_type",
+          "type",
+          "user"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "tfa_type": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/OidcUser"
+          }
+        }
+      },
+      "OidcUser": {
+        "type": "object",
+        "required": [
+          "email",
+          "info",
+          "is_admin",
+          "name",
+          "note",
+          "status",
+          "third_auth_type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "info": {
+            "$ref": "#/components/schemas/OidcUserInfo"
+          },
+          "is_admin": {
+            "type": "boolean"
+          },
+          "third_auth_type": {
+            "type": "string"
+          }
+        }
+      },
+      "OidcUserInfo": {
+        "type": "object",
+        "required": [
+          "email_alarm_notification",
+          "email_verification",
+          "login_device_whitelist",
+          "other"
+        ],
+        "properties": {
+          "email_verification": {
+            "type": "boolean"
+          },
+          "email_alarm_notification": {
+            "type": "boolean"
+          },
+          "login_device_whitelist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "other": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "OidcSettingsResponse": {
+        "type": "object",
+        "required": [
+          "callback_url",
+          "max_auth_count",
+          "providers"
+        ],
+        "properties": {
+          "max_auth_count": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "callback_url": {
+            "type": "string"
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Provider"
+            }
+          }
+        }
+      },
+      "Provider": {
+        "type": "object",
+        "required": [
+          "authorization_endpoint",
+          "client_id",
+          "client_secret",
+          "enabled",
+          "name",
+          "order_index",
+          "token_endpoint",
+          "userinfo_endpoint"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "order_index": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret": {
+            "type": "string"
+          },
+          "authorization_endpoint": {
+            "type": "string"
+          },
+          "token_endpoint": {
+            "type": "string"
+          },
+          "userinfo_endpoint": {
+            "type": "string"
+          }
+        }
+      },
+      "AbPeer": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "hostname": {
+            "type": "string",
+            "nullable": true
+          },
+          "platform": {
+            "type": "string",
+            "nullable": true
+          },
+          "alias": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "forceAlwaysRelay": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "rdpPort": {
+            "type": "string",
+            "nullable": true
+          },
+          "rdpUsername": {
+            "type": "string",
+            "nullable": true
+          },
+          "loginName": {
+            "type": "string",
+            "nullable": true
+          },
+          "same_server": {
+            "type": "boolean",
+            "nullable": true
+          }
+        }
+      },
+      "AbPeersResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "total"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbPeer"
+            }
+          }
+        }
+      },
+      "AbPersonal": {
+        "type": "object",
+        "required": [
+          "guid"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AbTag": {
+        "type": "object",
+        "required": [
+          "color",
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "AbTagRenameRequest": {
+        "type": "object",
+        "required": [
+          "new",
+          "old"
+        ],
+        "properties": {
+          "old": {
+            "type": "string"
+          },
+          "new": {
+            "type": "string"
+          }
+        }
+      },
+      "AbSharedProfilesResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "total"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbProfile"
+            }
+          }
+        }
+      },
+      "AbProfile": {
+        "type": "object",
+        "required": [
+          "guid",
+          "name",
+          "owner",
+          "rule"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "rule": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "AbSharedAddRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AbSharedNameRequest": {
+        "type": "object",
+        "required": [
+          "guid"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "guid": {
+            "type": "string"
+          }
+        }
+      },
+      "AbSettingsResponse": {
+        "type": "object",
+        "required": [
+          "max_peer_one_ab"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "max_peer_one_ab": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "AbRulesResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "msg",
+          "total"
+        ],
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbRule"
+            }
+          }
+        }
+      },
+      "AbRule": {
+        "type": "object",
+        "required": [
+          "guid",
+          "rule"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string",
+            "nullable": true
+          },
+          "group": {
+            "type": "string",
+            "nullable": true
+          },
+          "rule": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "AbRuleAddRequest": {
+        "type": "object",
+        "required": [
+          "guid",
+          "rule"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string",
+            "nullable": true
+          },
+          "group": {
+            "type": "string",
+            "nullable": true
+          },
+          "rule": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
+          }
+        }
+      },
+      "AbRuleDeleteRequest": {
+        "type": "object",
+        "required": [
+          "guid"
+        ],
+        "properties": {
+          "guid": {
+            "type": "string"
+          }
+        }
+      },
+      "SoftwareResponse": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "SoftwareVersionResponse": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "type": "string",
+            "nullable": true
+          },
+          "client": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "authorization": {
+        "description": "Requires an API key to access, format the key as a 256 bit base64 encoded string like `Ak4DJ9IDYTpaceqBlAlK5pGJq595ERpq6haBaADg_lA`.",
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "256 bit base64 encoded string"
+      },
+      "authorization_admin": {
+        "description": "Requires an Admin API key to access, format the key as a 256 bit base64 encoded string like `o5Zci3V8o2QIWBDrRgDNxXwrfmX3Gk3sRjY5I302dzU=`.",
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "256 bit base64 encoded string"
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "oci_db",
+            "database": "${workspaceFolder:sctgdesk-api-server}/oci_db_v2.sqlite3"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "api",
+            "database": "${workspaceFolder:sctgdesk-api-server}/db_v2.sqlite3"
+        }
+    ],
+    "sqltools.useNodeRuntime": true,
+    "terminal.integrated.env.osx": {
+        "DATABASE_URL": "sqlite:///Users/rlemeill/Development/sctgdesk-api-server/db_v2.sqlite3"
+    },
+    "rust-analyzer.runnables.extraEnv": {
+        "DATABASE_URL": "sqlite:///Users/rlemeill/Development/sctgdesk-api-server/db_v2.sqlite3"
+    },
+    "rust-analyzer.cargo.extraEnv": {
+        "DATABASE_URL": "sqlite:///Users/rlemeill/Development/sctgdesk-api-server/db_v2.sqlite3"
+    },
+}
