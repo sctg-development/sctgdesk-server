@@ -1,0 +1,82 @@
+name: Build for Ubuntu 22.04
+on:
+  workflow_call:
+  push:
+    branches:
+      - main
+      
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  packages: write
+  attestations: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    env:
+      TARGET: x86_64-unknown-linux-musl
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl build-essential debhelper devscripts pkg-config libssl-dev libsqlite3-dev zip musl-dev musl-tools
+
+    - name: Install Rust toolchain
+      uses: crusty-pie/toolchain@main
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+        targets: ${{env.TARGET}}
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+            path: ~/.cargo/registry
+            key: ubuntu-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo index
+      uses: actions/cache@v4
+      with:
+            path: ~/.cargo/git
+            key: ubuntu-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Cache cargo build
+      uses: actions/cache@v4
+      with:
+            path: target
+            key: ubuntu-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+          node-version: '20'
+
+    - name: Build project
+      run: |
+        DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo build --target=${{env.TARGET}} --release
+        cd target/${{env.TARGET}}/release
+        zip -r /tmp/ubuntu_amd64_${{ github.event.release.tag_name }}.zip sctgdesk-api-server
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ubuntu_amd64
+        path: |
+          target/${{env.TARGET}}/release/sctgdesk-api-server
+            
+    - name: Create Release with gh
+      env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+            export TAG_NAME=${{ github.event.release.tag_name }}
+            export TAG_NAME=${TAG_NAME:-"nightly"}
+            echo $TAG_NAME
+            mv /tmp/ubuntu_amd64_${{ github.event.release.tag_name }}.zip /tmp/ubuntu_amd64_${TAG_NAME}.zip
+            gh release create $TAG_NAME -t "$TAG_NAME" -n "$TAG_NAME" || true
+            gh release upload $TAG_NAME /tmp/ubuntu_amd64_${TAG_NAME}.zip --clobber

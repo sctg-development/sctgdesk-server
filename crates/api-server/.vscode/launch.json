@@ -1,0 +1,119 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'sctgdesk-api-server'",
+            "cargo": {
+                "args": [
+                    "build"
+                ],
+                "filter": {
+                    "name": "sctgdesk-api-server",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "0",
+                "RUST_LOG": "debug",
+                "OAUTH2_CREATE_USER": "1",
+                "OAUTH2_CONFIG_FILE": "${workspaceFolder}/.oauth2.toml",
+                "S3CONFIG_FILE": "${workspaceFolder}/.s3config.toml",
+                "MAIN_PKG_VERSION": "0.1.0"
+            },
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'sctgdesk-api-server with ui development'",
+            "cargo": {
+                "args": [
+                    "build"
+                ],
+                "filter": {
+                    "name": "sctgdesk-api-server",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "0",
+                "RUST_LOG": "debug",
+                "OAUTH2_CREATE_USER": "1",
+                "OAUTH2_CONFIG_FILE": "${workspaceFolder}/.oauth2.toml",
+                "S3CONFIG_FILE": "${workspaceFolder}/.s3config.toml",
+                "MAIN_PKG_VERSION": "0.1.0",
+                "VITE_DEVELOPMENT": "http://localhost:5173"
+            },
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug tests 'sctgdesk-api-server'",
+            "cargo": {
+                "args": [
+                    "test"
+                ],
+                "filter": {
+                    "name": "sctgdesk-api-server",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_LOG": "debug",
+            },
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug tests 'oauth2'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--lib"
+                ],
+                "filter": {
+                    "name": "oauth2",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}/libs/oauth2",
+            "env": {
+                "RUST_LOG": "debug"
+            },
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug build.rs",
+            "cargo": {
+                "args": [
+                    "build"
+                ],
+                "filter": {
+                    "name": "build",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "0",
+                "RUST_LOG": "debug",
+                "OAUTH2_CREATE_USER": "1",
+                "OAUTH2_CONFIG_FILE": "${workspaceFolder}/.oauth2.toml",
+                "S3CONFIG_FILE": "${workspaceFolder}/.s3config.toml",
+                "MAIN_PKG_VERSION": "0.1.0",
+                "VITE_DEVELOPMENT": "http://localhost:5173",
+                "DATABASE_URL": "sqlite:///Users/rlemeill/Development/sctgdesk-api-server/db_v2.sqlite3"
+            },
+        },
+    ]
+}
