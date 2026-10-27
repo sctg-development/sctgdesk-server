@@ -1,6 +1,6 @@
 # ADR 0001: Where the client lives
 
-Status: Proposed
+Status: Accepted (maintainer decision, 2026-10-27: overlay)
 
 ## Context
 
