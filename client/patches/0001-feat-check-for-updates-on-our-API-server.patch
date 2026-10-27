@@ -1,0 +1,47 @@
+From 5ab581beb4a20f159f3c9a483aa86da550df0f4e Mon Sep 17 00:00:00 2001
+From: sctg <sctg@localhost>
+Date: Tue, 27 Oct 2026 19:09:44 +0100
+Subject: [PATCH] feat: check for updates on our API server
+
+Upstream skips the update check for custom clients and posts to api.rustdesk.com.
+Post the same request to our API server instead (POST /api/software/version/latest).
+---
+ src/common.rs | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/src/common.rs b/src/common.rs
+index 0d46baf..1d9a059 100644
+--- a/src/common.rs
++++ b/src/common.rs
+@@ -1018,21 +1018,22 @@ pub fn is_modifier(evt: &KeyEvent) -> bool {
+ }
+ 
+ pub fn check_software_update() {
+-    if is_custom_client() {
+-        return;
+-    }
+     let opt = LocalConfig::get_option(keys::OPTION_ENABLE_CHECK_UPDATE);
+     if config::option2bool(keys::OPTION_ENABLE_CHECK_UPDATE, &opt) {
+         std::thread::spawn(move || allow_err!(do_check_software_update()));
+     }
+ }
+ 
+-// No need to check `danger_accept_invalid_cert` for now.
+-// Because the url is always `https://api.rustdesk.com/version/latest`.
++// The url is the one of our API server, which answers like api.rustdesk.com/version/latest.
+ #[tokio::main(flavor = "current_thread")]
+ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
+-    let (request, url) =
++    let (request, _) =
+         hbb_common::version_check_request(hbb_common::VER_TYPE_RUSTDESK_CLIENT.to_string());
++    let api = get_api_server("".to_owned(), "".to_owned());
++    if api.is_empty() {
++        return Ok(());
++    }
++    let url = format!("{}/api/software/version/latest", api);
+     let proxy_conf = Config::get_socks();
+     let tls_url = get_url_for_tls(&url, &proxy_conf);
+     let tls_type = get_cached_tls_type(tls_url);
+-- 
+2.50.1 (Apple Git-155)
+

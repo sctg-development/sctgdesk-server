@@ -1,0 +1,21 @@
+{{- if .Values.gateway.enabled }}
+{{- $ports := list 21115 21116 21117 21118 21119 -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata: 
+    name: hbbr-hbbs-gateway
+    namespace: {{ .Release.Namespace }}
+spec:
+    gatewayClassName: haproxy-gatewayclass
+    listeners:
+    {{- range $ports }}
+      - name: port-{{ . }}
+        protocol: TCP
+        port: {{ . }}
+        allowedRoutes:
+            kinds:
+            - kind: TCPRoute
+            namespaces:
+                from: Same
+    {{- end }}
+{{- end}}

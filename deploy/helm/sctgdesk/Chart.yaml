@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sctgdesk
+description: A Helm chart for deploying the backend of the SCTGDesk application
+type: application
+version: 1.0.7
+appVersion: 1.0.0

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api
+  labels:
+    app: {{ .Release.Name }}-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+    spec:
+      containers:
+      - name: {{ .Release.Name }}-api-server-container
+        image: {{ .Values.api.image }}
+        command: 
+            - "/bin/sh"
+            - "-c"
+            - "ln -svf /app/conf/configmap/config.yml /app/conf/config.yml && [ -f /data/sqlite3.db ] && ln -s /data/sqlite3.db /app/sqlite3.db || true && /app/rustdesk-api-server"
+        ports:
+        - containerPort: 21114
+        volumeMounts:
+        {{- if .Values.persistence.enabled }}
+        - name: data
+          mountPath: /data
+        {{- end }}
+        - name: config-volume
+          mountPath: /app/conf/configmap
+      volumes:
+      - name: data
+        {{- if .Values.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-pvc
+        {{- end }}
+      - name: config-volume
+        configMap:
+          name: {{ .Release.Name }}-api-config

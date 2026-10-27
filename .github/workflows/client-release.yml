@@ -1,0 +1,21 @@
+name: Client build (manual)
+
+# The monthly schedule of the former client repository is not carried over: this build uploads to S3
+# and publishes the `upload-tag` release, so it only runs when asked.
+on:
+  workflow_dispatch:
+    inputs:
+      upload-artifact:
+        type: boolean
+        default: false
+      upload-tag:
+        type: string
+        default: "dev"
+
+jobs:
+  client-build:
+    uses: ./.github/workflows/client-build.yaml
+    secrets: inherit
+    with:
+      upload-artifact: ${{ inputs.upload-artifact }}
+      upload-tag: ${{ inputs.upload-tag }}

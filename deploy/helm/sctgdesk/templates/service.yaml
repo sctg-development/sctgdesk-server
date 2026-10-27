@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-hbbr-hbbs-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: {{ .Release.Name }}-hbb
+  ports:
+  - name: port-21115
+    port: 21115
+    targetPort: 21115
+  - name: port-21116
+    port: 21116
+    targetPort: 21116
+  - name: port-udp-21116
+    port: 21116
+    protocol: UDP
+    targetPort: 21116
+  - name: port-21117
+    port: 21117
+    targetPort: 21117
+  - name: port-21118
+    port: 21118
+    targetPort: 21118
+  - name: port-21119
+    port: 21119
+    targetPort: 21119
