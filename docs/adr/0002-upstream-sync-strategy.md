@@ -1,6 +1,6 @@
 # ADR 0002: Upstream synchronisation and `hbb_common`
 
-Status: Proposed
+Status: Accepted (maintainer decision, 2026-10-27: recommendation adopted)
 
 ## Context
 

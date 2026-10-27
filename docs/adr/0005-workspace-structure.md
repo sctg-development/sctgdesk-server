@@ -1,6 +1,6 @@
 # ADR 0005: Cargo workspace and repository layout
 
-Status: Proposed
+Status: Accepted (maintainer decision, 2026-10-27: recommendation adopted)
 
 ## Context
 

@@ -1,6 +1,6 @@
 # ADR 0003: Fate of the TCP code
 
-Status: Proposed
+Status: Accepted (maintainer decision, 2026-10-27: recommendation adopted)
 
 ## Context
 

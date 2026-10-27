@@ -1,6 +1,6 @@
 # ADR 0004: License, AGPL compliance and the "RustDesk" mark
 
-Status: Proposed
+Status: Accepted (maintainer decision, 2026-10-27: descriptive use only; no approach to the mark owner for now)
 
 ## Context
 
@@ -32,3 +32,7 @@ Verified from the repositories:
 
 - A small, mostly mechanical clean-up PR (Phase 2/3) for licence file, headers, contact addresses and assets.
 - A legal review by someone qualified remains advisable; this ADR is an engineering position, not legal advice.
+
+## Decision record
+
+The maintainer chose descriptive use only and no written request to the mark owner. The owner's policy remains unread, so this carries residual risk; revisit before the public announcement (Phase 6).
