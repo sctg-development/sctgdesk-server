@@ -13,139 +13,67 @@
 //
 // You should have received a copy of the Affero General Public License
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
-use sqlx::{Connection, Executor, SqliteConnection};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PackageJson {
-    name: String,
-    private: Option<bool>,
-    version: String,
-    #[serde(rename = "type")]
-    type_: Option<String>,
-    scripts: HashMap<String, String>,
-    dependencies: HashMap<String, String>,
-    devDependencies: HashMap<String, String>,
-}
-
-impl PackageJson {
-    pub fn new() -> Self {
-        Self {
-            name: String::new(),
-            private: None,
-            version: String::new(),
-            type_: None,
-            scripts: HashMap::new(),
-            dependencies: HashMap::new(),
-            devDependencies: HashMap::new(),
-        }
-    }
-
-    pub fn set_version(&mut self, version: &str) {
-        self.version = version.to_string();
-    }
-}
-#[tokio::main]
-async fn main() {
-    let db_path = env::var("DATABASE_URL").unwrap_or("sqlite://db_v2.sqlite3".to_string());
-
-    println!("cargo:rerun-if-changed=../../web/console");
-
-    let data = fs::read_to_string("../../web/console/package.json").unwrap();
-    let mut package: PackageJson = serde_json::from_str(&data).unwrap();
-
-    // Construit le chemin du fichier dans le répertoire temporaire
-    let tmp_dir = env::var("TMP")
-        .or_else(|_| env::var("TEMP"))
-        .or_else(|_| env::var("TMPDIR"))
-        .unwrap_or_else(|_| "/tmp".to_string());
-    let mut path = PathBuf::from(tmp_dir);
-    path.push("version-8659B48F-5726-433D-BEC2-C7042FE9D93B.txt");
-    // Lit la version à partir du fichier
-    let version =
-        fs::read_to_string(&path).unwrap_or_else(|_| env::var("CARGO_PKG_VERSION").unwrap());
-
-    package.set_version(&version);
-
-    let serialized = serde_json::to_string_pretty(&package).unwrap();
-    fs::write("../../web/console/package.json", serialized).unwrap();
-
-    let is_windows = cfg!(target_os = "windows");
-
-    let (command, install_args, build_args) = if is_windows {
-        ("cmd.exe", &["/C", "npm install --force"], &["/C", "npm run build"])
+/// Runs `npm <args>` in `dir`, panicking with the captured output on failure.
+fn npm(dir: &Path, args: &[&str], what: &str) {
+    let output = if cfg!(target_os = "windows") {
+        let line = format!("npm {}", args.join(" "));
+        Command::new("cmd.exe").current_dir(dir).args(["/C", &line]).output()
     } else {
-        ("npm", &["install", "--force"], &["run", "build"])
-    };
-
-    // Install npm dependencies for webconsole
-    let output = Command::new(command)
-        .current_dir("../../web/console")
-        .args(install_args)
-        .output()
-        .expect("Failed to execute command");
+        Command::new("npm").current_dir(dir).args(args).output()
+    }
+    .expect("Failed to execute npm");
     assert!(
         output.status.success(),
-        "Failed to install npm dependencies: {}{}",
+        "Failed to {}: {}{}",
+        what,
         str::from_utf8(&output.stdout).unwrap_or(""),
         str::from_utf8(&output.stderr).unwrap_or("")
     );
+}
 
-    // Build webconsole
-    let output = Command::new(command)
-        .current_dir("../../web/console")
-        .args(build_args)
-        .output()
-        .expect("Failed to execute command");
-    assert!(
-        output.status.success(),
-        "Failed to build webconsole: {}{}",
-        str::from_utf8(&output.stdout).unwrap_or(""),
-        str::from_utf8(&output.stderr).unwrap_or("")
-    );
+/// `include_dir!` and `include_str!` need these files at compile time. When the web build is
+/// skipped, create empty placeholders (the directories are git-ignored) unless a real build exists.
+fn ensure_placeholder(path: &Path, content: &str) {
+    if !path.exists() {
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(path, content).unwrap();
+    }
+}
 
-    // Install npm dependencies for rapidoc
-        let output = Command::new(command)
-        .current_dir("../../web/rapidoc")
-        .args(install_args)
-        .output()
-        .expect("Failed to execute command");
-    assert!(
-        output.status.success(),
-        "Failed to install npm dependencies: {}{}",
-        str::from_utf8(&output.stdout).unwrap_or(""),
-        str::from_utf8(&output.stderr).unwrap_or("")
-    );
+fn main() {
+    println!("cargo:rerun-if-env-changed=SCTGDESK_SKIP_WEB_BUILD");
+    let web: PathBuf = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap()).join("../../web");
+    let (console, rapidoc) = (web.join("console"), web.join("rapidoc"));
+    for watched in [
+        console.join("src"),
+        console.join("index.html"),
+        console.join("package.json"),
+        rapidoc.join("index.ts"),
+        rapidoc.join("package.json"),
+    ] {
+        println!("cargo:rerun-if-changed={}", watched.display());
+    }
 
-    // Build rapidoc
-    let output = Command::new(command)
-        .current_dir("../../web/rapidoc")
-        .args(build_args)
-        .output()
-        .expect("Failed to execute command");
-    assert!(
-        output.status.success(),
-        "Failed to build rapidoc: {}{}",
-        str::from_utf8(&output.stdout).unwrap_or(""),
-        str::from_utf8(&output.stderr).unwrap_or("")
-    );
+    // SCTGDESK_SKIP_WEB_BUILD=1 builds the server without Node.js; the embedded web console
+    // and API documentation are then placeholders.
+    if env::var_os("SCTGDESK_SKIP_WEB_BUILD").is_some() {
+        ensure_placeholder(
+            &console.join("dist/index.html"),
+            "<!doctype html><title>SCTGDesk</title><p>Web console not built (SCTGDESK_SKIP_WEB_BUILD).",
+        );
+        ensure_placeholder(&rapidoc.join("dist/sctgdesk-server.min.js"), "");
+        ensure_placeholder(&rapidoc.join("dist/sctgdesk-server.min.js.map"), "");
+        return;
+    }
 
-    // Delete test data if it exists
-    let mut conn = SqliteConnection::connect(&format!("{}", db_path))
-    .await
-    .expect("Failed to open database");
-    conn.execute(
-        r#"
-        DELETE FROM peer WHERE guid = x'95CC7775BA37481DAD7214A4F6CE5A94';
-        PRAGMA journal_mode=DELETE;
-        "#
-    )
-    .await
-    .expect("Failed to delete test data");
+    npm(&console, &["install", "--force"], "install npm dependencies of web/console");
+    npm(&console, &["run", "build"], "build web/console");
+    npm(&rapidoc, &["install", "--force"], "install npm dependencies of web/rapidoc");
+    npm(&rapidoc, &["run", "build"], "build web/rapidoc");
 }
