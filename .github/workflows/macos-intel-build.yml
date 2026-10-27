@@ -1,9 +1,10 @@
 name: Build for MacOS Intel and Apple Silicon
+# The push trigger was removed: every merge into the default branch refreshed the `nightly` release.
+# Run it by hand (workflow_dispatch) when a nightly is wanted. `cargo update -p sctgdesk-api-server`
+# below no longer applies since the API server is a workspace member: remove it before relying on this build.
 on:
   workflow_call:
-  push:
-    branches:
-      - tcpserver-master-build
+  workflow_dispatch:
 
 jobs:
   build:
