@@ -79,6 +79,9 @@ pub fn init_args(args: &str, name: &str, about: &str) {
     if matches.is_present("logged-in-only") {
         std::env::set_var("LOGGED_IN_ONLY", "Y");
     }
+    if matches.is_present("require-kx-v1") {
+        std::env::set_var("REQUIRE_KX_V1", "Y");
+    }
     for (k, v) in matches.args {
         if let Some(v) = v.vals.first() {
             std::env::set_var(arg_name(k), v.to_string_lossy().to_string());

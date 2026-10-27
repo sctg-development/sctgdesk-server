@@ -550,6 +550,10 @@ impl RendezvousServer {
                     let key = secretbox::Key(symetric_key);
                     // The client picked the highest version both sides speak.
                     let picked = ex.version;
+                    if picked == 0 && std::env::var("REQUIRE_KX_V1").map_or(false, |v| v == "Y") {
+                        log::error!("Handshake failed: key exchange version 0 is refused (REQUIRE_KX_V1)");
+                        return false;
+                    }
                     if picked > KX_VERSION_LATEST {
                         log::error!("Handshake failed: unsupported key exchange version {}", picked);
                         return false;
