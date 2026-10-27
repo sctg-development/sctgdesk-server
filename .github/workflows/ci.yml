@@ -17,7 +17,10 @@ jobs:
     name: fmt, clippy, build, test
     runs-on: ubuntu-latest
     steps:
+      # libs/hbb_common is a submodule
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
