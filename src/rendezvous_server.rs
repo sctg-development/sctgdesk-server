@@ -1,6 +1,5 @@
 use crate::common::*;
 use crate::peer::*;
-use hbb_common::bytes::BufMut;
 use hbb_common::{
     allow_err, bail,
     bytes::{Bytes, BytesMut},
@@ -21,7 +20,7 @@ use hbb_common::{
         box_, box_::PublicKey, box_::SecretKey, secretbox, secretbox::Key, secretbox::Nonce, sign,
     },
     sodiumoxide::hex,
-    tcp::{listen_any, FramedStream},
+    tcp::{listen_any, Encrypt, FramedStream, KxTranscript, KX_PARAMS_DOMAIN, KX_VERSION_LATEST},
     timeout,
     tokio::{
         self,
@@ -66,36 +65,6 @@ struct Sink {
     tx: SinkType,
     key: Arc<Mutex<Option<Encrypt>>>,
 }
-#[derive(Clone)]
-struct Encrypt {
-    key: Key,
-    enc_seqnum: u64,
-    dec_seqnum: u64,
-}
-
-// Light version of hbb_common::tcp::Encrypt
-impl Encrypt {
-    pub fn dec(&mut self, bytes: &BytesMut) -> Result<Vec<u8>, ()> {
-        self.dec_seqnum += 1;
-        Ok(secretbox::open(
-            bytes,
-            &Self::get_nonce(self.dec_seqnum),
-            &self.key,
-        )?)
-    }
-
-    pub fn enc(&mut self, data: &[u8]) -> Vec<u8> {
-        self.enc_seqnum += 1;
-        secretbox::seal(&data, &Self::get_nonce(self.enc_seqnum), &self.key)
-    }
-
-    fn get_nonce(seqnum: u64) -> Nonce {
-        let mut nonce = Nonce([0u8; secretbox::NONCEBYTES]);
-        nonce.0[..std::mem::size_of_val(&seqnum)].copy_from_slice(&seqnum.to_le_bytes());
-        nonce
-    }
-}
-
 type Sender = mpsc::UnboundedSender<Data>;
 type Receiver = mpsc::UnboundedReceiver<Data>;
 static ROTATION_RELAY_SERVER: AtomicUsize = AtomicUsize::new(0);
@@ -578,24 +547,40 @@ impl RendezvousServer {
                         log::error!("Handshake failed: cannot open the sealed symetric key");
                         return false;
                     };
-                    let key = secretbox::Key::from_slice(&symetric_key);
-                    match key {
-                        Some(key) => {
-                            if let Some(sink) = sink.as_mut() {
-                                sink.key.lock().await.replace(Encrypt {
-                                    key,
-                                    enc_seqnum: 0,
-                                    dec_seqnum: 0,
-                                });
-                            }
-                            log::debug!("KeyExchange symetric key set");
-                            return true;
-                        }
-                        None => {
-                            log::error!("KeyExchange symetric key NOT set");
-                            return false;
-                        }
+                    let key = secretbox::Key(symetric_key);
+                    // The client picked the highest version both sides speak.
+                    let picked = ex.version;
+                    if picked > KX_VERSION_LATEST {
+                        log::error!("Handshake failed: unsupported key exchange version {}", picked);
+                        return false;
                     }
+                    let encrypt = match picked {
+                        0 => Encrypt::new(key),
+                        _ => {
+                            let our_pk = kx_server_pk(&self.inner.secure_tcp_pk_b);
+                            match Encrypt::new_split(
+                                key,
+                                false,
+                                &KxTranscript {
+                                    initiator_pk: &their_pk,
+                                    responder_pk: &our_pk,
+                                    advertised: KX_VERSION_LATEST,
+                                    picked,
+                                },
+                            ) {
+                                Ok(encrypt) => encrypt,
+                                Err(err) => {
+                                    log::error!("Handshake failed: {}", err);
+                                    return false;
+                                }
+                            }
+                        }
+                    };
+                    if let Some(sink) = sink.as_mut() {
+                        sink.key.lock().await.replace(encrypt);
+                    }
+                    log::debug!("KeyExchange symetric key set, version {}", picked);
+                    return true;
                 }
                 _ => {}
             }
@@ -1371,10 +1356,7 @@ impl RendezvousServer {
             while let Ok(Some(Ok(mut bytes))) = timeout(30_000, b.next()).await {
                 let mut enc_lock = enc.lock().await;
                 if enc_lock.is_some() {
-                    if let Ok(dec) = enc_lock.as_mut().unwrap().dec(&bytes) {
-                        bytes.clear();
-                        bytes.put_slice(&dec);
-                    } else {
+                    if enc_lock.as_mut().unwrap().dec(&mut bytes).is_err() {
                         log::warn!("Decryption error from {}", addr);
                         break;
                     }
@@ -1401,7 +1383,7 @@ impl RendezvousServer {
                 Some(peer) => {
                     let pk = peer.read().await.pk.clone();
                     sign::sign(
-                        &hbb_common::message_proto::IdPk {
+                        &IdPk {
                             id,
                             pk,
                             ..Default::default()
@@ -1469,12 +1451,23 @@ impl RendezvousServer {
         let sk = &self.inner.sk;
         match sk {
             Some(sk) => {
-                let our_pk_b = self.inner.secure_tcp_pk_b.clone();
-                let sm = sign::sign(&our_pk_b.0, &sk);
+                let our_pk_b = kx_server_pk(&self.inner.secure_tcp_pk_b);
+                let sm = sign::sign(&our_pk_b, &sk);
+                let mut params = KX_PARAMS_DOMAIN.to_vec();
+                params.extend(
+                    KxParams {
+                        pk: our_pk_b.to_vec().into(),
+                        version: KX_VERSION_LATEST,
+                        ..Default::default()
+                    }
+                    .write_to_bytes()
+                    .unwrap_or_default(),
+                );
 
-                let bytes_sm = Bytes::from(sm);
                 msg_out.set_key_exchange(KeyExchange {
-                    keys: vec![bytes_sm],
+                    keys: vec![Bytes::from(sm)],
+                    version: KX_VERSION_LATEST,
+                    signed_params: Bytes::from(sign::sign(&params, &sk)),
                     ..Default::default()
                 });
                 log::trace!(
@@ -1573,6 +1566,15 @@ async fn create_tcp_listener(port: i32) -> ResultType<TcpListener> {
     Ok(s)
 }
 
+/// The ephemeral public key as advertised to clients: bit 255 is ignored by X25519, so setting it
+/// costs nothing to legacy clients, while version 1 clients take it as "signed parameters required",
+/// which stops a man in the middle from stripping them.
+fn kx_server_pk(pk: &box_::PublicKey) -> [u8; 32] {
+    let mut pk = pk.0;
+    pk[31] |= 0x80;
+    pk
+}
+
 fn get_symetric_key_from_msg(
     our_sk_b: [u8; 32],
     their_pk_b: [u8; 32],
@@ -1637,5 +1639,62 @@ mod key_exchange_tests {
         assert_eq!(sign::verify(&signed, &server_sign_pk).unwrap(), kx_pk.0.to_vec());
         let (wrong_pk, _) = sign::gen_keypair();
         assert!(sign::verify(&signed, &wrong_pk).is_err());
+    }
+
+    #[test]
+    fn flagged_server_key_still_opens_what_the_client_sealed_to_it() {
+        let (server_pk, server_sk) = box_::gen_keypair();
+        let flagged = kx_server_pk(&server_pk);
+        assert_ne!(flagged, server_pk.0);
+        assert_eq!(flagged[31] & 0x80, 0x80);
+        // the client seals to the advertised (flagged) key; bit 255 does not take part in X25519
+        let (client_pk, sealed, key) = client_seal(flagged);
+        let sealed: [u8; 48] = sealed.try_into().unwrap();
+        assert_eq!(
+            get_symetric_key_from_msg(server_sk.0, client_pk, &sealed),
+            Some(key.0)
+        );
+    }
+
+    #[test]
+    fn version_1_streams_interoperate_between_client_and_server() {
+        let (server_pk, _) = box_::gen_keypair();
+        let server_pk = kx_server_pk(&server_pk);
+        let (client_pk, _, key) = client_seal(server_pk);
+        let transcript = || KxTranscript {
+            initiator_pk: &client_pk,
+            responder_pk: &server_pk,
+            advertised: KX_VERSION_LATEST,
+            picked: 1,
+        };
+        let mut client = Encrypt::new_split(key.clone(), true, &transcript()).unwrap();
+        let mut server = Encrypt::new_split(key, false, &transcript()).unwrap();
+
+        let mut up = hbb_common::bytes::BytesMut::from(&client.enc(b"hello server")[..]);
+        server.dec(&mut up).unwrap();
+        assert_eq!(&up[..], b"hello server");
+        let mut down = hbb_common::bytes::BytesMut::from(&server.enc(b"hello client")[..]);
+        client.dec(&mut down).unwrap();
+        assert_eq!(&down[..], b"hello client");
+    }
+
+    #[test]
+    fn version_1_and_version_0_keys_are_not_interchangeable() {
+        let (server_pk, _) = box_::gen_keypair();
+        let (client_pk, _, key) = client_seal(server_pk.0);
+        let mut v0 = Encrypt::new(key.clone());
+        let mut v1 = Encrypt::new_split(
+            key,
+            false,
+            &KxTranscript {
+                initiator_pk: &client_pk,
+                responder_pk: &server_pk.0,
+                advertised: KX_VERSION_LATEST,
+                picked: 1,
+            },
+        )
+        .unwrap();
+        let mut msg = hbb_common::bytes::BytesMut::from(&v0.enc(b"x")[..]);
+        assert!(v1.dec(&mut msg).is_err());
     }
 }
