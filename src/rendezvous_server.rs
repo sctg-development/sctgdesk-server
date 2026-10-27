@@ -1530,3 +1530,58 @@ fn get_symetric_key_from_msg(
     let key = box_::open(sealed_value, &nonce, &their_pk_b, &sk).ok()?;
     <[u8; 32]>::try_from(&key[..]).ok()
 }
+
+#[cfg(test)]
+mod key_exchange_tests {
+    use super::*;
+
+    /// Same construction as the client's `create_symmetric_key_msg` (rustdesk `src/common.rs`).
+    fn client_seal(server_pk: [u8; 32]) -> ([u8; 32], Vec<u8>, secretbox::Key) {
+        let their_pk_b = box_::PublicKey(server_pk);
+        let (our_pk_b, our_sk_b) = box_::gen_keypair();
+        let key = secretbox::gen_key();
+        let nonce = box_::Nonce([0u8; box_::NONCEBYTES]);
+        let sealed = box_::seal(&key.0, &nonce, &their_pk_b, &our_sk_b);
+        (our_pk_b.0, sealed, key)
+    }
+
+    #[test]
+    fn server_recovers_the_key_sealed_by_the_client() {
+        let (server_pk, server_sk) = box_::gen_keypair();
+        let (client_pk, sealed, key) = client_seal(server_pk.0);
+        let sealed: [u8; 48] = sealed.try_into().unwrap();
+        assert_eq!(
+            get_symetric_key_from_msg(server_sk.0, client_pk, &sealed),
+            Some(key.0)
+        );
+    }
+
+    #[test]
+    fn corrupted_box_is_rejected_without_panicking() {
+        let (server_pk, server_sk) = box_::gen_keypair();
+        let (client_pk, sealed, _) = client_seal(server_pk.0);
+        let mut sealed: [u8; 48] = sealed.try_into().unwrap();
+        sealed[0] ^= 0xff;
+        assert_eq!(get_symetric_key_from_msg(server_sk.0, client_pk, &sealed), None);
+    }
+
+    #[test]
+    fn box_from_another_peer_key_is_rejected() {
+        let (server_pk, server_sk) = box_::gen_keypair();
+        let (_, sealed, _) = client_seal(server_pk.0);
+        let (other_pk, _) = box_::gen_keypair();
+        let sealed: [u8; 48] = sealed.try_into().unwrap();
+        assert_eq!(get_symetric_key_from_msg(server_sk.0, other_pk.0, &sealed), None);
+    }
+
+    #[test]
+    fn phase1_message_is_signed_by_the_server_key() {
+        let (server_sign_pk, server_sign_sk) = sign::gen_keypair();
+        let (kx_pk, _) = box_::gen_keypair();
+        let signed = sign::sign(&kx_pk.0, &server_sign_sk);
+        // what the client does: verify with the server's public key, recover the X25519 key
+        assert_eq!(sign::verify(&signed, &server_sign_pk).unwrap(), kx_pk.0.to_vec());
+        let (wrong_pk, _) = sign::gen_keypair();
+        assert!(sign::verify(&signed, &wrong_pk).is_err());
+    }
+}
