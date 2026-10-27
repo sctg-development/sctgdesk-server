@@ -39,9 +39,9 @@
 
 ## 为项目加星
 
-**如果你欣赏我的作品，请考虑给它一个星！🤩 或者**[![](https://img.shields.io/static/v1?label=Sponsor\&message=%E2%9D%A4\&logo=GitHub\&color=%23fe8e86)](https://github.com/sponsors/sctg-development)
+**如果你喜欢我的作品，请考虑给它一个星！🤩或者**[![](https://img.shields.io/static/v1?label=Sponsor\&message=%E2%9D%A4\&logo=GitHub\&color=%23fe8e86)](https://github.com/sponsors/sctg-development)
 
-## 总结：博士
+## 简而言之;总结
 
 你可以使用以下内容`docker-compose.yml`用来启动服务器的文件：
 
@@ -111,7 +111,7 @@ docker-compose up
 
 API 独立版本是包含 API 服务器和网页控制台，但不包含 rendez-vous 服务器的版本。\
 独立版本可在其独立仓库中获取[SctgDesk-API-Server](https://github.com/sctg-development/sctgdesk-api-server).\
-关于所有与API或网页控制台相关的问题，请参见[SctgDesk-API-Server](https://github.com/sctg-development/sctgdesk-api-server)存储 库。
+关于所有与API或网页控制台相关的问题，请参见[SctgDesk-API-Server](https://github.com/sctg-development/sctgdesk-api-server)仓库。
 
 ## 截图
 
@@ -148,7 +148,7 @@ API 独立版本是包含 API 服务器和网页控制台，但不包含 rendez-
 ## 生成自动更新链接
 
 我们修改了客户端，使其从API服务器中获取自动更新链接，而非从Github发布中获取。\
-为了让自动更新链接正常工作，你需要修改客户端，从API服务器获取自动更新链接。这[你该如何做到](https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972):
+为了让自动更新链接正常工作，你需要修改客户端，从API服务器获取自动更新链接。就是这样[你该如何做到](https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972):
 
 ```rust
 // src/common.rs
@@ -174,11 +174,11 @@ async fn check_software_update_() -> hbb_common::ResultType<()> {
 }
 ```
 
-# 安全
+# 安全性
 
-嵌入式API服务器既不安全，也无法防止DDOS攻击。一个好做法是在API服务器前使用反向代理。NGINX是这个目的的好选择。HAProxy也是个不错的选择。\
+嵌入式API服务器既不安全，也不具备DDOS攻击的保护。一个好做法是在API服务器前使用反向代理。NGINX是这个目的的好选择。HAProxy也是不错的选择。\
 我们在生产环境中使用 HAProxy 来设置 API 服务器。
-这是我们为HAProxy提供的配置文件，仅作为示例提供。你应该根据自己的需求进行调整。
+这是我们为 HAProxy 提供的配置文件，仅作为示例提供。你应该根据自己的需求进行调整。
 
 ```haproxy
 global
@@ -267,7 +267,7 @@ WantedBy=multi-user.target
 
 要限制对服务器的访问，你可以使用`--logged-in-only`选项或设置`LOGGED_IN_ONLY=Y`环境变量`hbbs`服务器。这将限制控制权仅限登录用户。
 
-即使开启了这个选项，用户仍然可以在 Rendez-vous 服务器上注册，但他们无法控制其他用户的对等服务器。如果有人在未登录的情况下试图控制对等端，他们会收到错误信息：
+即使开启了这个选项，用户仍然可以在Rendez-vous服务器注册，但他们无法控制其他用户的对等节点。如果有人在未登录的情况下尝试控制对等节点，他们会收到错误提示：
 
 <img width="524" alt="Error message for unauthenticated control attempt" src="https://github.com/user-attachments/assets/cfa46504-39d8-46a7-9072-3ece6818b4a3">
 
@@ -280,7 +280,7 @@ WantedBy=multi-user.target
 1.  设置`LOGGED_IN_ONLY=Y`环境变量`hbbs`服务器。
 2.  或者，你也可以使用`--logged-in-only`运行`hbbs`服务器。
 
-**例**
+**示例**
 
 要设置`LOGGED_IN_ONLY`环境变量，你可以在你的`~/.bashrc`文件或同等文件：
 
@@ -299,6 +299,8 @@ export LOGGED_IN_ONLY=Y
 [**手动**](https://rustdesk.com/docs/en/self-host/)
 
 [**常见问题**](https://github.com/rustdesk/rustdesk/wiki/FAQ)
+
+[**如何将OSS迁移到Pro版**](https://rustdesk.com/docs/en/self-host/rustdesk-server-pro/installscript/#convert-from-open-source)
 
 你可以自己托管RustDesk服务器，它是免费且开源的。
 
@@ -324,15 +326,15 @@ set "DATABASE_URL=sqlite://%CD%/db_v2.sqlite3" && cargo build --release
 *   hbbr - RustDesk 中继服务器
 *   rustdesk-utils - RustDesk CLI 工具
 
-你可以在[releases](https://github.com/sctg-development/sctgdesk-server/releases) page.
+You can find updated binaries on the [releases](https://github.com/sctg-development/sctgdesk-server/releases) page.
 
 All released binaries after release v1.1.99-40 are attestated with Github Actions. You can check the attestation by checking the sha256sum of the binary with `https://search.sigstore.dev/?hash=<sha256>` for example.
 
-If you want extra features [RustDesk Server Pro](https://rustdesk.com/pricing.html) might suit you better.
+If you want extra features, [RustDesk Server Pro](https://rustdesk.com/pricing.html) might suit you better.
 
 If you want to develop your own server, [rustdesk-server-demo](https://github.com/rustdesk/rustdesk-server-demo) might be a better and simpler start for you than this repo.
 
-## Docker images
+## Installation
 
 Docker images are automatically generated and published on every github release.
 
@@ -409,6 +411,9 @@ Edit line 16 to point to your relay server (the one listening on port 21117). Yo
 
 (docker-compose credit goes to @lukebarone and @QuiGonLeong)
 
+> \[!NOTE]\
+> The rustdesk/rustdesk-server:latest in China may be replaced with the latest version number on Docker Hub, such as `rustdesk-server:1.1.10-3`. Otherwise, the old version may be pulled due to image acceleration.
+
 > Note that here, the sctg/sctgdesk-server-server:latest in China may be replaced with the latest version number on dockerhub, such as sctg/sctgdesk-server-server:1.1.99-37. Otherwise, the old version may be pulled due to image acceleration.
 
 ## How to create a keypair
@@ -445,7 +450,7 @@ These packages are meant for the following distributions:
 
 ## ENV variables
 
-hbbs and hbbr can be configured using these ENV variables.
+`hbbs` and `hbbr` can be configured using these ENV variables.
 You can specify the variables as usual or use an `.env` file.
 
 | variable | binary | description |
