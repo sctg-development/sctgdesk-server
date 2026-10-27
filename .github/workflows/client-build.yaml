@@ -11,7 +11,7 @@
 # RENDEZVOUS_SERVER
 # RS_PUB_KEY
 # SIGN_BASE_URL
-name: Build the flutter version of the RustDesk
+name: Build the SCTGDesk client
 
 on:
   workflow_call:
@@ -27,7 +27,7 @@ env:
   RUST_VERSION: "1.75" 
   CARGO_NDK_VERSION: "3.1.2"
   LLVM_VERSION: "15.0.6"
-  FLUTTER_VERSION: "3.19.6"
+  FLUTTER_VERSION: "3.24.5"
   FLUTTER_RUST_BRIDGE_VERSION: "1.80.1"
   # for arm64 linux because official Dart SDK does not work
   FLUTTER_ELINUX_VERSION: "3.16.9"
@@ -35,9 +35,9 @@ env:
   TAG_NAME: "${{ inputs.upload-tag }}"
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   # vcpkg version: 2024.03.25
-  VCPKG_COMMIT_ID: "a34c873a9717a888f58dc05268dea15592c2f0ff"
-  VERSION: "1.2.6"
-  NDK_VERSION: "r26b"
+  VCPKG_COMMIT_ID: "9e593bb18ea69cc5095e012465dcd675a822ed0d"
+  VERSION: "1.5.0"
+  NDK_VERSION: "r28c"
   #signing keys env variable checks
   ANDROID_SIGNING_KEY: '${{ secrets.ANDROID_SIGNING_KEY }}'
   ORG_NAME: '${{ secrets.ORG_NAME }}'
@@ -95,8 +95,17 @@ jobs:
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
-      - name: Checkout source code
+      - name: Checkout the monorepo
         uses: actions/checkout@v4
+        with:
+          path: _mono
+      - name: Prepare the client tree (upstream tag + patches + overlay)
+        shell: bash
+        run: |
+          _mono/client/apply.sh _client
+          shopt -s dotglob
+          mv _client/* .
+          rm -rf _client _mono
       
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1
@@ -296,8 +305,17 @@ jobs:
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
-      - name: Checkout source code
+      - name: Checkout the monorepo
         uses: actions/checkout@v4
+        with:
+          path: _mono
+      - name: Prepare the client tree (upstream tag + patches + overlay)
+        shell: bash
+        run: |
+          _mono/client/apply.sh _client
+          shopt -s dotglob
+          mv _client/* .
+          rm -rf _client _mono
 
       - name: Import the codesign cert
         if: env.MACOS_P12_BASE64 != null
@@ -471,8 +489,17 @@ jobs:
       - name: Install dependencies
         run: |
           brew install nasm llvm nasm cmake gcc wget ninja pkg-config
-      - name: Checkout source code
+      - name: Checkout the monorepo
         uses: actions/checkout@v4
+        with:
+          path: _mono
+      - name: Prepare the client tree (upstream tag + patches + overlay)
+        shell: bash
+        run: |
+          _mono/client/apply.sh _client
+          shopt -s dotglob
+          mv _client/* .
+          rm -rf _client _mono
 
       - name: Import the codesign cert
         if: env.MACOS_P12_BASE64 != null
@@ -698,8 +725,17 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y nasm qemu-user-static
 
-      - name: Checkout source code
+      - name: Checkout the monorepo
         uses: actions/checkout@v4
+        with:
+          path: _mono
+      - name: Prepare the client tree (upstream tag + patches + overlay)
+        shell: bash
+        run: |
+          _mono/client/apply.sh _client
+          shopt -s dotglob
+          mv _client/* .
+          rm -rf _client _mono
 
       - name: Set Swap Space
         uses: pierotofy/set-swap-space@master
@@ -867,8 +903,17 @@ jobs:
           #   }
           # - { target: x86_64-unknown-linux-musl   , os: ubuntu-20.04, use-cross: true }
     steps:
-      - name: Checkout source code
+      - name: Checkout the monorepo
         uses: actions/checkout@v4
+        with:
+          path: _mono
+      - name: Prepare the client tree (upstream tag + patches + overlay)
+        shell: bash
+        run: |
+          _mono/client/apply.sh _client
+          shopt -s dotglob
+          mv _client/* .
+          rm -rf _client _mono
 
       - name: Restore bridge files
         uses: actions/download-artifact@master
@@ -1183,178 +1228,6 @@ jobs:
   #         files: |
   #           flatpak/rustdesk-${{ env.VERSION }}-${{ matrix.job.target }}.flatpak
 
-  build-sctgdesk-web:
-    name: build-sctgdesk-web
-    runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { arch: x86_64, target: x86_64-unknown-linux-gnu, os: ubuntu-20.04 }
-    env:
-      RELEASE_NAME: web-basic
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
-
-      - name: Prepare env
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y wget npm
-
-      - name: Install flutter
-        uses: subosito/flutter-action@v2.12.0 #https://github.com/subosito/flutter-action/issues/277
-        with:
-          channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-
-      # https://rustdesk.com/docs/en/dev/build/web/
-      - name: Build web
-        shell: bash
-        run: |
-          pushd flutter/web/v1/js
-          npm install yarn -g
-          npm install typescript -g
-          npm install protoc -g
-          # Install protoc first, see: https://google.github.io/proto-lens/installing-protoc.html
-          npm install ts-proto
-          # Only works with vite <= 2.8, see: https://github.com/vitejs/vite/blob/main/docs/guide/build.md#chunking-strategy
-          npm install vite@2.8
-          yarn install && yarn build
-          popd
-
-          pushd flutter/web
-          wget https://github.com/rustdesk/doc.rustdesk.com/releases/download/console/web_deps.tar.gz
-          tar xzf web_deps.tar.gz
-          popd
-
-          python3 ./build-sctg.py --web
-          pushd flutter
-          # flutter build web --release
-          cd build
-          cp ../web/README.md web
-          # TODO: Remove the following line when the web is almost complete.
-          echo -e "\n\nThis build is for preview and not full functionality." >> web/README.md
-          dir_name="${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ env.RELEASE_NAME }}"
-          mv web/index.html web/sctgdesk.html
-          mv web/client.html web/index.html
-          mv web "${dir_name}" && tar czf "${dir_name}".tar.gz "${dir_name}"
-          cd "${dir_name}"
-          zip -9 -r "../${dir_name}".zip .
-          cd ..
-          
-          # debug now
-          dir_name_debug="${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ env.RELEASE_NAME }}-debug"
-          mv web-debug/index.html web-debug/sctgdesk.html
-          mv web-debug/client.html web-debug/index.html
-          mv web-debug "${dir_name_debug}" && tar czf "${dir_name_debug}".tar.gz "${dir_name_debug}"
-          cd "${dir_name_debug}"
-          zip -9 -r "../${dir_name_debug}".zip .
-          cd ..
-          
-          sha256sum "${dir_name}".tar.gz
-          sha256sum "${dir_name_debug}".tar.gz
-          popd
-
-      - name: Download, install mc and copy web files to S3
-        run: |
-          ls flutter/build/
-          curl -o mc https://dl.min.io/client/mc/release/linux-amd64/mc
-          chmod +x mc
-          ./mc alias set s3release https://${{ secrets.AWS_S3_ENDPOINT }} "${{ secrets.AWS_ACCESS_KEY_ID }}" "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          echo "Copying flutter/build/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ env.RELEASE_NAME }}.tar.gz to s3"
-          echo "./mc cp 'flutter/build/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ env.RELEASE_NAME }}.tar.gz' 's3release/${{ secrets.AWS_S3_BUCKET }}/${{ env.APP_NAME_LOW }}-releases/${{ env.APP_NAME_LOW }}-web-${{ env.VERSION }}.tar.gz'"
-          ./mc cp 'flutter/build/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ env.RELEASE_NAME }}.tar.gz' 's3release/${{ secrets.AWS_S3_BUCKET }}/${{ env.APP_NAME_LOW }}-releases/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ env.RELEASE_NAME }}.tar.gz'
-          ./mc cp 'flutter/build/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ env.RELEASE_NAME }}.zip' 's3release/${{ secrets.AWS_S3_BUCKET }}/${{ env.APP_NAME_LOW }}-releases/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ env.RELEASE_NAME }}.zip'
-
-      - name: Publish to Cloudflare Pages
-        uses: sctg-development/pages-action-without-url@main
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
-          directory: flutter/build/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ env.RELEASE_NAME }} # e.g. 'dist'
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish debug to Cloudflare Pages
-        uses: sctg-development/pages-action-without-url@main
-        continue-on-error: true
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}-debug
-          directory: flutter/build/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ env.RELEASE_NAME }}-debug # e.g. 'dist'
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-
-  build-rustdesk-web:
-    name: build-rustdesk-web
-    runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { arch: x86_64, target: x86_64-unknown-linux-gnu, os: ubuntu-18.04 }
-    env:
-      FLUTTER_VERSION: "3.16.9"
-      RELEASE_NAME: web-basic
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
-
-      - name: Prepare env
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y wget npm
-
-      - name: Install flutter
-        uses: subosito/flutter-action@v2.12.0 #https://github.com/subosito/flutter-action/issues/277
-        with:
-          channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-
-      # https://rustdesk.com/docs/en/dev/build/web/
-      - name: Build web
-        shell: bash
-        run: |
-          pushd flutter/web/v1/js
-          npm install yarn -g
-          npm install typescript -g
-          npm install protoc -g
-          # Install protoc first, see: https://google.github.io/proto-lens/installing-protoc.html
-          npm install ts-proto
-          # Only works with vite <= 2.8, see: https://github.com/vitejs/vite/blob/main/docs/guide/build.md#chunking-strategy
-          npm install vite@2.8
-          yarn install && yarn build
-          popd
-
-          pushd flutter/web
-          wget https://github.com/rustdesk/doc.rustdesk.com/releases/download/console/web_deps.tar.gz
-          tar xzf web_deps.tar.gz
-          popd
-
-          pushd flutter
-          flutter build web --release
-          cd build
-          cp ../web/README.md web
-          # TODO: Remove the following line when the web is almost complete.
-          echo -e "\n\nThis build is for preview and not full functionality." >> web/README.md
-          dir_name="rustdesk-${{ env.VERSION }}-${{ env.RELEASE_NAME }}"
-          mv web "${dir_name}" && tar czf "${dir_name}".tar.gz "${dir_name}"
-          sha256sum "${dir_name}".tar.gz
-          popd
-
-      - name: Download, install mc and copy orginal web files to S3
-        run: |
-          ls flutter/build/
-          curl -o mc https://dl.min.io/client/mc/release/linux-amd64/mc
-          chmod +x mc
-          ./mc alias set s3release https://${{ secrets.AWS_S3_ENDPOINT }} "${{ secrets.AWS_ACCESS_KEY_ID }}" "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          echo "Copying flutter/build/rustdesk-${{ env.VERSION }}-${{ env.RELEASE_NAME }}.tar.gz to s3"
-          echo "./mc cp 'flutter/build/rustdesk-${{ env.VERSION }}-${{ env.RELEASE_NAME }}.tar.gz' 's3release/${{ secrets.AWS_S3_BUCKET }}/${{ env.APP_NAME_LOW }}-releases/rustdesk-${{ env.VERSION }}-${{ env.RELEASE_NAME }}.tar.gz'"
-          ./mc cp 'flutter/build/rustdesk-${{ env.VERSION }}-${{ env.RELEASE_NAME }}.tar.gz' 's3release/${{ secrets.AWS_S3_BUCKET }}/${{ env.APP_NAME_LOW }}-releases/rustdesk-${{ env.VERSION }}-${{ env.RELEASE_NAME }}.tar.gz'
-        
   build-rustdesk-android:
     needs: [generate-bridge-linux]
     name: build rustdesk android apk ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
@@ -1422,8 +1295,17 @@ jobs:
                tree \
                wget
 
-      - name: Checkout source code
-        uses: actions/checkout@v3
+      - name: Checkout the monorepo
+        uses: actions/checkout@v4
+        with:
+          path: _mono
+      - name: Prepare the client tree (upstream tag + patches + overlay)
+        shell: bash
+        run: |
+          _mono/client/apply.sh _client
+          shopt -s dotglob
+          mv _client/* .
+          rm -rf _client _mono
       - name: Install flutter
         uses: subosito/flutter-action@v2
         with:

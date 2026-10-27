@@ -11,7 +11,7 @@ as close to the official one as possible).
 | `overlay/` | files copied over the tree: logos and icons (our visual signature) |
 | `branding.py` | name, servers, key, URLs: string replacements, strict (a rule that matches nothing fails the build) |
 | `build-sctg.py` | entry point: brands the tree, then runs upstream's `build.py` with the remaining arguments |
-| `ci/` | the former client workflows, kept for reference; **not adapted** to this layout yet |
+| `../.github/workflows/client-build.yaml` | the client build (from the former client repository): checks out this repository, runs `apply.sh`, then builds. **Never run**: toolchain versions were moved to upstream 1.5.0's, nothing else was changed |
 | `apply.sh` | clones the tag, applies `patches/` and `overlay/` |
 
 ## Build
@@ -40,6 +40,6 @@ The client needs the upstream toolchain (Flutter, vcpkg, ...): see upstream's do
 - The client was **not compiled** while preparing this layout (it needs Flutter and vcpkg): only the patch
   application and the branding rules were checked against a clean `1.5.0` checkout.
 - Icons: only `res/` and the macOS icon are overlaid. Windows, Android and iOS icons are upstream's.
-- The macOS signing and dmg steps of `build-sctg.py`, the flatpak rule and `ci/` come from the former script and are unverified on `1.5.0`.
+- The macOS signing and dmg steps of `build-sctg.py`, the flatpak rule and the client workflow come from the former script and are unverified on `1.5.0`.
 - `deploy/helm/` (the Helm chart of the former client repository) deploys the server and was written for a TCP test:
   to be refactored.
