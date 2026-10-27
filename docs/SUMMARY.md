@@ -1,0 +1,21 @@
+# Summary
+
+[Introduction](introduction.md)
+
+- [Architecture](architecture.md)
+  - [TCP key exchange](key-exchange.md)
+  - [REST API](api.md)
+- [Building from source](building.md)
+- [Testing](testing.md)
+- [The client](client.md)
+- [Syncing with upstream](upstream-sync.md)
+- [Versions and releases](releases.md)
+- [Contributing](contributing.md)
+- [Roadmap](roadmap.md)
+- [History](history.md)
+- [Architecture decision records](adr/README.md)
+  - [0001 Client placement](adr/0001-client-placement.md)
+  - [0002 Upstream sync strategy](adr/0002-upstream-sync-strategy.md)
+  - [0003 TCP and key exchange](adr/0003-tcp-and-key-exchange.md)
+  - [0004 License and trademark](adr/0004-license-and-trademark.md)
+  - [0005 Workspace structure](adr/0005-workspace-structure.md)

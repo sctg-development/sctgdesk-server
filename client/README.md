@@ -1,7 +1,7 @@
 # SCTGDesk client
 
 The client is **upstream RustDesk plus a small overlay**, not a fork of its source: this directory holds only what
-is ours (see [ADR 0001](../docs/adr/README.md) (on the `docs/adr` branch until it is merged) and the upstream-compatibility rule: the client stays
+is ours (see [ADR 0001](https://github.com/sctg-development/sctgdesk-server/blob/tcpserver-master-build/docs/adr/0001-client-placement.md) and the upstream-compatibility rule: the client stays
 as close to the official one as possible).
 
 | Path | Content |

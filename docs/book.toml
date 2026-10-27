@@ -1,0 +1,12 @@
+[book]
+title = "SCTGDesk developer manual"
+authors = ["SCTG Development"]
+language = "en"
+src = "."
+
+[build]
+build-dir = "../target/book"
+
+[output.html]
+git-repository-url = "https://github.com/sctg-development/sctgdesk-server"
+edit-url-template = "https://github.com/sctg-development/sctgdesk-server/edit/tcpserver-master-build/docs/{path}"

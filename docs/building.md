@@ -29,7 +29,7 @@ To build without Node.js, set `SCTGDESK_SKIP_WEB_BUILD=1`: the console and API d
 | `crates/api-{state,utils,oauth2,s3software}` | libraries of the API server |
 | `web/console`, `web/rapidoc` | Vue web console, API documentation |
 
-See [`docs/adr/`](adr/README.md) for the reasoning behind this layout.
+See [`docs/adr/`](adr/) for the reasoning behind this layout.
 
 ## Known gaps
 

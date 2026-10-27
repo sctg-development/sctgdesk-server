@@ -1,0 +1,44 @@
+name: Docs
+
+on:
+  push:
+    branches: [tcpserver-master-build, "docs/**"]
+    paths: ["docs/**", "CONTRIBUTING.md", "client/README.md", ".github/workflows/docs.yml"]
+  pull_request:
+    paths: ["docs/**", "CONTRIBUTING.md", "client/README.md", ".github/workflows/docs.yml"]
+  # Publishing is a decision: it only happens when someone runs the workflow and asks for it.
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy to GitHub Pages
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    name: mdBook
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook
+      - run: mdbook build docs
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/book
+
+  deploy:
+    name: GitHub Pages
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
