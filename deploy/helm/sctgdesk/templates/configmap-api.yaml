@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-api-config
+data:
+  config.yml: |
+    dbtype: 'sqlite3'
+    app:
+      authkey: {{ .Values.api.authkey }}
+      cryptkey: {{ .Values.api.cryptkey }}
+    s3:
+      Endpoint: {{ .Values.api.s3.endpoint }}
+      Region: {{ .Values.api.s3.region }}
+      AccessKey: {{ .Values.api.s3.access_key }}
+      SecretKey: {{ .Values.api.s3.secret_key }}
+      Bucket: {{ .Values.api.s3.bucket }}
+      Windows64Key: {{ .Values.api.s3.windows64_key }}
+      Windows32Key: {{ .Values.api.s3.windows32_key }}
+      OSXKey: {{ .Values.api.s3.osx_key }}
+      OSXArm64Key: {{ .Values.api.s3.osx_arm64_key }}
+      IOSKey: {{ .Values.api.s3.ios_key }}

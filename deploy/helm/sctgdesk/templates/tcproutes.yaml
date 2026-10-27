@@ -1,0 +1,24 @@
+{{- if .Values.gateway.enabled }}
+{{- $ports := list 21115 21116 21117 21118 21119 -}}
+{{- range $ports }}
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: port-{{ . }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    {{- if $.Values.gateway.proxyV2 }}
+    haproxy.org/send-proxy-v2: 'true'
+    {{- end}}
+spec:
+  parentRefs:
+  - name: hbbr-hbbs-gateway
+    sectionName: port-{{ . }}
+  rules:
+    - backendRefs:
+        - kind: Service
+          name: {{ $.Release.Name }}-hbbr-hbbs-service
+          port: {{ . }}
+{{- end }}
+{{- end }}
