@@ -23,7 +23,7 @@
 
 Dit is een aangepaste versie van RustDesk Server, die gratis en open source is.
 
-*   Het eerste verschil is dat deze versie de nieuwe versie bevat *Tcp* modus inbegrepen in de RustDesk Server Pro-versie.
+*   Het eerste verschil is dat deze versie de nieuwe versie bevat*TCP*modus inbegrepen in de RustDesk Server Pro-versie.
 *   Het tweede verschil is dat deze versie een voorlopige implementatie van de Rustdesk Server Pro API-server bevat.
     *   Ondersteuning voor persoonlijk adresboek
     *   Ondersteuning voor gedeeld adresboek op groepsniveau
@@ -32,10 +32,10 @@ Dit is een aangepaste versie van RustDesk Server, die gratis en open source is.
         *   Alleen-lezen, lezen-schrijven, admin
 *   Het derde verschil is dat deze versie een voorlopige implementatie van een eenvoudige webconsole bevat.
 
-De webconsole is toegankelijk op het adres `http://<server-ip>:21114/` met login "admin" en wachtwoord "Hallo, wereld!" .\
-Je kunt de API-documentatie bekijken in de ingebouwde API-server op het adres `http://<server-ip>:21114/api/doc/`.
+De webconsole is toegankelijk op het adres`http://<server-ip>:21114/`met login "admin" en wachtwoord "Hallo, wereld!" .\
+Je kunt de API-documentatie bekijken in de ingebouwde API-server op het adres`http://<server-ip>:21114/api/doc/`.
 
-Een niet-interactieve API-documentatie is beschikbaar op [sctgdesk-api-server repo](https://sctg-development.github.io/sctgdesk-api-server/).
+Een niet-interactieve API-documentatie is beschikbaar op[sctgdesk-api-server repo](https://sctg-development.github.io/sctgdesk-api-server/).
 
 ## Start het project
 
@@ -43,7 +43,7 @@ Een niet-interactieve API-documentatie is beschikbaar op [sctgdesk-api-server re
 
 ## TL; DR
 
-Je kunt het volgende gebruiken `docker-compose.yml` bestand om de server te starten:
+Je kunt het volgende gebruiken`docker-compose.yml`bestand om de server te starten:
 
 ```yaml
 version: '3'
@@ -92,7 +92,7 @@ mkdir -p data
 docker-compose up 
 ```
 
-## Binaries
+## Dubbelsterren
 
 Binaries zijn beschikbaar voor de volgende platforms:
 
@@ -105,13 +105,13 @@ Binaries zijn beschikbaar voor de volgende platforms:
 
 ### Standaard beheerder
 
-De standaard admin-gebruiker wordt aangemaakt met de gebruikersnaam `admin` en het wachtwoord `Hello,world!`. Je kunt het wachtwoord wijzigen na de eerste inlogmethode op de webconsole.
+De standaard admin-gebruiker wordt aangemaakt met de gebruikersnaam`admin`en het wachtwoord`Hello,world!`. Je kunt het wachtwoord wijzigen na de eerste inlogmethode op de webconsole.
 
 ## API Standalone versie
 
 De API standalone versie is een versie van de server die de API-server en de webconsole bevat, maar niet de rendez-vous server.\
-De standalone versie is beschikbaar in een eigen repository [sctgdesk-api-server](https://github.com/sctg-development/sctgdesk-api-server).\
-Voor alle API- of webconsole-gerelateerde problemen, raadpleeg de [sctgdesk-api-server](https://github.com/sctg-development/sctgdesk-api-server) opslagplaats.
+De standalone versie is beschikbaar in een eigen repository[sctgdesk-api-server](https://github.com/sctg-development/sctgdesk-api-server).\
+Voor alle API- of webconsole-gerelateerde problemen, raadpleeg de[sctgdesk-api-server](https://github.com/sctg-development/sctgdesk-api-server)Repository.
 
 ## Screenshots
 
@@ -148,7 +148,7 @@ Voor alle API- of webconsole-gerelateerde problemen, raadpleeg de [sctgdesk-api-
 ## Autoupdate-links genereren
 
 We hebben onze client aangepast om de autoupdate-links van de API-server te halen in plaats van Github-releases.\
-Om de autoupdate-links te laten werken, moet je je client aanpassen om de autoupdate-links van de API-server op te halen. Dit [Hoe je het kunt doen](https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972):
+Om de autoupdate-links te laten werken, moet je je client aanpassen om de autoupdate-links van de API-server op te halen. Dit[Hoe je het kunt doen](https://github.com/sctg-development/sctgdesk/blob/481d3516fef1daa145d8044594187cb11959f8be/src/common.rs#L953L972):
 
 ```rust
 // src/common.rs
@@ -174,11 +174,11 @@ async fn check_software_update_() -> hbb_common::ResultType<()> {
 }
 ```
 
-# Veiligheid
+# Beveiliging
 
-De embedded API-server is niet beveiligd of beschermd tegen DDOS-aanvallen. Een goede praktijk is om een reverse proxy te gebruiken voor de API-server. NGINX is hiervoor een goede keuze. HAProxy is ook een goede keuze.\
-We gebruiken HAProxy voor de API-server in onze productieomgeving.
-Dit is ons configuratiebestand voor HAProxy, het wordt alleen als voorbeeld verstrekt. Je moet het aanpassen aan je eigen behoeften:
+De embedded API-server is niet beveiligd en ook niet beschermd tegen DDOS-aanvallen. Een goede praktijk is om een reverse proxy voor de API-server te gebruiken. NGINX is hiervoor een goede keuze. HAProxy is ook een goede keuze.\
+We gebruiken HAProxy voor de API-server in onze productieomgeving. 
+Dit is ons configuratiebestand voor HAProxy, het wordt alleen als voorbeeld verstrekt. Je zou het moeten aanpassen aan je eigen behoeften:
 
 ```haproxy
 global
@@ -265,24 +265,24 @@ WantedBy=multi-user.target
 
 # Beperk ongewenste toegang
 
-Om de toegang tot je server te beperken, kun je de `--logged-in-only` optie of stel de `LOGGED_IN_ONLY=Y` Omgevingsvariabele voor de `hbbs` server. Dit beperkt de controle tot alleen ingelogde gebruikers.
+Om de toegang tot je server te beperken, kun je de`--logged-in-only`optie of stel de`LOGGED_IN_ONLY=Y`Omgevingsvariabele voor de`hbbs`Server. Dit beperkt de controle tot alleen ingelogde gebruikers.
 
-Zelfs met deze optie ingeschakeld kunnen gebruikers zich nog steeds registreren op de Rendez-vous server, maar ze kunnen de peer van een andere gebruiker niet besturen. Als iemand probeert een peer te controleren zonder ingelogd te zijn, krijgt hij een foutmelding:
+Zelfs met deze optie ingeschakeld kunnen gebruikers zich nog steeds registreren op de Rendez-vous-server, maar ze kunnen de peer van een andere gebruiker niet besturen. Als iemand probeert een peer te controleren zonder ingelogd te zijn, krijgt hij een foutmelding:
 
 <img width="524" alt="Error message for unauthenticated control attempt" src="https://github.com/user-attachments/assets/cfa46504-39d8-46a7-9072-3ece6818b4a3">
 
 Door deze functie in te schakelen, kun je een extra beveiligingslaag aan je server toevoegen en ongeautoriseerde toegang voorkomen.
 
-**Configureren `LOGGED_IN_ONLY`**
+**Configureren`LOGGED_IN_ONLY`**
 
 Om deze functie in te schakelen:
 
-1.  Stel de `LOGGED_IN_ONLY=Y` Omgevingsvariabele voor de `hbbs` server.
-2.  Alternatief kun je de `--logged-in-only` optie bij het uitvoeren van de `hbbs` server.
+1.  Stel de`LOGGED_IN_ONLY=Y`Omgevingsvariabele voor de`hbbs`Server.
+2.  Alternatief kun je de`--logged-in-only`optie bij het uitvoeren van de`hbbs`Server.
 
 **Voorbeeld**
 
-Om de `LOGGED_IN_ONLY` omgevingsvariabele kunt u de volgende regel toevoegen aan uw `~/.bashrc` Bestand of gelijkwaardig:
+Om de`LOGGED_IN_ONLY`omgevingsvariabele kunt u de volgende regel toevoegen aan uw`~/.bashrc`Bestand of gelijkwaardig:
 
 ```bash
 export LOGGED_IN_ONLY=Y
@@ -294,11 +294,13 @@ export LOGGED_IN_ONLY=Y
 [![build](https://github.com/sctg-development/sctgdesk-server/actions/workflows/macos-intel-build.yml/badge.svg)](https://github.com/sctg-development/sctgdesk-server/actions/workflows/macos-intel-build.yml)
 [![build](https://github.com/sctg-development/sctgdesk-server/actions/workflows/windows.yml/badge.svg)](https://github.com/sctg-development/sctgdesk-server/actions/workflows/windows.yml)
 
-[**Downloaden**](https://github.com/sctgdesk/sctgdesk-server/releases)
+[**Download**](https://github.com/sctgdesk/sctgdesk-server/releases)
 
-[**Handmatig**](https://rustdesk.com/docs/en/self-host/)
+[**Handboek**](https://rustdesk.com/docs/en/self-host/)
 
 [**FAQ**](https://github.com/rustdesk/rustdesk/wiki/FAQ)
+
+[**Hoe OSS naar Pro te migreren**](https://rustdesk.com/docs/en/self-host/rustdesk-server-pro/installscript/#convert-from-open-source)
 
 Host zelf je eigen RustDesk-server, die is gratis en open source.
 
@@ -324,43 +326,43 @@ Drie uitvoerbare bestanden worden gegenereerd in target/release.
 *   hbbr - RustDesk relaisserver
 *   rustdesk-utils - RustDesk CLI-hulpprogramma's
 
-Je kunt bijgewerkte binairen vinden op de [Releases](https://github.com/sctg-development/sctgdesk-server/releases) bladzijde.
+Je kunt bijgewerkte binairen vinden op de[Uitgaven](https://github.com/sctg-development/sctgdesk-server/releases)pagina.
 
-Alle vrijgegeven binaries na release v1.1.99-40 zijn bevestigd met Github Actions. Je kunt de attestatie controleren door de sha256som van de binaire te controleren met `https://search.sigstore.dev/?hash=<sha256>` bijvoorbeeld.
+Alle vrijgegeven binaries na release v1.1.99-40 worden geattesteerd met Github Actions. Je kunt de attestatie controleren door de sha256sum van de binary te controleren met`https://search.sigstore.dev/?hash=<sha256>`bijvoorbeeld.
 
-Als je extra functies wilt [RustDesk Server Pro](https://rustdesk.com/pricing.html) Misschien past het beter bij je.
+Als je extra functies wilt,[RustDesk Server Pro](https://rustdesk.com/pricing.html)Misschien past het beter bij je.
 
-Als je je eigen server wilt ontwikkelen, [rustdesk-server-demo](https://github.com/rustdesk/rustdesk-server-demo) Misschien is het een betere en eenvoudigere start voor jou dan deze repo.
+Als je je eigen server wilt ontwikkelen,[rustdesk-server-demo](https://github.com/rustdesk/rustdesk-server-demo)Misschien is het een betere en eenvoudigere start voor jou dan deze repo.
 
-## Docker-images
+## Installatie
 
 Docker-images worden automatisch gegenereerd en gepubliceerd op elke github-release.
 
-Deze beelden zijn opgebouwd tegen `ubuntu-22.04` met de enige toevoeging van de hoofdbinaire (`hbbr` en `hbbs`). Ze zijn beschikbaar op [Docker-hub](https://hub.docker.com/r/sctg/sctgdesk-server/) met deze tags:
+Deze beelden zijn opgebouwd tegen`ubuntu-22.04`met de enige toevoeging van de hoofdbinaire (`hbbr`en`hbbs`). Ze zijn beschikbaar op[Docker-hub](https://hub.docker.com/r/sctg/sctgdesk-server/)met deze tags:
 
 | Architectuur | afbeelding:tag |
 | --- | --- |
-| amd64 | `sctg/sctgdesk-server:latest` |
-| arm64v8 | `sctg/sctgdesk-server:latest` |
-| arm32v7 | `sctg/sctgdesk-server:latest` |
+| amd64 |`sctg/sctgdesk-server:latest`|
+| arm64v8 |`sctg/sctgdesk-server:latest`|
+| arm32v7 |`sctg/sctgdesk-server:latest`|
 
-Je kunt deze afbeeldingen direct starten met `docker run` met deze commando's:
+Je kunt deze afbeeldingen direct starten met`docker run`met deze commando's:
 
 ```bash
 docker run --name hbbs --net=host -v "$PWD/data:/usr/local/share/sctgdesk" -d sctg/sctgdesk-server:latest hbbs -r <relay-server-ip[:port]> 
 docker run --name hbbr --net=host -v "$PWD/data:/usr/local/share/sctgdesk" -d sctg/sctgdesk-server:latest hbbr 
 ```
 
-of zonder `--net=host`, maar P2P-directe verbinding kan niet werken.
+of zonder`--net=host`, maar P2P-directe verbinding kan niet werken.
 
-Voor systemen die SELinux gebruiken, vervanging `/root` bij `/root:z` is vereist om de containers correct te laten werken. Als alternatief kan SELinux-containerscheiding volledig worden uitgeschakeld door de optie toe te voegen `--security-opt label=disable`.
+Voor systemen die SELinux gebruiken, vervanging`/root`door`/root:z`vereist is om de containers correct te laten draaien. Alternatief kan de separatie van SELinux-containers volledig worden uitgeschakeld door de optie toe te voegen`--security-opt label=disable`.
 
 ```bash
 docker run --name hbbs -p 21114:21114 -p 21115:21115 -p 21116:21116 -p 21116:21116/udp -p 21118:21118 -v "$PWD/data:/usr/local/share/sctgdesk" -d sctg/sctgdesk-server:latest hbbs -r <relay-server-ip[:port]> 
 docker run --name hbbr -p 21117:21117 -p 21119:21119 -v "$PWD/data:/usr/local/share/sctgdesk" -d sctg/sctgdesk-serverlatest hbbr 
 ```
 
-De `relay-server-ip` parameter is het IP-adres (of DNS-naam) van de server die deze containers draait. De **facultatief** `port` De parameter moet worden gebruikt als je een andere poort gebruikt dan **21117** voor `hbbr`.
+De`relay-server-ip`parameter is het IP-adres (of DNS-naam) van de server die deze containers draait. De**optioneel** `port`De parameter moet worden gebruikt als je een andere poort gebruikt dan**21117**voor`hbbr`.
 
 Je kunt docker-compose ook gebruiken, waarbij je deze configuratie als sjabloon gebruikt:
 
@@ -405,15 +407,18 @@ services:
     restart: unless-stopped
 ```
 
-Edit regel 16 om naar je relaisserver te wijzen (degene die luistert op poort 21117). Je kunt ook de volumelijnen (lijn 18 en lijn 33) aanpassen als dat nodig is.
+Bewerk regel 16 zodat deze naar je relaisserver wijst (degene die luistert op poort 21117). Je kunt ook de volumelijnen (lijn 18 en lijn 33) bewerken als je dat nodig hebt.
 
 (docker-compose krediet gaat naar @lukebarone en @QuiGonLeong)
 
-> Let op dat hier het sctg/sctgdesk-server-server:latest in China kan worden vervangen door het nieuwste versienummer op dockerhub, zoals sctg/sctgdesk-server-server:1.1.99-37. Anders kan de oude versie worden verwijderd door beeldversnelling.
+> \[! OPMERKING]\
+> De rustdesk/rustdesk-server:latest in China kan worden vervangen door het nieuwste versienummer op Docker Hub, zoals`rustdesk-server:1.1.10-3`. Anders kan de oude versie worden verwijderd door beeldversnelling.
+
+> Let op dat hier de sctg/sctgdesk-server-server:latest in China kan worden vervangen door het nieuwste versienummer op dockerhub, zoals sctg/sctgdesk-server-server:1.1.99-37. Anders kan de oude versie worden verwijderd vanwege beeldversnelling.
 
 ## Hoe maak je een sleutelbord
 
-Voor encryptie is een sleutelhanger nodig; Je kunt het aanbieden, zoals eerder uitgelegd, maar je hebt een manier nodig om er een te maken.
+Een sleutelpaar is nodig voor encryptie; je kunt het aanbieden, zoals eerder uitgelegd, maar je hebt een manier nodig om er een te maken.
 
 Je kunt dit commando gebruiken om een sleutelhanger te genereren:
 
@@ -421,7 +426,7 @@ Je kunt dit commando gebruiken om een sleutelhanger te genereren:
 /usr/bin/rustdesk-utils genkeypair
 ```
 
-Als je de `rustdesk-utils` pakket op je systeem geïnstalleerd, kun je hetzelfde commando aanroepen met docker:
+Als je de`rustdesk-utils`pakket op je systeem geïnstalleerd, kun je hetzelfde commando aanroepen met docker:
 
 ```bash
 docker run --rm --entrypoint /usr/bin/rustdesk-utils  sctg/sctgdesk-server-server:latest genkeypair
@@ -436,7 +441,7 @@ Secret Key:  egAVd44u33ZEUIDTtksGcHeVeAwywarEdHmf99KM5ajwEsuG3NQFT9coAfiZ6nen4hf
 
 ## Pakketten
 
-Er zijn aparte .deb pakketten beschikbaar voor elke binaire map, die je kunt vinden in de [Releases](https://github.com/sctg-development/sctgdesk-server/releases).
+Er zijn aparte .deb pakketten beschikbaar voor elke binaire map, die je kunt vinden in de[Uitgaven](https://github.com/sctg-development/sctgdesk-server/releases). 
 Deze pakketten zijn bedoeld voor de volgende distributies:
 
 *   Ubuntu 22.04 LTS
@@ -445,21 +450,21 @@ Deze pakketten zijn bedoeld voor de volgende distributies:
 
 ## ENV-variabelen
 
-hbbs en hbbr kunnen worden geconfigureerd met deze ENV-variabelen.
-Je kunt de variabelen zoals gewoonlijk specificeren of een `.env` bestand.
+`hbbs`en`hbbr`kan worden geconfigureerd met deze ENV-variabelen. 
+Je kunt de variabelen zoals gewoonlijk specificeren of een`.env`Bestand.
 
-| variabele | binair | Beschrijving |
+| variabele | binair | beschrijving |
 | --- | --- | --- |
-| ALWAYS_USE_RELAY | HBBS | als ingesteld op **"J"** Staat directe peerverbinding niet toe |
-| DOWNGRADE_START_CHECK | HBBR | Vertraging (in seconden) voor downgrade Check |
-| DOWNGRADE_THRESHOLD | HBBR | Drempel van downgrade-controle (bit/ms) |
-| SLEUTEL | HBBS/HBBR | als ingesteld is, dwingt het gebruik van een specifieke sleutel af, als ingesteld op **"\_"** Dwing het gebruik van elke sleutel |
-| LIMIT_SPEED | HBBR | snelheidslimiet (in Mb/s) |
-| OAUTH2\_CONFIG_FILE | HBBS | Path for OAUTH2 config file |
-| OAUTH2\_CREATE_USER | HBBS | als ingesteld op **"1"** Maak een gebruiker aan als die niet bestaat |
-| PORT | HBBS/HBBR | Luisterpoort (21116 voor HBBS - 21117 voor HBBR) |
-| ESTAFETTE | HBBS | IP-adres/DNS-naam van de machines die hbbr draaien (gescheiden door komma) |
-| RUST_LOG | alle | Set Debug Level (fout|waarschuw|info|debug|trace) |
-| S3CONFIG_FILE | HBBS | Pad voor S3 configuratiebestand |
-| SINGLE_BANDWIDTH | HBBR | maximale bandbreedte voor één enkele verbinding (in Mb/s) |
-| TOTAL_BANDWIDTH | HBBR | maximale totale bandbreedte (in Mb/s) |
+| ALWAYS_USE_RELAY | hbbs | als ingesteld op**"J"**Staat directe peerverbinding niet toe |
+| DOWNGRADE_START_CHECK | hbbr | vertraging (in seconden) voor downgrade check |
+| DOWNGRADE_THRESHOLD | hbbr | drempel van downgrade check (bit/ms) |
+| SLEUTEL | hbbs/hbbr | als ingesteld is het gebruik van een specifieke sleutel, als ingesteld op**"\_"**Dwing het gebruik van elke sleutel |
+| LIMIT_SPEED | hbbr | snelheidslimiet (in Mb/s) |
+| OAUTH2\_CONFIG_FILE | hbbs | pad voor oauth2 configuratiebestand |
+| OAUTH2\_CREATE_USER | hbbs | als ingesteld op**"1"**Maak een gebruiker aan als die niet bestaat |
+| POORT | HBBS/HBBR | Luisterpoort (21116 voor HBBS - 21117 voor HBBR) |
+| RELAY | hbbs | IP-adres/DNS-naam van de machines die hbbr draaien (gescheiden door komma) |
+| RUST_LOG | alle | set debug level (fout|waarschuw|info|debug|trace) |
+| S3CONFIG_FILE | hbbs | pad voor s3 configuratiebestand |
+| SINGLE_BANDWIDTH | hbbr | maximale bandbreedte voor één enkele verbinding (in Mb/s) |
+| TOTAL_BANDWIDTH | HBBB | maximale totale bandbreedte (in Mb/s) |
