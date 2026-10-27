@@ -174,6 +174,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 software,
                 software_version,
                 software_releases_latest,
+                software_version_latest,
                 software_download,
                 software_releases_tag,
                 webconsole_index,
@@ -2060,6 +2061,29 @@ async fn software_releases_latest(request: ExtendedRequest) -> Redirect {
     let version = version.unwrap();
     let url = format!("{}/api/software/releases/tag/{}", host, version);
     Redirect::to(url)
+}
+
+/// # Check for a newer client (RustDesk protocol)
+///
+/// This is what current RustDesk clients send to `https://api.rustdesk.com/version/latest`: a POST
+/// with the platform, the architecture and a device fingerprint. The fingerprint and the rest of
+/// the body are ignored and never logged. The answer carries the URL of the latest release; the
+/// client takes the version from the last segment of that URL.
+///
+/// Upstream builds that are branded as a custom client skip this check, so a client built with
+/// `client/` points at this endpoint instead (see the client patches).
+#[openapi(tag = "software")]
+#[post("/api/software/version/latest", format = "json", data = "<_body>")]
+async fn software_version_latest(
+    request: ExtendedRequest,
+    _body: Json<serde_json::Value>,
+) -> Json<SoftwareResponse> {
+    log::debug!("software_version_latest");
+    let host = get_host(request.headers);
+    let version = extract_version().await.unwrap_or("0.0.0".to_string());
+    Json(SoftwareResponse {
+        url: format!("{}/api/software/releases/tag/{}", host, version),
+    })
 }
 
 /// # Simulate GitHub API for releases
