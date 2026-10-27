@@ -39,9 +39,9 @@ lazy_static::lazy_static! {
 
 static DOWNGRADE_THRESHOLD_100: AtomicUsize = AtomicUsize::new(66); // 0.66
 static DOWNGRADE_START_CHECK: AtomicUsize = AtomicUsize::new(1_800_000); // in ms
-static LIMIT_SPEED: AtomicUsize = AtomicUsize::new(4 * 1024 * 1024); // in bit/s
+static LIMIT_SPEED: AtomicUsize = AtomicUsize::new(32 * 1024 * 1024); // in bit/s
 static TOTAL_BANDWIDTH: AtomicUsize = AtomicUsize::new(1024 * 1024 * 1024); // in bit/s
-static SINGLE_BANDWIDTH: AtomicUsize = AtomicUsize::new(16 * 1024 * 1024); // in bit/s
+static SINGLE_BANDWIDTH: AtomicUsize = AtomicUsize::new(128 * 1024 * 1024); // in bit/s
 const BLACKLIST_FILE: &str = "blacklist.txt";
 const BLOCKLIST_FILE: &str = "blocklist.txt";
 
@@ -85,7 +85,7 @@ pub async fn start(port: &str, key: &str) -> ResultType<()> {
     let main_task = async move {
         loop {
             log::info!("Start");
-            io_loop(listen_any(port, true).await?, listen_any(port2, true).await?, &key).await;
+            io_loop(listen_any(port).await?, listen_any(port2).await?, &key).await;
         }
     };
     let listen_signal = crate::common::listen_signal();
@@ -392,19 +392,30 @@ async fn handle_connection(
 
 async fn make_pair(
     stream: TcpStream,
-    addr: SocketAddr,
+    mut addr: SocketAddr,
     key: &str,
     limiter: Limiter,
     ws: bool,
 ) -> ResultType<()> {
     if ws {
-        make_pair_(
-            tokio_tungstenite::accept_async(stream).await?,
-            addr,
-            key,
-            limiter,
-        )
-        .await;
+        use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
+        let callback = |req: &Request, response: Response| {
+            let headers = req.headers();
+            let real_ip = headers
+                .get("X-Real-IP")
+                .or_else(|| headers.get("X-Forwarded-For"))
+                .and_then(|header_value| header_value.to_str().ok());
+            if let Some(ip) = real_ip {
+                if ip.contains('.') {
+                    addr = format!("{ip}:0").parse().unwrap_or(addr);
+                } else {
+                    addr = format!("[{ip}]:0").parse().unwrap_or(addr);
+                }
+            }
+            Ok(response)
+        };
+        let ws_stream = tokio_tungstenite::accept_hdr_async(stream, callback).await?;
+        make_pair_(ws_stream, addr, key, limiter).await;
     } else {
         make_pair_(FramedStream::from(stream, addr), addr, key, limiter).await;
     }
@@ -417,6 +428,7 @@ async fn make_pair_(stream: impl StreamTrait, addr: SocketAddr, key: &str, limit
         if let Ok(msg_in) = RendezvousMessage::parse_from_bytes(&bytes) {
             if let Some(rendezvous_message::Union::RequestRelay(rf)) = msg_in.union {
                 if !key.is_empty() && rf.licence_key != key {
+                    log::warn!("Relay authentication failed from {} - invalid key", addr);
                     return;
                 }
                 if !rf.uuid.is_empty() {

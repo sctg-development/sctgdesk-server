@@ -1,6 +1,5 @@
 use crate::common::*;
 use crate::peer::*;
-use hbb_common::bytes::BufMut;
 use hbb_common::{
     allow_err, bail,
     bytes::{Bytes, BytesMut},
@@ -21,7 +20,7 @@ use hbb_common::{
         box_, box_::PublicKey, box_::SecretKey, secretbox, secretbox::Key, secretbox::Nonce, sign,
     },
     sodiumoxide::hex,
-    tcp::{listen_any, FramedStream},
+    tcp::{listen_any, Encrypt, FramedStream, KxTranscript, KX_PARAMS_DOMAIN, KX_VERSION_LATEST},
     timeout,
     tokio::{
         self,
@@ -55,7 +54,7 @@ enum Data {
     RelayServers(RelayServers),
 }
 
-const REG_TIMEOUT: i32 = 30_000;
+const REG_TIMEOUT: i64 = 30_000;
 type TcpStreamSink = SplitSink<Framed<TcpStream, BytesCodec>, Bytes>;
 type WsSink = SplitSink<tokio_tungstenite::WebSocketStream<TcpStream>, tungstenite::Message>;
 enum SinkType {
@@ -66,42 +65,20 @@ struct Sink {
     tx: SinkType,
     key: Arc<Mutex<Option<Encrypt>>>,
 }
-#[derive(Clone)]
-struct Encrypt {
-    key: Key,
-    enc_seqnum: u64,
-    dec_seqnum: u64,
-}
-
-// Light version of hbb_common::tcp::Encrypt
-impl Encrypt {
-    pub fn dec(&mut self, bytes: &BytesMut) -> Result<Vec<u8>, ()> {
-        self.dec_seqnum += 1;
-        Ok(secretbox::open(
-            bytes,
-            &Self::get_nonce(self.dec_seqnum),
-            &self.key,
-        )?)
-    }
-
-    pub fn enc(&mut self, data: &[u8]) -> Vec<u8> {
-        self.enc_seqnum += 1;
-        secretbox::seal(&data, &Self::get_nonce(self.enc_seqnum), &self.key)
-    }
-
-    fn get_nonce(seqnum: u64) -> Nonce {
-        let mut nonce = Nonce([0u8; secretbox::NONCEBYTES]);
-        nonce.0[..std::mem::size_of_val(&seqnum)].copy_from_slice(&seqnum.to_le_bytes());
-        nonce
-    }
-}
-
 type Sender = mpsc::UnboundedSender<Data>;
 type Receiver = mpsc::UnboundedReceiver<Data>;
 static ROTATION_RELAY_SERVER: AtomicUsize = AtomicUsize::new(0);
 type RelayServers = Vec<String>;
-static CHECK_RELAY_TIMEOUT: u64 = 3_000;
+const CHECK_RELAY_TIMEOUT: u64 = 3_000;
 static ALWAYS_USE_RELAY: AtomicBool = AtomicBool::new(false);
+
+// Store punch hole requests
+use once_cell::sync::Lazy;
+use tokio::sync::Mutex as TokioMutex; // differentiate if needed
+#[derive(Clone)]
+struct PunchReqEntry { tm: Instant, from_ip: String, to_ip: String, to_id: String }
+static PUNCH_REQS: Lazy<TokioMutex<Vec<PunchReqEntry>>> = Lazy::new(|| TokioMutex::new(Vec::new()));
+const PUNCH_REQ_DEDUPE_SEC: u64 = 60;
 
 #[derive(Clone)]
 struct Inner {
@@ -401,16 +378,8 @@ impl RendezvousServer {
                     }
                 }
                 Some(rendezvous_message::Union::PunchHoleRequest(ph)) => {
-                    if self.pm.is_in_memory(&ph.id).await {
-                        self.handle_udp_punch_hole_request(addr, ph, key).await?;
-                    } else {
-                        // not in memory, fetch from db with spawn in case blocking me
-                        let mut me = self.clone();
-                        let key = key.to_owned();
-                        tokio::spawn(async move {
-                            allow_err!(me.handle_udp_punch_hole_request(addr, ph, &key).await);
-                        });
-                    }
+                    // UDP PunchHoleRequest is intentionally unsupported.
+                    // The supported client path sends PunchHoleRequest over TCP/WS.
                 }
                 Some(rendezvous_message::Union::PunchHoleSent(phs)) => {
                     self.handle_hole_sent(phs, addr, Some(socket)).await?;
@@ -578,24 +547,44 @@ impl RendezvousServer {
                         log::error!("Handshake failed: cannot open the sealed symetric key");
                         return false;
                     };
-                    let key = secretbox::Key::from_slice(&symetric_key);
-                    match key {
-                        Some(key) => {
-                            if let Some(sink) = sink.as_mut() {
-                                sink.key.lock().await.replace(Encrypt {
-                                    key,
-                                    enc_seqnum: 0,
-                                    dec_seqnum: 0,
-                                });
-                            }
-                            log::debug!("KeyExchange symetric key set");
-                            return true;
-                        }
-                        None => {
-                            log::error!("KeyExchange symetric key NOT set");
-                            return false;
-                        }
+                    let key = secretbox::Key(symetric_key);
+                    // The client picked the highest version both sides speak.
+                    let picked = ex.version;
+                    if picked == 0 && std::env::var("REQUIRE_KX_V1").map_or(false, |v| v == "Y") {
+                        log::error!("Handshake failed: key exchange version 0 is refused (REQUIRE_KX_V1)");
+                        return false;
                     }
+                    if picked > KX_VERSION_LATEST {
+                        log::error!("Handshake failed: unsupported key exchange version {}", picked);
+                        return false;
+                    }
+                    let encrypt = match picked {
+                        0 => Encrypt::new(key),
+                        _ => {
+                            let our_pk = kx_server_pk(&self.inner.secure_tcp_pk_b);
+                            match Encrypt::new_split(
+                                key,
+                                false,
+                                &KxTranscript {
+                                    initiator_pk: &their_pk,
+                                    responder_pk: &our_pk,
+                                    advertised: KX_VERSION_LATEST,
+                                    picked,
+                                },
+                            ) {
+                                Ok(encrypt) => encrypt,
+                                Err(err) => {
+                                    log::error!("Handshake failed: {}", err);
+                                    return false;
+                                }
+                            }
+                        }
+                    };
+                    if let Some(sink) = sink.as_mut() {
+                        sink.key.lock().await.replace(encrypt);
+                    }
+                    log::debug!("KeyExchange symetric key set, version {}", picked);
+                    return true;
                 }
                 _ => {}
             }
@@ -819,6 +808,7 @@ impl RendezvousServer {
     ) -> ResultType<(RendezvousMessage, Option<SocketAddr>)> {
         let mut ph = ph;
         if !key.is_empty() && ph.licence_key != key {
+            log::warn!("Authentication failed from {} for peer {} - invalid key", addr, ph.id);
             let mut msg_out = RendezvousMessage::new();
             msg_out.set_punch_hole_response(PunchHoleResponse {
                 failure: punch_hole_response::Failure::LICENSE_MISMATCH.into(),
@@ -871,7 +861,7 @@ impl RendezvousServer {
         if let Some(peer) = self.pm.get(&id).await {
             let (elapsed, peer_addr) = {
                 let r = peer.read().await;
-                (r.last_reg_time.elapsed().as_millis() as i32, r.socket_addr)
+                (r.last_reg_time.elapsed().as_millis() as i64, r.socket_addr)
             };
             if elapsed >= REG_TIMEOUT {
                 let mut msg_out = RendezvousMessage::new();
@@ -881,6 +871,23 @@ impl RendezvousServer {
                 });
                 return Ok((msg_out, None));
             }
+            
+            // record punch hole request (from addr -> peer id/peer_addr)
+            {
+                let from_ip = try_into_v4(addr).ip().to_string();
+                let to_ip = try_into_v4(peer_addr).ip().to_string();
+                let to_id_clone = id.clone();
+                let mut lock = PUNCH_REQS.lock().await;
+                let mut dup = false;
+                for e in lock.iter().rev().take(30) { // only check recent tail subset for speed
+                    if e.from_ip == from_ip && e.to_id == to_id_clone {
+                        if e.tm.elapsed().as_secs() < PUNCH_REQ_DEDUPE_SEC { dup = true; }
+                        break;
+                    }
+                }
+                if !dup { lock.push(PunchReqEntry { tm: Instant::now(), from_ip, to_ip, to_id: to_id_clone }); }
+            }
+
             let mut msg_out = RendezvousMessage::new();
             let peer_is_lan = self.is_lan(peer_addr);
             let is_lan = self.is_lan(addr);
@@ -947,7 +954,7 @@ impl RendezvousServer {
         let mut states = BytesMut::zeroed((peers.len() + 7) / 8);
         for (i, peer_id) in peers.iter().enumerate() {
             if let Some(peer) = self.pm.get_in_memory(peer_id).await {
-                let elapsed = peer.read().await.last_reg_time.elapsed().as_millis() as i32;
+                let elapsed = peer.read().await.last_reg_time.elapsed().as_millis() as i64;
                 // bytes index from left to right
                 let states_idx = i / 8;
                 let bit_idx = 7 - i % 8;
@@ -1094,11 +1101,12 @@ impl RendezvousServer {
         match fds.next() {
             Some("h") => {
                 res = format!(
-                    "{}\n{}\n{}\n{}\n{}\n{}\n",
+                    "{}\n{}\n{}\n{}\n{}\n{}\n{}\n",
                     "relay-servers(rs) <separated by ,>",
                     "reload-geo(rg)",
                     "ip-blocker(ib) [<ip>|<number>] [-]",
                     "ip-changes(ic) [<id>|<number>] [-]",
+                    "punch-requests(pr) [<number>] [-]",
                     "always-use-relay(aur)",
                     "test-geo(tg) <ip1> <ip2>"
                 )
@@ -1198,6 +1206,24 @@ impl RendezvousServer {
                     }
                 }
             }
+            Some("punch-requests" | "pr") => {
+                use std::fmt::Write as _;
+                let mut lock = PUNCH_REQS.lock().await;
+                let arg = fds.next();
+                if let Some("-") = arg { lock.clear(); }
+                else {
+                    let mut start = arg.and_then(|x| x.parse::<usize>().ok()).unwrap_or(0);
+                    let mut page_size = fds.next().and_then(|x| x.parse::<usize>().ok()).unwrap_or(10);
+                    if page_size == 0 { page_size = 10; }
+                    for (_, e) in lock.iter().enumerate().skip(start).take(page_size) {
+                        let age = e.tm.elapsed();
+                        let event_system = std::time::SystemTime::now() - age;
+                        let event_iso = chrono::DateTime::<chrono::Utc>::from(event_system)
+                            .to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+                        let _ = writeln!(res, "{} {} -> {}@{}", event_iso, e.from_ip, e.to_id, e.to_ip);
+                    }
+                }
+            }
             Some("always-use-relay" | "aur") => {
                 if let Some(rs) = fds.next() {
                     if rs.to_uppercase() == "Y" {
@@ -1234,7 +1260,8 @@ impl RendezvousServer {
 
     async fn handle_listener2(&self, stream: TcpStream, addr: SocketAddr) {
         let mut rs = self.clone();
-        if addr.ip().is_loopback() {
+        let ip = try_into_v4(addr).ip();
+        if ip.is_loopback() {
             tokio::spawn(async move {
                 let mut stream = stream;
                 let mut buffer = [0; 1024];
@@ -1284,13 +1311,29 @@ impl RendezvousServer {
     async fn handle_listener_inner(
         &mut self,
         stream: TcpStream,
-        addr: SocketAddr,
+        mut addr: SocketAddr,
         key: &str,
         ws: bool,
     ) -> ResultType<()> {
         let mut sink;
         if ws {
-            let ws_stream = tokio_tungstenite::accept_async(stream).await?;
+            use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
+            let callback = |req: &Request, response: Response| {
+                let headers = req.headers();
+                let real_ip = headers
+                    .get("X-Real-IP")
+                    .or_else(|| headers.get("X-Forwarded-For"))
+                    .and_then(|header_value| header_value.to_str().ok());
+                if let Some(ip) = real_ip {
+                    if ip.contains('.') {
+                        addr = format!("{ip}:0").parse().unwrap_or(addr);
+                    } else {
+                        addr = format!("[{ip}]:0").parse().unwrap_or(addr);
+                    }
+                }
+                Ok(response)
+            };
+            let ws_stream = tokio_tungstenite::accept_hdr_async(stream, callback).await?;
             let (a, mut b) = ws_stream.split();
             sink = Some(Sink {
                 tx: SinkType::Ws(a),
@@ -1317,10 +1360,7 @@ impl RendezvousServer {
             while let Ok(Some(Ok(mut bytes))) = timeout(30_000, b.next()).await {
                 let mut enc_lock = enc.lock().await;
                 if enc_lock.is_some() {
-                    if let Ok(dec) = enc_lock.as_mut().unwrap().dec(&bytes) {
-                        bytes.clear();
-                        bytes.put_slice(&dec);
-                    } else {
+                    if enc_lock.as_mut().unwrap().dec(&mut bytes).is_err() {
                         log::warn!("Decryption error from {}", addr);
                         break;
                     }
@@ -1347,7 +1387,7 @@ impl RendezvousServer {
                 Some(peer) => {
                     let pk = peer.read().await.pk.clone();
                     sign::sign(
-                        &hbb_common::message_proto::IdPk {
+                        &IdPk {
                             id,
                             pk,
                             ..Default::default()
@@ -1415,12 +1455,23 @@ impl RendezvousServer {
         let sk = &self.inner.sk;
         match sk {
             Some(sk) => {
-                let our_pk_b = self.inner.secure_tcp_pk_b.clone();
-                let sm = sign::sign(&our_pk_b.0, &sk);
+                let our_pk_b = kx_server_pk(&self.inner.secure_tcp_pk_b);
+                let sm = sign::sign(&our_pk_b, &sk);
+                let mut params = KX_PARAMS_DOMAIN.to_vec();
+                params.extend(
+                    KxParams {
+                        pk: our_pk_b.to_vec().into(),
+                        version: KX_VERSION_LATEST,
+                        ..Default::default()
+                    }
+                    .write_to_bytes()
+                    .unwrap_or_default(),
+                );
 
-                let bytes_sm = Bytes::from(sm);
                 msg_out.set_key_exchange(KeyExchange {
-                    keys: vec![bytes_sm],
+                    keys: vec![Bytes::from(sm)],
+                    version: KX_VERSION_LATEST,
+                    signed_params: Bytes::from(sign::sign(&params, &sk)),
                     ..Default::default()
                 });
                 log::trace!(
@@ -1514,9 +1565,18 @@ async fn create_udp_listener(port: i32, rmem: usize) -> ResultType<FramedSocket>
 
 #[inline]
 async fn create_tcp_listener(port: i32) -> ResultType<TcpListener> {
-    let s = listen_any(port as _, true).await?;
+    let s = listen_any(port as _).await?;
     log::debug!("listen on tcp {:?}", s.local_addr());
     Ok(s)
+}
+
+/// The ephemeral public key as advertised to clients: bit 255 is ignored by X25519, so setting it
+/// costs nothing to legacy clients, while version 1 clients take it as "signed parameters required",
+/// which stops a man in the middle from stripping them.
+fn kx_server_pk(pk: &box_::PublicKey) -> [u8; 32] {
+    let mut pk = pk.0;
+    pk[31] |= 0x80;
+    pk
 }
 
 fn get_symetric_key_from_msg(
@@ -1583,5 +1643,62 @@ mod key_exchange_tests {
         assert_eq!(sign::verify(&signed, &server_sign_pk).unwrap(), kx_pk.0.to_vec());
         let (wrong_pk, _) = sign::gen_keypair();
         assert!(sign::verify(&signed, &wrong_pk).is_err());
+    }
+
+    #[test]
+    fn flagged_server_key_still_opens_what_the_client_sealed_to_it() {
+        let (server_pk, server_sk) = box_::gen_keypair();
+        let flagged = kx_server_pk(&server_pk);
+        assert_ne!(flagged, server_pk.0);
+        assert_eq!(flagged[31] & 0x80, 0x80);
+        // the client seals to the advertised (flagged) key; bit 255 does not take part in X25519
+        let (client_pk, sealed, key) = client_seal(flagged);
+        let sealed: [u8; 48] = sealed.try_into().unwrap();
+        assert_eq!(
+            get_symetric_key_from_msg(server_sk.0, client_pk, &sealed),
+            Some(key.0)
+        );
+    }
+
+    #[test]
+    fn version_1_streams_interoperate_between_client_and_server() {
+        let (server_pk, _) = box_::gen_keypair();
+        let server_pk = kx_server_pk(&server_pk);
+        let (client_pk, _, key) = client_seal(server_pk);
+        let transcript = || KxTranscript {
+            initiator_pk: &client_pk,
+            responder_pk: &server_pk,
+            advertised: KX_VERSION_LATEST,
+            picked: 1,
+        };
+        let mut client = Encrypt::new_split(key.clone(), true, &transcript()).unwrap();
+        let mut server = Encrypt::new_split(key, false, &transcript()).unwrap();
+
+        let mut up = hbb_common::bytes::BytesMut::from(&client.enc(b"hello server")[..]);
+        server.dec(&mut up).unwrap();
+        assert_eq!(&up[..], b"hello server");
+        let mut down = hbb_common::bytes::BytesMut::from(&server.enc(b"hello client")[..]);
+        client.dec(&mut down).unwrap();
+        assert_eq!(&down[..], b"hello client");
+    }
+
+    #[test]
+    fn version_1_and_version_0_keys_are_not_interchangeable() {
+        let (server_pk, _) = box_::gen_keypair();
+        let (client_pk, _, key) = client_seal(server_pk.0);
+        let mut v0 = Encrypt::new(key.clone());
+        let mut v1 = Encrypt::new_split(
+            key,
+            false,
+            &KxTranscript {
+                initiator_pk: &client_pk,
+                responder_pk: &server_pk.0,
+                advertised: KX_VERSION_LATEST,
+                picked: 1,
+            },
+        )
+        .unwrap();
+        let mut msg = hbb_common::bytes::BytesMut::from(&v0.enc(b"x")[..]);
+        assert!(v1.dec(&mut msg).is_err());
     }
 }

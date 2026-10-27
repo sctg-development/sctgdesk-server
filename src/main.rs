@@ -2,7 +2,7 @@
 // https://blog.csdn.net/bytxl/article/details/44344855
 
 use flexi_logger::*;
-use hbb_common::{bail, config::RENDEZVOUS_PORT,config::API_PORT, ResultType};
+use hbb_common::{bail, config::RENDEZVOUS_PORT, ResultType};
 use hbbs::{common::*, *};
 use rocket::{
     config::LogLevel,
@@ -13,6 +13,7 @@ use std::thread;
 use sctgdesk_api_server::build_rocket;
 
 const RMEM: usize = 0;
+const API_PORT: i32 = 21114;
 
 fn get_rocket_log_level() -> LogLevel {
     let log_level_env = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
@@ -78,7 +79,8 @@ fn main() -> ResultType<()> {
         -M, --rmem=[NUMBER(default={RMEM})] 'Sets UDP recv buffer size, set system rmem_max first, e.g., sudo sysctl -w net.core.rmem_max=52428800. vi /etc/sysctl.conf, net.core.rmem_max=52428800, sudo sysctl –p'
         , --mask=[MASK] 'Determine if the connection comes from LAN, e.g. 192.168.0.0/16'
         -k, --key=[KEY] 'Only allow the client with the same key'
-        , --logged-in-only 'Only allow logged in user to control'",
+        , --logged-in-only 'Only allow logged in user to control'
+        , --require-kx-v1 'Refuse TCP key exchange version 0 (clients older than the signed key exchange); can also be set with REQUIRE_KX_V1=Y'",
     );
     init_args(&args, "hbbs", "RustDesk ID/Rendezvous Server");
     let port = get_arg_or("port", RENDEZVOUS_PORT.to_string()).parse::<i32>()?;

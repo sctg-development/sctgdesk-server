@@ -301,6 +301,8 @@ export LOGGED_IN_ONLY=Y
 
 [**FAQ**](https://github.com/rustdesk/rustdesk/wiki/FAQ)
 
+[**How to migrate OSS to Pro**](https://rustdesk.com/docs/en/self-host/rustdesk-server-pro/installscript/#convert-from-open-source)
+
 Self-host your own RustDesk server, it is free and open source.
 
 ## How to build manually
@@ -329,11 +331,11 @@ You can find updated binaries on the [releases](https://github.com/sctg-developm
 
 All released binaries after release v1.1.99-40 are attestated with Github Actions. You can check the attestation by checking the sha256sum of the binary with `https://search.sigstore.dev/?hash=<sha256>` for example.
 
-If you want extra features [RustDesk Server Pro](https://rustdesk.com/pricing.html) might suit you better.
+If you want extra features, [RustDesk Server Pro](https://rustdesk.com/pricing.html) might suit you better.
 
 If you want to develop your own server, [rustdesk-server-demo](https://github.com/rustdesk/rustdesk-server-demo) might be a better and simpler start for you than this repo.
 
-## Docker images
+## Installation
 
 Docker images are automatically generated and published on every github release.
 
@@ -410,6 +412,8 @@ Edit line 16 to point to your relay server (the one listening on port 21117). Yo
 
 (docker-compose credit goes to @lukebarone and @QuiGonLeong)
 
+> [!NOTE]  
+> The rustdesk/rustdesk-server:latest in China may be replaced with the latest version number on Docker Hub, such as `rustdesk-server:1.1.10-3`. Otherwise, the old version may be pulled due to image acceleration.
 
 > Note that here, the sctg/sctgdesk-server-server:latest in China may be replaced with the latest version number on dockerhub, such as sctg/sctgdesk-server-server:1.1.99-37. Otherwise, the old version may be pulled due to image acceleration.
 
@@ -448,7 +452,7 @@ These packages are meant for the following distributions:
 
 ## ENV variables
 
-hbbs and hbbr can be configured using these ENV variables.
+`hbbs` and `hbbr` can be configured using these ENV variables.
 You can specify the variables as usual or use an `.env` file.
 
 | variable | binary | description |

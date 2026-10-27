@@ -1,7 +1,6 @@
 use clap::App;
 use hbb_common::{
-    anyhow::{Context, Result},
-    log, ResultType,
+    allow_err, anyhow::{Context, Result}, get_version_number, log, tokio, ResultType
 };
 use ini::Ini;
 use sodiumoxide::crypto::sign;
@@ -79,6 +78,9 @@ pub fn init_args(args: &str, name: &str, about: &str) {
     }
     if matches.is_present("logged-in-only") {
         std::env::set_var("LOGGED_IN_ONLY", "Y");
+    }
+    if matches.is_present("require-kx-v1") {
+        std::env::set_var("REQUIRE_KX_V1", "Y");
     }
     for (k, v) in matches.args {
         if let Some(v) = v.vals.first() {
@@ -191,4 +193,32 @@ pub async fn listen_signal() -> Result<()> {
 pub async fn listen_signal() -> Result<()> {
     let () = std::future::pending().await;
     unreachable!();
+}
+
+
+pub fn check_software_update() {
+    const ONE_DAY_IN_SECONDS: u64 = 60 * 60 * 24;
+    std::thread::spawn(move || loop {
+        std::thread::spawn(move || allow_err!(check_software_update_()));
+        std::thread::sleep(std::time::Duration::from_secs(ONE_DAY_IN_SECONDS));
+    });
+}
+
+#[tokio::main(flavor = "current_thread")]
+async fn check_software_update_() -> hbb_common::ResultType<()> {
+    let (request, url) = hbb_common::version_check_request(hbb_common::VER_TYPE_RUSTDESK_SERVER.to_string());
+    let latest_release_response = reqwest::Client::builder().build()?
+        .post(url)
+        .json(&request)
+        .send()
+        .await?;
+
+    let bytes = latest_release_response.bytes().await?;
+    let resp: hbb_common::VersionCheckResponse = serde_json::from_slice(&bytes)?;
+    let response_url = resp.url;
+    let latest_release_version = response_url.rsplit('/').next().unwrap_or_default();
+    if get_version_number(&latest_release_version) > get_version_number(crate::version::VERSION) {
+       log::info!("new version is available: {}", latest_release_version);
+    }
+    Ok(())
 }
