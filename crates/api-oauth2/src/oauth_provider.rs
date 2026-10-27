@@ -14,10 +14,11 @@
 // You should have received a copy of the Affero General Public License
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
 use crate::{
-    errors::Oauth2Error, get_providers_config_file, get_providers_config_from_file, Claims, Provider, ProviderConfig
+    errors::Oauth2Error, get_providers_config_file, get_providers_config_from_file, Claims,
+    Provider, ProviderConfig,
 };
-use std::{future::Future, pin::Pin};
 use base64::prelude::{Engine as _, BASE64_URL_SAFE_NO_PAD};
+use std::{future::Future, pin::Pin};
 
 pub struct OAuthResponse {
     pub access_token: String,
@@ -43,7 +44,7 @@ pub trait OAuthProviderFactory {
     }
 }
 
-pub trait OAuthProvider: Send + Sync{
+pub trait OAuthProvider: Send + Sync {
     /// Get redirect url for the provider
     ///
     /// # Arguments
@@ -87,5 +88,8 @@ pub fn decode_oauth2_id_token(id_token: &str) -> Result<(String, String), Oauth2
         .map_err(|_| Oauth2Error::DecodeIdTokenError)?;
     let claims: serde_json::Value =
         serde_json::from_slice(&claims).map_err(|_| Oauth2Error::DecodeIdTokenError)?;
-    Ok((claims["name"].as_str().unwrap().to_string(), claims["email"].as_str().unwrap().to_string()))
+    Ok((
+        claims["name"].as_str().unwrap().to_string(),
+        claims["email"].as_str().unwrap().to_string(),
+    ))
 }

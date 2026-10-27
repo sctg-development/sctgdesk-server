@@ -1353,7 +1353,9 @@ impl Database {
             DELETE FROM ab WHERE guid = ?;
             COMMIT;
             "#,
-            ab_guid,ab_guid,ab_guid
+            ab_guid,
+            ab_guid,
+            ab_guid
         )
         .execute(&mut *conn)
         .await;
@@ -1802,14 +1804,14 @@ impl Database {
 
     /// Update a shared address book
     /// Only the name can be updated
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `guid` - address book uuid in string format
     /// * `name` - address book name
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Option<()>
     pub async fn update_shared_address_book(&self, guid: &str, name: &str) -> Option<()> {
         let mut conn = self.pool.acquire().await.unwrap();

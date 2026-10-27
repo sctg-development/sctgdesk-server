@@ -80,7 +80,8 @@ pub async fn get_signed_release_url(
     let region = region.to_string();
     let region_provider = Region::new(region);
 
-    let shared_config = ConfigLoader::default().behavior_version(BehaviorVersion::latest())
+    let shared_config = ConfigLoader::default()
+        .behavior_version(BehaviorVersion::latest())
         .region(region_provider)
         .endpoint_url(endpoint)
         .load()
@@ -195,7 +196,6 @@ pub async fn extract_version() -> Result<String, Box<dyn std::error::Error>> {
             return Ok(String::from(captures.get(0).unwrap().as_str()));
         }
     }
-
 
     Err("No version found".into())
 }

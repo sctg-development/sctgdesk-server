@@ -15,8 +15,8 @@
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
 pub mod dex_provider;
 pub mod github_provider;
-pub mod oauth_provider;
 pub mod oauth2_provider;
+pub mod oauth_provider;
 use serde::{Deserialize, Serialize};
 use std::{fs, str::FromStr};
 mod errors;

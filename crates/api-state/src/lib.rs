@@ -13,15 +13,15 @@
 //
 // You should have received a copy of the Affero General Public License
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
-mod database;
-mod state;
 mod bearer;
+mod database;
 mod password;
+mod state;
 
-pub use utils::{UserId, SessionId};
+pub use utils::{SessionId, UserId};
 
-pub use state::ApiState;
+pub use bearer::{AuthenticatedAdmin, AuthenticatedUser};
 pub use password::UserPasswordInfo;
-pub use bearer::{AuthenticatedUser, AuthenticatedAdmin};
+pub use state::ApiState;
 
 pub mod types;

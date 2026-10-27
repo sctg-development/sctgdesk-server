@@ -57,16 +57,19 @@ impl OpenApiResponderInner for ActionResponse {
                 ..Default::default()
             }),
         );
-        responses.insert(            "200".to_string(),
-        RefOr::Object(OpenApiReponse {
-            description: r#"\
+        responses.insert(
+            "200".to_string(),
+            RefOr::Object(OpenApiReponse {
+                description: r#"\
             # [200 OK](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)  
             This response is given when the request is successful.  
             The body is empty if there is no error,  
             The body contains a json object with the error {"error":"Error message"}   
-            "#.to_string(),
-            ..Default::default()
-        }));
+            "#
+                .to_string(),
+                ..Default::default()
+            }),
+        );
         Ok(Responses {
             responses,
             ..Default::default()

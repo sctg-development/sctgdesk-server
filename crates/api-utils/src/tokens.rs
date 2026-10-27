@@ -13,10 +13,10 @@
 //
 // You should have received a copy of the Affero General Public License
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
+use base64::prelude::{Engine as _, BASE64_URL_SAFE_NO_PAD};
 use rand::{thread_rng, Rng};
 use rocket_okapi::okapi::schemars;
 use rocket_okapi::okapi::schemars::JsonSchema;
-use base64::prelude::{Engine as _, BASE64_URL_SAFE_NO_PAD};
 const TOKEN_LENGTH: usize = 32;
 
 #[must_use]
@@ -62,4 +62,3 @@ impl<'de> serde::Deserialize<'de> for Token {
         Ok(token)
     }
 }
-

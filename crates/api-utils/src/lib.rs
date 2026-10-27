@@ -13,15 +13,15 @@
 //
 // You should have received a copy of the Affero General Public License
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
-mod tokens;
-mod bearer;
 pub mod address_book;
+mod bearer;
+mod tokens;
 
-pub mod types;
 pub mod get_host;
+pub mod types;
 
+pub use bearer::{BearerAuthToken, CookieAuthToken, IntoToken, MixedAuthToken};
 pub use tokens::Token;
-pub use bearer::{BearerAuthToken, CookieAuthToken, MixedAuthToken, IntoToken};
 // pub use address_book::AddressBook;
 pub use types::*;
 use uuid::Uuid;
@@ -34,33 +34,29 @@ macro_rules! unwrap_or_return {
             Err(err) => {
                 log::debug!("ERR in unwrap_or_return: {:?}", &err);
                 return err;
-            },
+            }
         }
     };
 }
 
 #[macro_export]
 macro_rules! include_svg_as_base64 {
-    ($path:expr) => {
-        {
-            use ::base64::prelude::{Engine as _, BASE64_STANDARD};
-            let svg_data = include_bytes!($path);
-            let base64 = BASE64_STANDARD.encode(svg_data);
-            format!("data:image/svg+xml;base64,{}", base64)
-        }
-    };
+    ($path:expr) => {{
+        use ::base64::prelude::{Engine as _, BASE64_STANDARD};
+        let svg_data = include_bytes!($path);
+        let base64 = BASE64_STANDARD.encode(svg_data);
+        format!("data:image/svg+xml;base64,{}", base64)
+    }};
 }
 
 #[macro_export]
 macro_rules! include_png_as_base64 {
-    ($path:expr) => {
-        {
-            use ::base64::prelude::{Engine as _, BASE64_STANDARD};
-            let svg_data = include_bytes!($path);
-            let base64 = BASE64_STANDARD.encode(svg_data);
-            format!("data:image/png;base64,{}", base64)
-        }
-    };
+    ($path:expr) => {{
+        use ::base64::prelude::{Engine as _, BASE64_STANDARD};
+        let svg_data = include_bytes!($path);
+        let base64 = BASE64_STANDARD.encode(svg_data);
+        format!("data:image/png;base64,{}", base64)
+    }};
 }
 
 pub fn guid_into_uuid(guid: Vec<u8>) -> Option<String> {

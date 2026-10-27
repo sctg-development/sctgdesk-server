@@ -15,13 +15,13 @@
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
 use std::collections::HashMap;
 
-use rocket::data::{Data, FromData, Outcome, Limits};
-use rocket::request::{Request,local_cache};
+use rocket::data::{Data, FromData, Limits, Outcome};
 use rocket::http::Status;
+use rocket::request::{local_cache, Request};
 use rocket_okapi::gen::OpenApiGenerator;
 use rocket_okapi::okapi::openapi3::RequestBody;
 use rocket_okapi::request::OpenApiFromData;
-use rocket_okapi::{JsonSchema,Result as OkapiResult};
+use rocket_okapi::{JsonSchema, Result as OkapiResult};
 use serde::Deserialize;
 
 /// A wrapper around a JSON value that includes headers.
@@ -58,9 +58,12 @@ impl<'r, T: Deserialize<'r>> ExtendedJson<T> {
 
     async fn from_data(req: &'r Request<'_>, data: Data<'r>) -> Result<Self, Error<'r>> {
         let headers_src = req.headers().clone();
-        let mut headers:HashMap<String, String> = HashMap::new();
-        headers_src.iter().for_each(|k|{
-            headers.insert(k.name.to_string().to_lowercase(),k.value.to_string().to_lowercase());
+        let mut headers: HashMap<String, String> = HashMap::new();
+        headers_src.iter().for_each(|k| {
+            headers.insert(
+                k.name.to_string().to_lowercase(),
+                k.value.to_string().to_lowercase(),
+            );
         });
         let limit = req.limits().get("json").unwrap_or(Limits::JSON);
         let string = match data.open(limit).into_string().await {
@@ -68,7 +71,7 @@ impl<'r, T: Deserialize<'r>> ExtendedJson<T> {
             Ok(_) => {
                 let eof = std::io::ErrorKind::UnexpectedEof;
                 return Err(Error::Io(std::io::Error::new(eof, "data limit exceeded")));
-            },
+            }
             Err(e) => return Err(Error::Io(e)),
         };
         Self::from_str(local_cache!(req, string), headers)
@@ -84,12 +87,11 @@ impl<'r, T: Deserialize<'r>> FromData<'r> for ExtendedJson<T> {
             Ok(value) => Outcome::Success(value),
             Err(Error::Io(e)) if e.kind() == std::io::ErrorKind::UnexpectedEof => {
                 Outcome::Error((Status::PayloadTooLarge, Error::Io(e)))
-            },
+            }
             Err(Error::Parse(s, e)) if e.classify() == serde_json::error::Category::Data => {
                 Outcome::Error((Status::UnprocessableEntity, Error::Parse(s, e)))
-            },
+            }
             Err(e) => Outcome::Error((Status::BadRequest, e)),
-
         }
     }
 }

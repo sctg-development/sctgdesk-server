@@ -17,7 +17,7 @@ use std::collections::HashMap;
 
 pub fn get_host(headers: HashMap<String, String>) -> String {
     // Default to http
-    let mut proto = "http".to_string(); 
+    let mut proto = "http".to_string();
 
     // Check if the headers contain the X-Forwarded-Proto header
     if let Some(proto_in_headers) = headers.get("x-forwarded-proto") {
@@ -31,7 +31,7 @@ pub fn get_host(headers: HashMap<String, String>) -> String {
 
     // Default to the host header
     if let Some(host) = headers.get("host") {
-        return format!("{}://{}",proto, host.to_string());
+        return format!("{}://{}", proto, host.to_string());
     }
 
     "".to_string()

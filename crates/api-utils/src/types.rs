@@ -137,7 +137,7 @@ pub struct UserInfo {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
-    pub admin: bool
+    pub admin: bool,
 }
 
 #[derive(Serialize, Debug, JsonSchema)]
@@ -430,13 +430,21 @@ pub struct UpdateUserRequest {
     pub name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
-    #[serde(default, rename = "confirm-password", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        rename = "confirm-password",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub confirm_password: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub is_admin: Option<bool>,
-    #[serde(default, rename = "group_name", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        rename = "group_name",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub group_name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
@@ -689,7 +697,7 @@ pub struct PeerInfo {
 }
 
 #[derive(Serialize, Deserialize, Clone, JsonSchema)]
-pub struct Peer{
+pub struct Peer {
     pub guid: String,
     pub id: String,
     pub status: i32,
@@ -741,7 +749,7 @@ pub struct AbRulesResponse {
 
 #[derive(Serialize, Deserialize, Clone, JsonSchema)]
 pub struct AbRuleAddRequest {
-    pub guid: String, // address book guid
+    pub guid: String,         // address book guid
     pub user: Option<String>, // user=None and group=None means all users
     pub group: Option<String>,
     pub rule: u32,
@@ -753,7 +761,11 @@ pub struct AbRuleDeleteRequest {
 }
 
 pub enum Platform {
-    Windows,MacOS,Linux,Android,All
+    Windows,
+    MacOS,
+    Linux,
+    Android,
+    All,
 }
 
 #[derive(Serialize, Deserialize, Clone, JsonSchema)]

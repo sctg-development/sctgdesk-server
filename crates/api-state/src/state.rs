@@ -722,7 +722,7 @@ impl ApiState {
         self.db.delete_shared_address_book(guid).await
     }
 
-    pub async fn delete_shared_address_books(&self, shareds:Vec<String>) -> Option<()> {
+    pub async fn delete_shared_address_books(&self, shareds: Vec<String>) -> Option<()> {
         for shared in shareds {
             self.db.delete_shared_address_book(shared.as_str()).await;
         }

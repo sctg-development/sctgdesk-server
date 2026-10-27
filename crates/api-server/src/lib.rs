@@ -69,8 +69,8 @@ use rocket::{
 pub use state::{ApiState, UserPasswordInfo};
 use utils::{
     include_png_as_base64, unwrap_or_return, uuid_into_guid, AbTagRenameRequest, AddUserRequest,
-    AddressBook, EnableUserRequest, DeleteUserRequest, GroupsResponse, OidcSettingsResponse, PeersResponse,
-    SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList,
+    AddressBook, DeleteUserRequest, EnableUserRequest, GroupsResponse, OidcSettingsResponse,
+    PeersResponse, SoftwareResponse, SoftwareVersionResponse, UpdateUserRequest, UserList,
 };
 use utils::{
     AbGetResponse, AbRequest, AuditRequest, CurrentUserRequest, CurrentUserResponse,
@@ -662,16 +662,16 @@ async fn groups(
 }
 
 /// # Get a Group
-/// 
+///
 /// This function is an API endpoint that allows an authenticated admin to retrieve a group.
 /// It is tagged with "group" for OpenAPI documentation.
-/// 
+///
 /// ## Parameters
-/// 
+///
 /// - `guid`: The GUID of the group to retrieve.
-/// 
+///
 /// ## Returns
-/// 
+///
 /// If successful, this function returns a `Json<Group>` object
 /// If the group is not found, this function returns a `status::NotFound` error.
 #[openapi(tag = "group")]
@@ -777,16 +777,16 @@ async fn group_update(
 }
 
 /// # Delete a group
-/// 
+///
 /// This function is an API endpoint that allows an authenticated admin to delete a group.
 /// It is tagged with "group" for OpenAPI documentation.
-/// 
+///
 /// ## Parameters
-/// 
+///
 /// - `guid`: The GUID of the group to retrieve.
-/// 
+///
 /// ## Returns
-/// 
+///
 #[openapi(tag = "group")]
 #[delete("/api/group/<guid>", format = "application/json", data = "<request>")]
 async fn group_delete(
@@ -1729,15 +1729,15 @@ async fn user_add(
 }
 
 /// # Delete user
-/// 
+///
 /// This function is an API endpoint that deletes a user.
-/// 
+///
 /// ## Parameters
-/// 
+///
 /// - `request`: A JSON object containing the list of users to delete.
-/// 
+///
 /// ## Returns
-/// 
+///
 /// If successful, this function returns a `Json<UsersResponse>` object containing the number of users deleted.
 #[openapi(tag = "user")]
 #[delete("/api/user", format = "application/json", data = "<request>")]
@@ -2214,13 +2214,13 @@ async fn ab_rule_delete(
 ///
 /// This function is an API endpoint that adds a shared profile to an address book.
 /// It is tagged with "address book" for OpenAPI documentation.
-/// 
+///
 /// ## Parameters
-/// 
+///
 /// - `request`: A JSON object containing the shared profile to be added.
-/// 
+///
 /// ## Returns
-/// 
+///
 /// If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the shared profiles in the address book.  <br>
 #[openapi(tag = "address book")]
 #[post("/api/ab/shared/add", format = "application/json", data = "<request>")]
@@ -2233,7 +2233,9 @@ async fn ab_shared_add(
     let name = request.0.name;
     let note = request.0.note;
     let owner = guid_into_uuid(user.info.user_id.clone()).unwrap();
-    let ab_uuid = state.add_shared_address_book(name.as_str(),owner.as_str()).await;
+    let ab_uuid = state
+        .add_shared_address_book(name.as_str(), owner.as_str())
+        .await;
     if ab_uuid.is_none() {
         return Err(status::Unauthorized::<()>(()));
     }
@@ -2255,13 +2257,13 @@ async fn ab_shared_add(
 ///
 /// This function is an API endpoint that deletes shared profiles from an address book.
 /// It is tagged with "address book" for OpenAPI documentation.
-/// 
+///
 /// ## Parameters
-/// 
+///
 /// - `request`: A JSON object containing an array of shared profile GUIDs to be deleted.
-/// 
+///
 /// ## Returns
-/// 
+///
 /// If successful, this function returns an `ActionResponse::Empty` object.
 #[openapi(tag = "address book")]
 #[delete("/api/ab/shared", format = "application/json", data = "<request>")]
@@ -2272,24 +2274,30 @@ async fn ab_shared_delete(
 ) -> Result<ActionResponse, status::Unauthorized<()>> {
     state.check_maintenance().await;
     let shared_profiles_to_delete = request.0;
-    state.delete_shared_address_books(shared_profiles_to_delete).await;
+    state
+        .delete_shared_address_books(shared_profiles_to_delete)
+        .await;
     Ok(ActionResponse::Empty)
 }
 
 /// # Update shared profile name
-/// 
+///
 /// This function is an API endpoint that updates the name of a shared profile in an address book.
 /// It is tagged with "address book" for OpenAPI documentation.
-/// 
+///
 /// ## Parameters
-/// 
+///
 /// - `request`: A JSON object containing the updated shared profile information.
-/// 
+///
 /// ## Returns
-/// 
+///
 /// If successful, this function returns a `Json<AbSharedProfilesResponse>` object containing the updated shared profile information.
 #[openapi(tag = "address book")]
-#[put("/api/ab/shared/update/profile", format = "application/json", data = "<request>")]
+#[put(
+    "/api/ab/shared/update/profile",
+    format = "application/json",
+    data = "<request>"
+)]
 async fn ab_shared_name(
     state: &State<ApiState>,
     user: AuthenticatedAdmin,
@@ -2298,7 +2306,9 @@ async fn ab_shared_name(
     state.check_maintenance().await;
     let shared_profile = request.0;
     let name = shared_profile.name.expect("Currently name is required");
-    state.update_shared_address_book(shared_profile.guid.as_str(), name.as_str()).await;
+    state
+        .update_shared_address_book(shared_profile.guid.as_str(), name.as_str())
+        .await;
     let shared_profiles = state.get_shared_address_books(user.info.user_id).await;
     let mut ab_shared_profiles = AbSharedProfilesResponse::default();
     for ab in shared_profiles.expect("shared_profiles is None") {

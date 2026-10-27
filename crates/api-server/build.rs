@@ -23,7 +23,10 @@ use std::str;
 fn npm(dir: &Path, args: &[&str], what: &str) {
     let output = if cfg!(target_os = "windows") {
         let line = format!("npm {}", args.join(" "));
-        Command::new("cmd.exe").current_dir(dir).args(["/C", &line]).output()
+        Command::new("cmd.exe")
+            .current_dir(dir)
+            .args(["/C", &line])
+            .output()
     } else {
         Command::new("npm").current_dir(dir).args(args).output()
     }
@@ -72,8 +75,16 @@ fn main() {
         return;
     }
 
-    npm(&console, &["install", "--force"], "install npm dependencies of web/console");
+    npm(
+        &console,
+        &["install", "--force"],
+        "install npm dependencies of web/console",
+    );
     npm(&console, &["run", "build"], "build web/console");
-    npm(&rapidoc, &["install", "--force"], "install npm dependencies of web/rapidoc");
+    npm(
+        &rapidoc,
+        &["install", "--force"],
+        "install npm dependencies of web/rapidoc",
+    );
     npm(&rapidoc, &["run", "build"], "build web/rapidoc");
 }
