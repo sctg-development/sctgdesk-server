@@ -12,3 +12,6 @@ test.*
 .oauth2.toml
 .idea
 data
+# written next to the sources by the s3software/oauth2 tests
+/crates/api-s3software/s3config.toml
+/crates/api-oauth2/oauth2.toml

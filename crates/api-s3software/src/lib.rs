@@ -139,6 +139,7 @@ mod tests {
     use reqwest::StatusCode;
 
     #[tokio::test]
+    #[ignore = "calls the live S3 bucket described by s3config.toml; run explicitly with --ignored"]
     async fn test_get_signed_release_url() {
         let config = get_s3_config_file().await;
         if config.is_err() {
