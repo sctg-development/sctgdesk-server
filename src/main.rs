@@ -31,6 +31,11 @@ fn get_rocket_log_level() -> LogLevel {
 #[rocket::main]
 async fn start_rocket() -> ResultType<()> {
     let port = get_arg_or("api-port", API_PORT.to_string()).parse::<i32>()?;
+    // --logged-in-only validates tokens against this server; follow --api-port, a reverse proxy
+    // in front of the API usually speaks TLS and cannot be reached in clear text.
+    if std::env::var("API_SERVER").map_or(true, |v| v.is_empty()) {
+        std::env::set_var("API_SERVER", format!("http://127.0.0.1:{port}"));
+    }
     let figment = rocket::Config::figment()
         .merge(("address", "0.0.0.0"))
         .merge(("port", port))
