@@ -9,8 +9,9 @@ Open work, roughly in priority order. Nothing here is a promise; each item is a 
 - **Triage `cargo audit`** (dozens of advisories, informational for now) and add `cargo-deny` for licenses.
 - **Adapt or remove** what was inherited and never checked: `docker/`, `docker-classic/`, `kubernetes/`, `update-api-server.sh`,
   the legacy macOS and Windows build workflows (now manual).
-- **Verify the Docker image build** (`Dockerfile`, `multiarch-docker-hub.yml`, rewritten for amd64 and arm64 on the shared
-  multi-arch action; 32-bit ARM and the `.deb` packages are dropped). It has not been run.
+- **Docker image** (`Dockerfile`, `multiarch-docker-hub.yml`, on the shared multi-arch action; 32-bit ARM and the `.deb`
+  packages are dropped): the build of amd64 and arm64 and the manifest merge succeeded once on CI (2026-10-28). Not yet
+  checked: that the image runs, the Linux zips and their attestation (they only run on a release).
 - **Translated READMEs** (`README-*.md`) are stale.
 
 ## Protocol
