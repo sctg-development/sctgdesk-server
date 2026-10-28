@@ -872,6 +872,8 @@ jobs:
         with:
           name: librustdesk-${{ matrix.job.arch }}-${{ matrix.job.build-name }}.so
           path: target/release/liblibrustdesk.so
+          # intermediate file, only needed by the next job; the repository is public
+          retention-days: 1
 
   build-rustdesk-linux-amd64:
     needs: [build-rustdesk-lib-linux-amd64]
@@ -1047,13 +1049,6 @@ jobs:
           echo "./mc cp '${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ matrix.job.arch }}.deb' 's3release/${{ secrets.AWS_S3_BUCKET }}/${{ env.APP_NAME_LOW }}-releases/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ matrix.job.arch }}.deb'"
           ./mc cp '${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ matrix.job.arch }}.deb' 's3release/${{ secrets.AWS_S3_BUCKET }}/${{ env.APP_NAME_LOW }}-releases/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ matrix.job.arch }}.deb'
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@master
-        if: ${{ contains(matrix.job.extra-build-features, 'flatpak') }}
-        with:
-          name: ${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ matrix.job.arch }}.deb
-          path: ${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ matrix.job.arch }}.deb
-
       - name: Patch archlinux PKGBUILD
         if: ${{ matrix.job.extra-build-features == '' }}
         run: |
@@ -1096,14 +1091,16 @@ jobs:
           scripts: |
             cd res && HBB=`pwd`/.. FLUTTER=1 makepkg -f
 
-      - name: Publish archlinux package
-        if: matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          prerelease: true
-          tag_name: ${{ env.TAG_NAME }}
-          files: |
-            res/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ matrix.job.arch }}.zst
+      # Not published: the binaries embed the address of the rendezvous server and this repository
+      # is public. Builds are uploaded to S3 only.
+      # - name: Publish archlinux package
+      #   if: matrix.job.extra-build-features == '' && env.UPLOAD_ARTIFACT == 'true'
+      #   uses: softprops/action-gh-release@v2
+      #   with:
+      #     prerelease: true
+      #     tag_name: ${{ env.TAG_NAME }}
+      #     files: |
+      #       res/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ matrix.job.arch }}.zst
 
       - name: Build appimage package
         if: matrix.job.extra-build-features == 'appimage' && env.UPLOAD_ARTIFACT == 'true'
@@ -1417,13 +1414,6 @@ jobs:
         env:
           # override default build-tools version (29.0.3) -- optional
           BUILD_TOOLS_VERSION: "30.0.2"
-
-      - name: Upload Artifacts
-        if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
-        uses: actions/upload-artifact@master
-        with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
-          path: ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
 
       # - name: Publish signed apk package
       #   if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
