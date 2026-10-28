@@ -827,15 +827,29 @@ impl RendezvousServer {
             if !ph.token.is_empty() {
                 let api_server = std::env::var("API_SERVER").unwrap_or_else(|_| "http://127.0.0.1:21114".to_string());
                 let api_url = api_server + "/api/currentUser";
-                let client = Client::new();
-                let res = client.post(&api_url)
+                // Without an answer the client would wait forever for a punch hole response.
+                let client = Client::builder().timeout(Duration::from_secs(5)).build()?;
+                let res = match client.post(&api_url)
                     .bearer_auth(ph.token)
                     .json(&json!({ "id": ph.id, "uuid": "uuid" }))
                     .send()
-                    .await?;
+                    .await
+                {
+                    Ok(res) => res,
+                    Err(err) => {
+                        log::error!("logged-in-only: cannot reach the API server at {}: {}", api_url, err);
+                        msg_out.set_punch_hole_response(PunchHoleResponse {
+                            other_failure: String::from("The connection is not allowed. The login server is unreachable."),
+                            ..Default::default()
+                        });
+                        return Ok((msg_out, None));
+                    }
+                };
                 if res.status().is_success() {
-                    let response_body: serde_json::Value = res.json().await?;
-                    log::debug!("Username: {}", response_body["name"]);
+                    match res.json::<serde_json::Value>().await {
+                        Ok(response_body) => log::debug!("Username: {}", response_body["name"]),
+                        Err(err) => log::debug!("logged-in-only: unreadable answer of the API server: {}", err),
+                    }
                 } else {
                     log::debug!("Error: {}", res.status());
                     msg_out.set_punch_hole_response(PunchHoleResponse {
