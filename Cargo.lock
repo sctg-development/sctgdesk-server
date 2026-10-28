@@ -2258,7 +2258,7 @@ dependencies = [
 
 [[package]]
 name = "hbbs"
-version = "1.1.99-47"
+version = "1.1.16-sctg.1"
 dependencies = [
  "async-speed-limit",
  "async-trait",
@@ -4671,7 +4671,7 @@ dependencies = [
 
 [[package]]
 name = "sctgdesk-api-server"
-version = "1.1.99-47"
+version = "1.1.16-sctg.1"
 dependencies = [
  "base64 0.22.1",
  "bcrypt",
