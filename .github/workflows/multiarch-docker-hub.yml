@@ -1,15 +1,6 @@
 # Copyright 2024 SCTG Development - Ronan LE MEILLAT
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third party and are governed by
-# separate terms of service, privacy policy, and support.
-# Online documentation.
-
-# GitHub recommends pinning actions to a commit SHA.
-# To get a newer version, you must update the SHA.
-# You can also reference a tag or a branch, but the action can change without warning.
-
 name: Generate multi-arch Docker image and release linux binaries
 
 permissions:
@@ -19,200 +10,59 @@ permissions:
   packages: write
 
 on:
-  # push:
-  #   branches:
-  #     - tcpserver-master-build
   workflow_call:
     secrets:
       DOCKER_USERNAME:
         required: true
       DOCKER_PASSWORD:
         required: true
-      DOCKER_IMAGE:
-        required: true
+  workflow_dispatch:
+
 jobs:
-  push_to_registry:
-    permissions:
-      id-token: write
-      contents: write
-      packages: write
-      attestations: write
-    name: Push Docker image to Docker Hub
+  image:
+    name: Build and push the multi-arch image to Docker Hub (amd64, arm64)
+    uses: sctg-development/build-multi-arch-docker-action/.github/workflows/build.yml@v2
+    with:
+      dockerfile: Dockerfile
+      context: .
+      image: sctg/sctgdesk-server
+      submodules: recursive
+      artifact-prefix: sctgdesk-server-${{ github.run_id }}
+      cleanup: false
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  linux-binaries:
+    name: Publish the static Linux binaries of the release
+    needs: image
+    if: ${{ github.event_name == 'release' }}
     runs-on: ubuntu-latest
-    env:
-      DOCKER_ARMHF_EXPERIMENTAL: enabled # Set to 'enabled' to enable armhf build
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: "linux/arm64,linux/amd64" #,linux/armhf
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Add current version in Debian changelog if not present
-        run: |
-          export TAG=${{ github.event.release.tag_name }}
-          if ! grep -q "rustdesk-server ($TAG)" debian/changelog; then
-            TMP=$(mktemp)
-            echo "rustdesk-server ($TAG) unstable; urgency=medium" > $TMP
-            echo "" >> $TMP
-            echo "  * New release $TAG" >> $TMP
-            echo "" >> $TMP
-            echo " -- GitHub Actions <ronan@none.com>  $(date -R)" >> $TMP
-            echo "" >> $TMP
-            cat debian/changelog >> $TMP
-            cp $TMP debian/changelog
-            rm $TMP
-          fi
-
-      - name: Extract metadata (tags, labels) for Docker integration image
-        id: metaintegration
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_IMAGE }}-integration
-
-      - name: Build and push Docker integration image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile-integration
-          platforms: linux/arm64, linux/amd64 #, linux/armhf
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: true
-          tags: ${{ steps.metaintegration.outputs.tags }}
-          labels: ${{ steps.metaintegration.outputs.labels }}
-
-      - name: Pull and extract files from Docker image (amd64)
-        continue-on-error: true
-        run: |
-          export TAG=${{ github.event.release.tag_name }}
-          mkdir -p /tmp/amd64/zip
-          docker pull ${{ secrets.DOCKER_IMAGE }}-integration:latest
-          docker create --platform linux/amd64 --name temp-container-amd64 ${{ secrets.DOCKER_IMAGE }}-integration:latest
-          docker cp temp-container-amd64:/usr/local/share/debpackages/rustdesk-server-hbbr_${{ github.event.release.tag_name }}_amd64.deb /tmp/amd64/
-          docker cp temp-container-amd64:/usr/local/share/debpackages/rustdesk-server-hbbs_${{ github.event.release.tag_name }}_amd64.deb /tmp/amd64/
-          docker cp temp-container-amd64:/usr/local/share/debpackages/rustdesk-server-utils_${{ github.event.release.tag_name }}_amd64.deb /tmp/amd64/
-          docker cp temp-container-amd64:/usr/local/bin/hbbs /tmp/amd64/zip/
-          docker cp temp-container-amd64:/usr/local/bin/hbbr /tmp/amd64/zip/
-          docker cp temp-container-amd64:/usr/local/bin/rustdesk-utils /tmp/amd64/zip/
-          docker rm temp-container-amd64
-          cd /tmp/amd64/zip
-          zip -r /tmp/amd64/linux_static_${{ github.event.release.tag_name }}_amd64.zip .
-
-      - name: Pull and extract files from Docker image (arm64)
-        continue-on-error: true
-        run: |
-          export TAG=${{ github.event.release.tag_name }}
-          mkdir -p /tmp/arm64/zip
-          docker pull ${{ secrets.DOCKER_IMAGE }}-integration:latest
-          docker create --platform linux/arm64 --name temp-container-arm64 ${{ secrets.DOCKER_IMAGE }}-integration:latest
-          docker cp temp-container-arm64:/usr/local/share/debpackages/rustdesk-server-hbbr_${{ github.event.release.tag_name }}_arm64.deb /tmp/arm64/
-          docker cp temp-container-arm64:/usr/local/share/debpackages/rustdesk-server-hbbs_${{ github.event.release.tag_name }}_arm64.deb /tmp/arm64/
-          docker cp temp-container-arm64:/usr/local/share/debpackages/rustdesk-server-utils_${{ github.event.release.tag_name }}_arm64.deb /tmp/arm64/
-          docker cp temp-container-arm64:/usr/local/bin/hbbs /tmp/arm64/zip/
-          docker cp temp-container-arm64:/usr/local/bin/hbbr /tmp/arm64/zip/
-          docker cp temp-container-arm64:/usr/local/bin/rustdesk-utils /tmp/arm64/zip/
-          docker rm temp-container-arm64
-          cd /tmp/arm64/zip
-          zip -r /tmp/arm64/linux_static_${{ github.event.release.tag_name }}_arm64.zip .
-
-      # - name: Pull and extract files from Docker image (armhf)
-      #   continue-on-error: true
-      #   if: ${{ env.DOCKER_ARMHF_EXPERIMENTAL == 'enabled' }}
-      #   run: |
-      #     export TAG=${{ github.event.release.tag_name }}
-      #     mkdir -p /tmp/armhf/zip
-      #     docker pull ${{ secrets.DOCKER_IMAGE }}-integration:latest
-      #     docker create --platform linux/armhf --name temp-container-armhf ${{ secrets.DOCKER_IMAGE }}-integration:latest
-      #     docker cp temp-container-armhf:/usr/local/share/debpackages/rustdesk-server-hbbr_${{ github.event.release.tag_name }}_armhf.deb /tmp/armhf/
-      #     docker cp temp-container-armhf:/usr/local/share/debpackages/rustdesk-server-hbbs_${{ github.event.release.tag_name }}_armhf.deb /tmp/armhf/
-      #     docker cp temp-container-armhf:/usr/local/share/debpackages/rustdesk-server-utils_${{ github.event.release.tag_name }}_armhf.deb /tmp/armhf/
-      #     docker cp temp-container-armhf:/usr/local/bin/hbbs /tmp/armhf/zip/
-      #     docker cp temp-container-armhf:/usr/local/bin/hbbr /tmp/armhf/zip/
-      #     docker cp temp-container-armhf:/usr/local/bin/rustdesk-utils /tmp/armhf/zip/
-      #     docker rm temp-container-armhf
-      #     cd /tmp/armhf/zip
-      #     zip -r /tmp/armhf/linux_static_${{ github.event.release.tag_name }}_armhf.zip .
-
-      - name: Upload Release
+      - name: Extract the binaries from the image
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST: ${{ needs.image.outputs.image-digest }}
+          TAG: ${{ github.event.release.tag_name }}
         run: |
-          ls -lR
-          gh release upload ${{ github.event.release.tag_name }} /tmp/arm64/linux_static_${{ github.event.release.tag_name }}_arm64.zip
-          gh release upload ${{ github.event.release.tag_name }} /tmp/arm64/rustdesk-server-hbbr_${{ github.event.release.tag_name }}_arm64.deb
-          gh release upload ${{ github.event.release.tag_name }} /tmp/arm64/rustdesk-server-hbbs_${{ github.event.release.tag_name }}_arm64.deb
-          gh release upload ${{ github.event.release.tag_name }} /tmp/arm64/rustdesk-server-utils_${{ github.event.release.tag_name }}_arm64.deb
-          gh release upload ${{ github.event.release.tag_name }} /tmp/amd64/linux_static_${{ github.event.release.tag_name }}_amd64.zip
-          gh release upload ${{ github.event.release.tag_name }} /tmp/amd64/rustdesk-server-hbbr_${{ github.event.release.tag_name }}_amd64.deb
-          gh release upload ${{ github.event.release.tag_name }} /tmp/amd64/rustdesk-server-hbbs_${{ github.event.release.tag_name }}_amd64.deb
-          gh release upload ${{ github.event.release.tag_name }} /tmp/amd64/rustdesk-server-utils_${{ github.event.release.tag_name }}_amd64.deb
-
-      # - name: Upload armhf release
-      #   env:
-      #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   if: ${{ env.DOCKER_ARMHF_EXPERIMENTAL == 'enabled' }}
-      #   run: |
-      #       gh release upload ${{ github.event.release.tag_name }} /tmp/armhf/linux_static_${{ github.event.release.tag_name }}_armhf.zip
-      #       gh release upload ${{ github.event.release.tag_name }} /tmp/armhf/rustdesk-server-hbbr_${{ github.event.release.tag_name }}_armhf.deb
-      #       gh release upload ${{ github.event.release.tag_name }} /tmp/armhf/rustdesk-server-hbbs_${{ github.event.release.tag_name }}_armhf.deb
-      #       gh release upload ${{ github.event.release.tag_name }} /tmp/armhf/rustdesk-server-utils_${{ github.event.release.tag_name }}_armhf.deb
-
-      - name: Extract metadata (tags, labels) for Docker integration image
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_IMAGE }}
-
-      - name: Build and push Docker image
-        id: push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/arm64, linux/amd64 #, linux/armhf
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Attest
+          for arch in amd64 arm64; do
+            mkdir -p "/tmp/$arch/zip"
+            cid=$(docker create --platform "linux/$arch" "sctg/sctgdesk-server@$DIGEST")
+            for b in hbbs hbbr rustdesk-utils; do
+              docker cp "$cid:/usr/local/bin/$b" "/tmp/$arch/zip/"
+            done
+            docker rm "$cid"
+            (cd "/tmp/$arch/zip" && zip -r "/tmp/$arch/linux_static_${TAG}_${arch}.zip" .)
+          done
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          for arch in amd64 arm64; do
+            gh release upload "$TAG" "/tmp/$arch/linux_static_${TAG}_${arch}.zip" --clobber
+          done
+      - name: Attest the release files
         uses: actions/attest-build-provenance@v3
-        id: attest
-        continue-on-error: true
         with:
-          subject-name: docker.io/${{ secrets.DOCKER_IMAGE }}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
-
-      - name: Attest release amd64
-        uses: actions/attest-build-provenance@v3
-        continue-on-error: true
-        with:
-          subject-path: "/tmp/amd64/linux_static_${{ github.event.release.tag_name }}_amd64.zip, /tmp/amd64/rustdesk-server-hbbr_${{ github.event.release.tag_name }}_amd64.deb, /tmp/amd64/rustdesk-server-hbbs_${{ github.event.release.tag_name }}_amd64.deb, /tmp/amd64/rustdesk-server-utils_${{ github.event.release.tag_name }}_amd64.deb, /tmp/amd64/zip/hbbs, /tmp/amd64/zip/hbbr, /tmp/amd64/zip/rustdesk-utils"
-
-      - name: Attest release arm64
-        uses: actions/attest-build-provenance@v3
-        continue-on-error: true
-        with:
-          subject-path: "/tmp/arm64/linux_static_${{ github.event.release.tag_name }}_arm64.zip, /tmp/arm64/rustdesk-server-hbbr_${{ github.event.release.tag_name }}_arm64.deb, /tmp/arm64/rustdesk-server-hbbs_${{ github.event.release.tag_name }}_arm64.deb, /tmp/arm64/rustdesk-server-utils_${{ github.event.release.tag_name }}_arm64.deb, /tmp/arm64/zip/hbbs, /tmp/arm64/zip/hbbr, /tmp/arm64/zip/rustdesk-utils"
-
-      - name: Attest release armhf
-        uses: actions/attest-build-provenance@v3
-        if: ${{ env.DOCKER_ARMHF_EXPERIMENTAL == 'enabled' }}
-        continue-on-error: true
-        with:
-          subject-path: "/tmp/armhf/linux_static_${{ github.event.release.tag_name }}_armhf.zip, /tmp/armhf/rustdesk-server-hbbr_${{ github.event.release.tag_name }}_armhf.deb, /tmp/armhf/rustdesk-server-hbbs_${{ github.event.release.tag_name }}_armhf.deb, /tmp/armhf/rustdesk-server-utils_${{ github.event.release.tag_name }}_armhf.deb, /tmp/armhf/zip/hbbs, /tmp/armhf/zip/hbbr, /tmp/armhf/zip/rustdesk-utils"
+          subject-path: "/tmp/*/linux_static_*.zip"

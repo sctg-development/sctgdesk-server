@@ -70,6 +70,11 @@ reqwest = { git = "https://github.com/rustdesk-org/reqwest", features = ["blocki
 [target.'cfg(not(any(target_os = "macos", target_os = "windows")))'.dependencies]
 reqwest = { git = "https://github.com/rustdesk-org/reqwest", features = ["blocking", "socks", "json", "rustls-tls", "rustls-tls-native-roots", "gzip"], default-features=false }
 
+# hbb_common pulls native-tls, hence OpenSSL. The static musl builds (Docker image, release zips)
+# cannot find a system OpenSSL for their target: build it from source there.
+[target.'cfg(target_env = "musl")'.dependencies]
+openssl = { version = "0.10", features = ["vendored"] }
+
 [build-dependencies]
 hbb_common = { path = "libs/hbb_common" }
 
