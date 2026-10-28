@@ -74,4 +74,7 @@ jobs:
       - name: Attest the release files
         uses: actions/attest-build-provenance@v3
         with:
-          subject-path: "/tmp/*/linux_static_*.zip"
+          # explicit paths: a glob over /tmp/*/ fails with EACCES on /tmp/snap-private-tmp
+          subject-path: |
+            /tmp/amd64/linux_static_*.zip
+            /tmp/arm64/linux_static_*.zip
