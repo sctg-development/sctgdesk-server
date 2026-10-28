@@ -1,8 +1,7 @@
 name: Build for Ubuntu 22.04
+# The push trigger was removed: every merge into the default branch refreshed the `nightly` release.
+# Run it by hand (workflow_dispatch) when a nightly is wanted.
 on:
-  push:
-    branches:
-      - tcpserver-master-build
   workflow_dispatch:
 
 jobs:
@@ -19,6 +18,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Set up environment
         run: |

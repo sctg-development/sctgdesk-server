@@ -1,9 +1,9 @@
 name: Build for Windows 64-bit # and 32-bit
+# The push trigger was removed: every merge into the default branch refreshed the `nightly` release.
+# Run it by hand (workflow_dispatch) when a nightly is wanted.
 on:
   workflow_call:
-  push:
-    branches:
-      - tcpserver-master-build
+  workflow_dispatch:
 
 jobs:
   build:
@@ -23,6 +23,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: Install SQLite
       run: |
