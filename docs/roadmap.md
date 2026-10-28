@@ -7,8 +7,10 @@ Open work, roughly in priority order. Nothing here is a promise; each item is a 
 - **Run the CI on GitHub.** The workflows (`ci.yml`, `client-build.yaml`) were written and checked locally only.
 - **Fix `crates/api-oauth2` tests**, which do not compile, and re-enable them in CI.
 - **Triage `cargo audit`** (dozens of advisories, informational for now) and add `cargo-deny` for licenses.
-- **Adapt or remove** what was inherited and never checked: `Dockerfile*`, `docker/`, `kubernetes/`, `update-api-server.sh`,
-  the legacy build workflows that still run `cargo update -p sctgdesk-api-server`.
+- **Adapt or remove** what was inherited and never checked: `docker/`, `docker-classic/`, `kubernetes/`, `update-api-server.sh`,
+  the legacy macOS and Windows build workflows (now manual).
+- **Verify the Docker image build** (`Dockerfile`, `multiarch-docker-hub.yml`, rewritten for amd64 and arm64 on the shared
+  multi-arch action; 32-bit ARM and the `.deb` packages are dropped). It has not been run.
 - **Translated READMEs** (`README-*.md`) are stale.
 
 ## Protocol
