@@ -87,7 +87,9 @@ exclude = ["ui"]
 [profile.release]
 lto = true
 codegen-units = 1
-panic = 'abort'
+# hbbs runs the API server in-process: with "abort" a panic in a request handler stops the
+# rendezvous server (see fix/token-parse-panic). Rocket catches unwinding panics and answers 500.
+panic = 'unwind'
 strip = true
 #opt-level = 'z' # only have smaller size after strip # Default is 3, better performance
 #rpath = true # Not needed
