@@ -27,6 +27,13 @@ jobs:
       context: .
       image: sctg/sctgdesk-server
       submodules: recursive
+      # docker/metadata-action adds `latest` by itself ("latest=auto") for type=ref,event=tag, type=semver and
+      # type=match, and the action offers no `flavor` input to turn that off: only raw tags are used here, so that
+      # `latest` moves only for a full release, never for a pre-release, a branch or a manual run.
+      tags: |
+        type=ref,event=branch
+        type=raw,value=${{ github.ref_name }},enable=${{ github.ref_type == 'tag' }}
+        type=raw,value=latest,enable=${{ github.event_name == 'release' && !github.event.release.prerelease }}
       artifact-prefix: sctgdesk-server-${{ github.run_id }}
       cleanup: false
     secrets:

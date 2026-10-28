@@ -1,3 +1,10 @@
+rustdesk-server (1.1.16-sctg.1) UNRELEASED; urgency=medium
+
+  * first release of the monorepo (server, API server and web console, client overlay)
+  * based on upstream rustdesk-server 1.1.16, hbb_common as a git submodule
+  * TCP key exchange version 1 (--require-kx-v1 refuses legacy clients)
+  * the 32-bit ARM binaries and the .deb packages are no longer produced
+
 rustdesk-server (1.1.99-38) UNRELEASED; urgency=low
 
   * supports windows and macos
