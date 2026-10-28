@@ -13,7 +13,7 @@ without committing, and stops on conflicts. It never pushes.
 
 | File | Resolution |
 |---|---|
-| `Cargo.toml` | keep our `version` and `authors`; take upstream's dependency changes. Upstream's target-specific `reqwest` replaces any plain one. |
+| `Cargo.toml` | keep our `version` and `authors`; take upstream's dependency changes. Upstream's target-specific `reqwest` replaces any plain one. Keep our `[target.'cfg(target_env = "musl")'.dependencies]` block (vendored OpenSSL, needed by the static musl builds because `hbb_common` pulls `native-tls`). |
 | `Cargo.lock` | never hand-merge: take ours, then `cargo build` and commit the result |
 | `debian/changelog`, `README*.md` | keep ours |
 | `.github/workflows/*` deleted on our side | stay deleted (our CI is `ci.yml`) |
