@@ -27,6 +27,13 @@ jobs:
       context: .
       image: sctg/sctgdesk-server
       submodules: recursive
+      # `sctg-v1.1.16-sctg.1` is not a strict semver tag, so the default tags would neither add `latest` nor the version
+      # without its prefix. `latest` only moves for a full release, never for a pre-release or a manual run.
+      tags: |
+        type=ref,event=branch
+        type=ref,event=tag
+        type=match,pattern=sctg-v(.*),group=1
+        type=raw,value=latest,enable=${{ github.event_name == 'release' && !github.event.release.prerelease }}
       artifact-prefix: sctgdesk-server-${{ github.run_id }}
       cleanup: false
     secrets:
