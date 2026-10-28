@@ -17,8 +17,9 @@ jobs:
       fail-fast: false
       matrix:
         job:
-          - { sys: macos-13 , arch: intel }
-          - { sys: macos-latest , arch: apple_silicon }
+          # macos-13 (the last GitHub-hosted Intel runner we used) is gone: build the Intel binaries on Apple Silicon
+          - { sys: macos-latest , arch: intel , target: x86_64-apple-darwin }
+          - { sys: macos-latest , arch: apple_silicon , target: aarch64-apple-darwin }
 
     steps:
     - name: Checkout code
@@ -57,7 +58,10 @@ jobs:
     - name: Build
       run: |
         cargo update -p sctgdesk-api-server
-        DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo build --release
+        rustup target add ${{ matrix.job.target }}
+        DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3 cargo build --release --target ${{ matrix.job.target }}
+        mkdir -p target/release
+        cp target/${{ matrix.job.target }}/release/hbbs target/${{ matrix.job.target }}/release/hbbr target/${{ matrix.job.target }}/release/rustdesk-utils target/release/
         cd target/release
         zip -r /tmp/macos_${{ matrix.job.arch }}_${{ github.event.release.tag_name }}.zip hbbs hbbr rustdesk-utils
 

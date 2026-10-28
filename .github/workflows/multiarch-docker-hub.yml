@@ -51,6 +51,8 @@ jobs:
               docker cp "$cid:/usr/local/bin/$b" "/tmp/$arch/zip/"
             done
             docker rm "$cid"
+            # a second pull of the same digest for another platform fails with "cannot overwrite digest"
+            docker rmi -f "sctg/sctgdesk-server@$DIGEST" || true
             (cd "/tmp/$arch/zip" && zip -r "/tmp/$arch/linux_static_${TAG}_${arch}.zip" .)
           done
       - name: Upload to the release
