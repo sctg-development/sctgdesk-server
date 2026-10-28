@@ -17,8 +17,9 @@ jobs:
       fail-fast: false
       matrix:
         job:
-          - { sys: macos-13 , arch: intel }
-          - { sys: macos-latest , arch: apple_silicon }
+          # macos-13 is no longer a GitHub-hosted runner
+          - { sys: macos-15-intel , arch: intel }
+          - { sys: macos-15 , arch: apple_silicon }
 
     steps:
     - name: Checkout code
