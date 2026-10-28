@@ -21,7 +21,7 @@ on:
 jobs:
   image:
     name: Build and push the multi-arch image to Docker Hub (amd64, arm64)
-    uses: sctg-development/build-multi-arch-docker-action/.github/workflows/build.yml@v1
+    uses: sctg-development/build-multi-arch-docker-action/.github/workflows/build.yml@v2
     with:
       dockerfile: Dockerfile
       context: .
