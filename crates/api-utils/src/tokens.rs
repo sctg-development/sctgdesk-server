@@ -36,9 +36,12 @@ impl Token {
     }
 
     pub fn from_str<S: AsRef<str>>(str: S) -> Result<Self, base64::DecodeError> {
-        let bytes = BASE64_URL_SAFE_NO_PAD.decode(str.as_ref()).unwrap();
-        let mut buf = [0u8; TOKEN_LENGTH];
-        buf.copy_from_slice(&bytes);
+        // The string comes from the Authorization header: it must never panic, a release build
+        // aborts the whole process (panic = "abort") and hbbs runs the API server in-process.
+        let bytes = BASE64_URL_SAFE_NO_PAD.decode(str.as_ref())?;
+        let buf: [u8; TOKEN_LENGTH] = bytes
+            .try_into()
+            .map_err(|bytes: Vec<u8>| base64::DecodeError::InvalidLength(bytes.len()))?;
         Ok(Self(buf))
     }
 }
@@ -60,5 +63,24 @@ impl<'de> serde::Deserialize<'de> for Token {
         let s = String::deserialize(deserializer)?;
         let token = Self::from_str(&s).map_err(serde::de::Error::custom)?;
         Ok(token)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_str_roundtrips_a_generated_token() {
+        let token = Token::new_random();
+        assert_eq!(Token::from_str(token.to_base64()).unwrap(), token);
+    }
+
+    #[test]
+    fn from_str_rejects_malformed_input_without_panicking() {
+        // not base64, too short, too long, empty
+        for bad in ["x", "!!!!", "", "AAAA", &"A".repeat(200)] {
+            assert!(Token::from_str(bad).is_err(), "{bad:?} must be rejected");
+        }
     }
 }
