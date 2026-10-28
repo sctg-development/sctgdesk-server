@@ -23,6 +23,9 @@ RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
     fi
 COPY src /build/src
 COPY libs /build/libs
+# the API server and its libraries are workspace members, the web console is embedded by their build script
+COPY crates /build/crates
+COPY web /build/web
 COPY Cargo.toml /build/Cargo.toml
 COPY Cargo.lock /build/Cargo.lock
 COPY build.rs /build/build.rs
