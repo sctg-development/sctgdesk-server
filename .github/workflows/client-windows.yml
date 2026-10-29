@@ -164,7 +164,9 @@ jobs:
       # build-sctg.py brands the tree (client/branding.py), then runs upstream's build.py
       - name: Build the client
         run: |
+          $ErrorActionPreference = 'Stop'
           python3 .\build-sctg.py --portable --flutter --skip-portable-pack --hwcodec --vram
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           mv ./flutter/build/windows/x64/runner/Release ./rustdesk
 
           Invoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip

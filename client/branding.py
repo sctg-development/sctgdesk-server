@@ -126,6 +126,8 @@ def rules_for(cfg, forced_api, local_build):
         # Names
         Rule(['**/*.dart', '**/*.rs', '**/*.toml'], 'RustDesk', app),
         Rule(['**/*.toml'], '"rustdesk"', f'"{low}"'),
+        # the package of Cargo.toml is renamed above: the lockfile has to follow, builds use --locked
+        Rule(['Cargo.lock'], 'name = "rustdesk"\nversion', f'name = "{low}"\nversion'),
         Rule(['**/*.toml', '**/*.rc'], '"rustdesk.exe"', f'"{low}.exe"'),
         Rule(['**/*.rc'], 'RustDesk', app, optional=True),
         Rule(['**/*.rc'], 'rustdesk', low, optional=True),
