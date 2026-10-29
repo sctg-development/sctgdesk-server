@@ -72,13 +72,13 @@ jobs:
 
           # https://rustdesk.com/docs/en/dev/build/web/
           pushd flutter/web/v1/js
-          npm install yarn -g
-          npm install typescript -g
           npm install protoc -g
-          npm install ts-proto
-          # Only works with vite <= 2.8
-          npm install vite@2.8
-          yarn install && yarn build
+          # Its yarn.lock is a Yarn 3 lockfile (TypeScript 4.5, Vite 2.7 pinned). The preinstalled
+          # Yarn 1 ignores it and installs today's @types/node, which TypeScript 4 cannot parse.
+          curl -fsSL -o "$RUNNER_TEMP/yarn.cjs" https://repo.yarnpkg.com/3.8.7/packages/yarnpkg-cli/bin/yarn.js
+          export YARN_ENABLE_IMMUTABLE_INSTALLS=false YARN_ENABLE_TELEMETRY=0
+          node "$RUNNER_TEMP/yarn.cjs" install
+          node "$RUNNER_TEMP/yarn.cjs" build
           popd
 
           pushd flutter/web
