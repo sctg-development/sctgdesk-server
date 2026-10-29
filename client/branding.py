@@ -125,6 +125,13 @@ def rules_for(cfg, forced_api, local_build):
         Rule(['flutter/lib/desktop/pages/desktop_home_page.dart'], "contains('rustdesk')", f"contains('{low}')"),
         # Names
         Rule(['**/*.dart', '**/*.rs', '**/*.toml'], 'RustDesk', app),
+        # ... except the names that are shared with code we do not build: a symbol of a C library, the files of
+        # the drivers, the window that the TopMost DLL creates. Renaming them breaks the link or the feature.
+        Rule(['src/platform/windows.rs'], f'Delete{app}TestCertsW', 'DeleteRustDeskTestCertsW'),
+        Rule(['libs/virtual_display/dylib/src/win10/mod.rs'], f'{app}IddDriver', 'RustDeskIddDriver'),
+        Rule(['libs/remote_printer/src/lib.rs'], f'{app}PrinterDriver', 'RustDeskPrinterDriver'),
+        Rule(['src/privacy_mode/win_topmost_window.rs', 'libs/scrap/src/dxgi/mag.rs'],
+             f'{app}PrivacyWindow', 'RustDeskPrivacyWindow'),
         Rule(['**/*.toml'], '"rustdesk"', f'"{low}"'),
         # the package of Cargo.toml is renamed above: the lockfile has to follow, builds use --locked
         Rule(['Cargo.lock'], 'name = "rustdesk"\nversion', f'name = "{low}"\nversion'),
