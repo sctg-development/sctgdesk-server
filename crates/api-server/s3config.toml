@@ -15,6 +15,14 @@ AccessKey = "c324ead11faa0d87337c07ddc4a1129fab76188d"
 SecretKey = "GJurV55f/LD36kjZFpchZMj/uvgTqxHyFkBchUUa8KA="
 # The bucket of the S3 compatible storage
 Bucket = "aezoz24elapn"
+# A key below is either the object itself (sctgdesk-1.2.6.dmg), or contains {version} to designate the newest
+# version found in the bucket (sctgdesk-{version}.dmg): nothing has to be edited at each release.
+# The bucket is listed at most every five minutes.
+#
+# ListBucket is needed to find the newest version on Oracle Cloud, where Bucket above is the namespace and the keys
+# start with the real bucket. Leave it out for other S3 services.
+# ListBucket = "master"
+
 # The path of the S3 compatible storage containing the Windows 64-bit version
 Windows64Key = "master/sctgdesk-releases/sctgdesk-1.2.6-x86_64.exe"
 # The path of the S3 compatible storage containing the Windows 32-bit version

@@ -32,7 +32,26 @@ RustDesk clients (login, address books, heartbeat, system info, audit), the ones
 | `GET /api/software/download` | redirects to the download page |
 | `GET /api/software/version/server` | version of the server and of the latest client |
 
-The latest client version and the download page come from `s3config.toml` (see `crates/api-s3software`).
+The client download links, the latest client version and the download page come from `s3config.toml` (see
+`crates/api-s3software`).
+
+A key of that file (`Windows64Key`, `OSXKey`, `IOSKey`, ...) is either the object itself, or contains `{version}`:
+
+```toml
+Windows64Key = "master/sctgdesk-releases/sctgdesk-{version}-x86_64.exe"
+OSXKey       = "master/sctgdesk-releases/sctgdesk-{version}.dmg"
+IOSKey       = "master/sctgdesk-releases/sctgdesk-{version}.ipa"
+ListBucket   = "master"   # Oracle Cloud only, see below
+```
+
+The API then lists the bucket for the prefix before `{version}` and picks the key with the highest `x.y.z`: the
+whole key has to match, so `sctgdesk-{version}.dmg` does not pick `sctgdesk-1.4.0-web-basic.zip`, and `1.10.0` is
+higher than `1.9.3`. The answer is kept for five minutes. `GET /api/software/version/latest` reports the version
+found that way. A key without `{version}` works as before and does not call the bucket. If the bucket cannot be
+listed, the link answers 404 and the reason is in the log.
+
+On Oracle Cloud, `Bucket` is the namespace and the keys start with the real bucket (`master/...`): set
+`ListBucket` to that bucket, otherwise the listing goes to the wrong place and finds nothing.
 
 ## Where the code is
 
