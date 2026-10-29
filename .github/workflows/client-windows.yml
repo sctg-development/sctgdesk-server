@@ -28,7 +28,7 @@ on:
       - "client/patches/**"
       - "client/overlay/**"
 
-permissions:
+#permissions:
   # contents: read
 
 env:
