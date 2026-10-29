@@ -1,7 +1,7 @@
 {
   "name": "sctgdesk-api-server-webconsole",
   "private": false,
-  "version": "1.1.16-sctg.1",
+  "version": "1.1.16-sctg.2",
   "type": "module",
   "scripts": {
     "preview": "vite preview",
