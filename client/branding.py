@@ -102,8 +102,13 @@ def web_rules_for(cfg):
              "open('../../../../src/client.rs'"),
         Rule(['flutter/web/v1/js/gen_js_from_hbb.py'], "open('../../../Cargo.toml'",
              "open('../../../../Cargo.toml'"),
+        Rule(['flutter/web/v1/js/gen_js_from_hbb.py'], "glob.glob('../../../src/lang/*')",
+             "glob.glob('../../../../src/lang/*')"),
         Rule(['flutter/web/v1/js/ts_proto.py'], "os.getcwd(), '..', '..', '..', 'libs'",
              "os.getcwd(), '..', '..', '..', '..', 'libs'"),
+        # Our rule above leaves `port` and `roffset` of getrUriFromRs unread; tsc refuses it with these
+        Rule(['flutter/web/v1/js/tsconfig.json'], '"noUnusedLocals": true', '"noUnusedLocals": false'),
+        Rule(['flutter/web/v1/js/tsconfig.json'], '"noUnusedParameters": true', '"noUnusedParameters": false'),
         # The landing page asks our API server for the download links
         Rule(['flutter/web/client.html'], '__API_SERVER__', api),
         Rule(['flutter/lib/**/*.dart'], 'RustDesk', app),
