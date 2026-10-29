@@ -39,7 +39,7 @@ env:
 jobs:
   build-web:
     name: build the web client
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout the monorepo
         uses: actions/checkout@v4
