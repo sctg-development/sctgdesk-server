@@ -37,7 +37,7 @@ use rocket::{Request, Response};
 
 use s3software::extract_version;
 use s3software::get_software_download_page;
-use s3software::{get_s3_config_file, get_signed_release_url_with_config};
+use s3software::{get_latest_signed_release_url, get_s3_config_file};
 
 use state::{self};
 
@@ -1942,7 +1942,10 @@ async fn users_client(
 ///
 /// # Usage
 ///
-/// * it needs a valid S3 configuration file defined with the `S3_CONFIG_FILE` environment variable
+/// * it needs a valid S3 configuration file defined with the `S3CONFIG_FILE` environment variable
+/// * a key of this file that contains `{version}` designates the newest version found in the bucket,
+///   for example `master/sctgdesk-releases/sctgdesk-{version}-x86_64.exe`; a key without it is the
+///   object itself. `ListBucket` is needed to list an Oracle Cloud bucket (see `docs/api.md`)
 ///
 /// <pre>
 /// [s3config]<br>
@@ -1966,41 +1969,23 @@ async fn users_client(
 )]
 async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<()>> {
     log::debug!("software");
-    let config = get_s3_config_file()
+    let config = get_s3_config_file().await.map_err(|e| {
+        log::error!("cannot read the S3 configuration: {}", e);
+        status::NotFound(())
+    })?;
+    let template = match key {
+        "osx" => config.s3config.osxkey.clone(),
+        "w64" => config.s3config.windows64_key.clone(),
+        "ios" => config.s3config.ioskey.clone(),
+        _ => return Err(status::NotFound(())),
+    };
+    let url = get_latest_signed_release_url(config, template.as_str())
         .await
-        .map_err(|e| status::NotFound(Box::new(e)));
-
-    let config = config.unwrap();
-    match key {
-        "osx" => {
-            let key = config.clone().s3config.osxkey;
-            let url = get_signed_release_url_with_config(config, key.as_str())
-                .await
-                .map_err(|e| status::NotFound(Box::new(e)));
-            let url = url.unwrap();
-            let response = SoftwareResponse { url };
-            Ok(Json(response))
-        }
-        "w64" => {
-            let key = config.clone().s3config.windows64_key;
-            let url = get_signed_release_url_with_config(config, key.as_str())
-                .await
-                .map_err(|e| status::NotFound(Box::new(e)));
-            let url = url.unwrap();
-            let response = SoftwareResponse { url };
-            Ok(Json(response))
-        }
-        "ios" => {
-            let key = config.clone().s3config.ioskey;
-            let url = get_signed_release_url_with_config(config, key.as_str())
-                .await
-                .map_err(|e| status::NotFound(Box::new(e)));
-            let url = url.unwrap();
-            let response = SoftwareResponse { url };
-            Ok(Json(response))
-        }
-        _ => Err(status::NotFound(())),
-    }
+        .map_err(|e| {
+            log::error!("cannot get the download link of {}: {}", key, e);
+            status::NotFound(())
+        })?;
+    Ok(Json(SoftwareResponse { url }))
 }
 
 /// # Retrieve the server version
