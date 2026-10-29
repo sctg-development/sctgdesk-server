@@ -208,7 +208,7 @@ jobs:
 
       - name: Install Minio  MC
         run: |
-          curl -o mc.exe https://dl.min.io/client/mc/release/windows-amd64/mc.exe
+          curl -fsSL -o mc.exe https://dl.min.io/aistor/mc/release/windows-amd64/mc.exe
           .\mc.exe alias set s3release https://${{ secrets.AWS_S3_ENDPOINT }} "${{ secrets.AWS_ACCESS_KEY_ID }}" "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
         shell: powershell
         
@@ -276,7 +276,7 @@ jobs:
 
       - name: Download, install mc and copy file to S3
         run: |
-          # curl -o mc.exe https://dl.min.io/client/mc/release/windows-amd64/mc.exe
+          # curl -fsSL -o mc.exe https://dl.min.io/aistor/mc/release/windows-amd64/mc.exe
           # .\mc.exe alias set s3release https://${{ secrets.AWS_S3_ENDPOINT }} "${{ secrets.AWS_ACCESS_KEY_ID }}" "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           $command = ".\mc.exe cp .\SignOutput\${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ matrix.job.arch }}.exe s3release\${{ secrets.AWS_S3_BUCKET }}\${{ env.APP_NAME_LOW }}-releases\"
           Write-Host $command
@@ -450,7 +450,7 @@ jobs:
 
       - name: Download, install mc and copy file to S3
         run: |
-          curl -o mc https://dl.min.io/client/mc/release/darwin-amd64/mc
+          curl -fsSL -o mc https://dl.min.io/aistor/mc/release/darwin-amd64/mc
           chmod +x mc
           ./mc alias set s3release https://${{ secrets.AWS_S3_ENDPOINT }} "${{ secrets.AWS_ACCESS_KEY_ID }}" "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           echo "Copying ${{ env.APP_NAME_LOW }}-${{ env.VERSION }}.dmg to s3"
@@ -538,7 +538,7 @@ jobs:
 
       - name: Configure S3 client
         run: |
-          curl -o mc https://dl.min.io/client/mc/release/darwin-amd64/mc
+          curl -fsSL -o mc https://dl.min.io/aistor/mc/release/darwin-amd64/mc
           chmod +x mc
           ./mc alias set s3release https://${{ secrets.AWS_S3_ENDPOINT }} "${{ secrets.AWS_ACCESS_KEY_ID }}" "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
         shell: bash
@@ -1040,7 +1040,7 @@ jobs:
 
       - name: Download, install mc and copy deb file to S3
         run: |
-          curl -o mc https://dl.min.io/client/mc/release/linux-amd64/mc
+          curl -fsSL -o mc https://dl.min.io/aistor/mc/release/linux-amd64/mc
           chmod +x mc
           ./mc alias set s3release https://${{ secrets.AWS_S3_ENDPOINT }} "${{ secrets.AWS_ACCESS_KEY_ID }}" "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           echo "Copying ${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ matrix.job.arch }}.deb to s3"
@@ -1445,7 +1445,7 @@ jobs:
       - name: Download, install mc and copy orginal web files to S3
         run: |
           ls signed-apk/
-          curl -o mc https://dl.min.io/client/mc/release/linux-amd64/mc
+          curl -fsSL -o mc https://dl.min.io/aistor/mc/release/linux-amd64/mc
           chmod +x mc
           ./mc alias set s3release https://${{ secrets.AWS_S3_ENDPOINT }} "${{ secrets.AWS_ACCESS_KEY_ID }}" "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           ./mc cp 'signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk' 's3release/${{ secrets.AWS_S3_BUCKET }}/${{ env.APP_NAME_LOW }}-releases/${{ env.APP_NAME_LOW }}-${{ env.VERSION }}-${{ matrix.job.arch }}.apk'
