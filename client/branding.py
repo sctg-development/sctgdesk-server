@@ -16,8 +16,11 @@ Settings come from the environment (the CI passes them as secrets):
   MACOS_CODESIGN_IDENTITY  optional, "Name (TEAMID)": its TEAMID replaces the upstream team id
 
   branding.py [--root DIR] [--check] [--disable-api-server-forced] [--local-build]
+  branding.py [--root DIR] [--check] --web
 
 --check reports what would change and writes nothing.
+--web brands the web client tree (client/apply.sh DIR web): the rules of the desktop and mobile
+clients do not apply to it.
 """
 import argparse
 import os
@@ -79,6 +82,27 @@ def apply_rule(root, rule, check):
     return changed, applied
 
 
+def web_rules_for(cfg):
+    """The web client of upstream (flutter/web/v1/js) and our landing page (flutter/web/client.html)."""
+    app = cfg['APP_NAME']
+    api = f"{cfg['API_SERVER_PROTOCOL']}://{cfg['API_SERVER']}"
+    ts = 'flutter/web/v1/js/src/connection.ts'
+    return [
+        # Where the browser connects: hbbs and hbbr behind a TLS WebSocket proxy (ports 21120 and 21121)
+        Rule([ts], 'const PORT = 21116', 'const PORT = 21118'),
+        Rule([ts], 'uri = tmp[0] + ":" + (port + (isRelay ? roffset || 3 : 2));',
+             'uri = tmp[0] + ":" + (PORT + (isRelay ? 3 : 2));'),
+        Rule([ts], 'const SCHEMA = "ws://";', 'const SCHEMA = "wss://";'),
+        # Upstream's servers and key must not stay the defaults
+        Rule([ts], '  "rs-sg.rustdesk.com",\n  "rs-cn.rustdesk.com",\n  "rs-us.rustdesk.com",\n',
+             f'  "{cfg["RENDEZVOUS_SERVER"]}",\n'),
+        Rule([ts], 'OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=', cfg['RS_PUB_KEY']),
+        # The landing page asks our API server for the download links
+        Rule(['flutter/web/client.html'], '__API_SERVER__', api),
+        Rule(['flutter/lib/**/*.dart'], 'RustDesk', app),
+    ]
+
+
 def rules_for(cfg, forced_api, local_build):
     app, low = cfg['APP_NAME'], cfg['APP_NAME'].lower()
     org = cfg['ORG_NAME']
@@ -137,6 +161,7 @@ def main():
     parser.add_argument('--disable-api-server-forced', action='store_true',
                         help='let users choose their API server instead of forcing ours')
     parser.add_argument('--local-build', action='store_true', help='also rename the Dart bridge class')
+    parser.add_argument('--web', action='store_true', help='brand the web client tree instead')
     args = parser.parse_args()
 
     cfg = {k: env(k) for k in ('APP_NAME', 'ORG_NAME', 'RENDEZVOUS_SERVER', 'RS_PUB_KEY', 'API_SERVER')}
@@ -146,7 +171,9 @@ def main():
         sys.exit(f'branding: {root} does not look like a RustDesk checkout')
 
     misses = []
-    for rule in rules_for(cfg, not args.disable_api_server_forced, args.local_build):
+    rules = (web_rules_for(cfg) if args.web
+             else rules_for(cfg, not args.disable_api_server_forced, args.local_build))
+    for rule in rules:
         changed, applied = apply_rule(root, rule, args.check)
         status = f'{changed} file(s)' if changed else ('already applied' if applied else 'NO MATCH')
         print(f'{status:>16}  {rule.old[:50]!r} in {rule.files[0]}{" ..." if len(rule.files) > 1 else ""}')
@@ -154,10 +181,11 @@ def main():
             misses.append(rule)
 
     # Nothing of upstream's identity may be left in the places that decide where we connect.
-    config = (root / 'libs/hbb_common/src/config.rs')
-    leaks = [v for v in (UPSTREAM_RENDEZVOUS, UPSTREAM_KEY) if config.is_file() and v in read(config)]
-    if leaks and not args.check:
-        misses.append(Rule(['libs/hbb_common/src/config.rs'], 'upstream server or key still present', ''))
+    config = root / ('flutter/web/v1/js/src/connection.ts' if args.web else 'libs/hbb_common/src/config.rs')
+    leaked = [v for v in (UPSTREAM_RENDEZVOUS, UPSTREAM_KEY, 'rs-sg.rustdesk.com', 'rs-cn.rustdesk.com',
+                          'rs-us.rustdesk.com') if config.is_file() and v in read(config)]
+    if leaked and not args.check:
+        misses.append(Rule([str(config.relative_to(root))], 'upstream server or key still present', ''))
 
     if misses:
         print(f'\nbranding: {len(misses)} rule(s) matched nothing. The upstream layout changed; '
