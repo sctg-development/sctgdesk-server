@@ -10,6 +10,20 @@
     <title>Client download</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        :root {
+            --ink: #f0e9e9;
+            --icon: clamp(44px, calc((100vw - 120px) / 4), 84px);
+            /* the two lines of a fan make this angle between them: each one is half of it off the vertical */
+            --fan-angle: 120deg;
+            /* how far a child is from the icon, and how big it is, compared with an icon of the row */
+            --reach-ratio: 1.3;
+            --child-ratio: 0.95;
+            --reach: calc(var(--icon) * var(--reach-ratio));
+            --child: calc(var(--icon) * var(--child-ratio));
+            --gap: 6px;
+            --speed: 0.38s;
+        }
+
         body {
             background-color: black;
             display: flex;
@@ -31,20 +45,131 @@
             max-width: 140px;
         }
 
-        .logo-sub {
-            width: 60%;
-            max-width: 84px;
-            /* 60% de 140px */
-            padding: 10px;
+        .row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
         }
 
-        @media (min-width: 600px) {
-            .logo-main {
-                width: 140px;
-            }
+        /* an icon of the row: a link, or a button that opens a fan */
+        .icon {
+            display: block;
+            padding: 10px;
+            border: 0;
+            background: none;
+            cursor: pointer;
+            line-height: 0;
+            transition: transform 0.2s ease;
+        }
 
-            .logo-sub {
-                width: 84px;
+        .icon img {
+            width: var(--icon);
+            height: auto;
+        }
+
+        .icon:hover,
+        .group.open>.icon {
+            transform: scale(1.06);
+        }
+
+        a:focus-visible,
+        button:focus-visible {
+            outline: 1px solid var(--ink);
+            outline-offset: 4px;
+            border-radius: 6px;
+        }
+
+        /* Windows and Apple: the icon and, under it, the fan */
+        .group {
+            position: relative;
+        }
+
+        /* the origin of the fan: the middle of the bottom edge of the icon */
+        .fan {
+            position: absolute;
+            left: 50%;
+            top: calc(100% - 10px);
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            --k: 1;
+            --half: calc(var(--fan-angle) / 2);
+            --r: calc(var(--reach) * var(--k));
+            --size: calc(var(--child) * var(--k));
+        }
+
+        .group.open .fan {
+            pointer-events: auto;
+            --show: 1;
+        }
+
+        /* a thin line from the icon to a child, drawn from the icon outwards */
+        .line {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 1px;
+            /* ends next to the drawing of the child, which fills about 60% of its box */
+            width: calc(var(--r) - var(--size) * 0.36 - var(--gap) * 2);
+            background: var(--ink);
+            opacity: 0.55;
+            transform-origin: 0 50%;
+            transform: rotate(var(--turn)) translateX(var(--gap)) scaleX(var(--show, 0));
+            transition: transform var(--speed) ease;
+        }
+
+        .line.left {
+            --turn: calc(90deg + var(--half));
+        }
+
+        .line.right {
+            --turn: calc(90deg - var(--half));
+        }
+
+        .child {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: var(--size);
+            line-height: 0;
+            opacity: var(--show, 0);
+            transform: translate(-50%, -50%) translate(calc(var(--dx) * var(--show, 0)), calc(var(--dy) * var(--show, 0))) scale(calc(0.4 + 0.6 * var(--show, 0)));
+            transition: transform var(--speed) cubic-bezier(.2, .8, .2, 1), opacity var(--speed) ease;
+        }
+
+        .child.left {
+            --dx: calc(var(--r) * -1 * sin(var(--half)));
+            --dy: calc(var(--r) * cos(var(--half)));
+        }
+
+        .child.right {
+            --dx: calc(var(--r) * sin(var(--half)));
+            --dy: calc(var(--r) * cos(var(--half)));
+        }
+
+        .child img {
+            display: block;
+            width: 100%;
+            height: auto;
+            transition: transform 0.2s ease;
+        }
+
+        .child:hover img {
+            transform: scale(1.08);
+        }
+
+        /* the link of a child is not known yet, or the server has none: shown, not usable */
+        .child[aria-disabled="true"] {
+            opacity: calc(var(--show, 0) * 0.25);
+            pointer-events: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .line,
+            .child,
+            .icon {
+                transition: none;
             }
         }
     </style>
@@ -52,35 +177,91 @@
 
 <body>
     <div class="logo-container">
-        <img class="logo-main" src="images/logo.svg" alt="Logo principal">
-        <div>
-            <a id="windows64"><img class="logo-sub" src="images/windows.svg" alt="Logo Windows"></a>
-            <a id="osx"><img class="logo-sub" src="images/apple.svg" alt="Logo Apple"></a>
-            <a id="ios"><img class="logo-sub" src="images/ios.svg" alt="Logo iOS"></a>
-            <a id="globe" href="/sctgdesk.html"><img class="logo-sub" src="images/globe.svg" alt="Logo globe"></a>
+        <img class="logo-main" src="images/logo.svg" alt="">
+        <div class="row">
+            <div class="group" id="windows">
+                <button class="icon" type="button" aria-label="Windows" aria-expanded="false"><img src="images/windows.svg" alt=""></button>
+                <div class="fan">
+                    <i class="line left"></i>
+                    <i class="line right"></i>
+                    <a class="child left" id="w32" aria-label="Windows 32 bits" aria-disabled="true"><img src="images/windows-32.svg" alt=""></a>
+                    <a class="child right" id="w64" aria-label="Windows 64 bits" aria-disabled="true"><img src="images/windows-64.svg" alt=""></a>
+                </div>
+            </div>
+            <div class="group" id="apple">
+                <button class="icon" type="button" aria-label="Mac" aria-expanded="false"><img src="images/apple.svg" alt=""></button>
+                <div class="fan">
+                    <i class="line left"></i>
+                    <i class="line right"></i>
+                    <a class="child left" id="osx" aria-label="Mac Intel" aria-disabled="true"><img src="images/apple-intel.svg" alt=""></a>
+                    <a class="child right" id="osx-arm64" aria-label="Mac Apple Silicon" aria-disabled="true"><img src="images/apple-silicon.svg" alt=""></a>
+                </div>
+            </div>
+            <a class="icon" id="ios" aria-label="iOS" aria-disabled="true"><img src="images/ios.svg" alt=""></a>
+            <a class="icon" id="globe" aria-label="Web" href="/sctgdesk.html"><img src="images/globe.svg" alt=""></a>
         </div>
     </div>
 </body>
 <script>
-    window.onload = function () {
-        fetch('__API_SERVER__/api/software/client-download-link/w64')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('windows64').href = data.url;
-            });
+    (function () {
+        var API = '__API_SERVER__/api/software/client-download-link/';
+        var groups = Array.prototype.slice.call(document.querySelectorAll('.group'));
 
-        fetch('__API_SERVER__/api/software/client-download-link/osx')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('osx').href = data.url;
-            });
+        // Link of each download, asked to the API server. A download that has no link stays dimmed.
+        ['w64', 'w32', 'osx', 'osx-arm64', 'ios'].forEach(function (key) {
+            var link = document.getElementById(key);
+            fetch(API + key)
+                .then(function (response) {
+                    if (!response.ok) throw new Error(response.status);
+                    return response.json();
+                })
+                .then(function (data) {
+                    link.href = data.url;
+                    link.removeAttribute('aria-disabled');
+                })
+                .catch(function () { });
+        });
 
-        fetch('__API_SERVER__/api/software/client-download-link/ios')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('ios').href = data.url;
+        // The fan is scaled down when the screen is too narrow for its two children.
+        function fit(group) {
+            var root = getComputedStyle(document.documentElement);
+            var number = function (name, fallback) { return parseFloat(root.getPropertyValue(name)) || fallback; };
+            var icon = group.querySelector('.icon img').getBoundingClientRect().width;
+            var half = number('--fan-angle', 120) / 2 * Math.PI / 180;
+            var need = icon * number('--reach-ratio', 1.3) * Math.sin(half) + icon * number('--child-ratio', 0.95) / 2 + 8;
+            var box = group.getBoundingClientRect();
+            var middle = box.left + box.width / 2;
+            var room = Math.min(middle, document.documentElement.clientWidth - middle);
+            group.querySelector('.fan').style.setProperty('--k', Math.min(1, Math.max(0.5, room / need)));
+        }
+
+        function toggle(group, open) {
+            groups.forEach(function (other) {
+                var isOpen = other === group && open;
+                other.classList.toggle('open', isOpen);
+                other.querySelector('button').setAttribute('aria-expanded', isOpen);
             });
-    };
+            if (open) fit(group);
+        }
+
+        groups.forEach(function (group) {
+            group.querySelector('button').addEventListener('click', function (event) {
+                event.stopPropagation();
+                toggle(group, !group.classList.contains('open'));
+            });
+        });
+        document.addEventListener('click', function () { toggle(null, false); });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') toggle(null, false);
+        });
+        window.addEventListener('resize', function () {
+            groups.forEach(function (group) { if (group.classList.contains('open')) fit(group); });
+        });
+
+        // page.html#windows or #apple opens a fan: a link to share, and what the tests use
+        var wanted = document.getElementById(location.hash.slice(1));
+        if (wanted && wanted.classList.contains('group')) toggle(wanted, true);
+    })();
 </script>
 
 </html>

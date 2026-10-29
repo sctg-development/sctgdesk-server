@@ -1938,7 +1938,8 @@ async fn users_client(
 ///
 /// # Arguments
 ///
-/// * `key` - The key to the software download link, it can be `osx`, `w64` or `ios`
+/// * `key` - The key to the software download link: `w64` and `w32` (Windows 64 and 32 bits), `osx` (Mac with an
+///   Intel processor), `osx-arm64` (Mac with Apple Silicon) or `ios`
 ///
 /// # Usage
 ///
@@ -1975,7 +1976,9 @@ async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<
     })?;
     let template = match key {
         "osx" => config.s3config.osxkey.clone(),
+        "osx-arm64" => config.s3config.osxarm64_key.clone(),
         "w64" => config.s3config.windows64_key.clone(),
+        "w32" => config.s3config.windows32_key.clone(),
         "ios" => config.s3config.ioskey.clone(),
         _ => return Err(status::NotFound(())),
     };

@@ -47,7 +47,11 @@ cd /tmp/web && python3 branding.py --web
 ```
 
 `web-overlay/flutter/web/` holds our own files: `client.html`, the landing page with the download links of the
-desktop clients (it asks `API_SERVER` for them), and its `images/`. The build renames it to `index.html`; the web
+desktop clients (it asks `API_SERVER` for them), and its `images/`. The page has no text: a click on the Windows or the
+Apple icon opens a fan under it, two thin lines at 120° (`--fan-angle`) leading to two icons, 32 and 64 bits for
+Windows, Intel and Apple Silicon for the Mac (a bare chip, and a chip with the apple). The links come from
+`/api/software/client-download-link/{w32,w64,osx,osx-arm64}`; an icon without a link stays dimmed. `page#windows` and
+`page#apple` open a fan on load. The build renames it to `index.html`; the web
 client itself becomes `sctgdesk.html`. `branding.py --web` points the browser at our servers (WebSocket over TLS,
 ports 21120 and 21121 of a reverse proxy in front of `hbbs` 21118 and `hbbr` 21119), replaces the default servers and
 key of upstream, and fails if one is left. The workflow is `.github/workflows/client-web.yml`.
