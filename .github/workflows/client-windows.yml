@@ -29,7 +29,7 @@ on:
       - "client/overlay/**"
 
 permissions:
-  contents: read
+  # contents: read
 
 env:
   # the values of flutter-build.yml of upstream 1.5.0
