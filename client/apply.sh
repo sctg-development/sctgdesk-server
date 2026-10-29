@@ -6,7 +6,7 @@
 # Then, from DIR: ./build-sctg.py --flutter ...   (brands the tree, then runs upstream's build.py)
 #
 # `web` prepares the web client instead, from UPSTREAM_TAG_WEB (upstream dropped its sources after
-# 1.4.0), with web-overlay/ and without patches. Brand it with: python3 branding.py --web
+# 1.4.0), with web-overlay/ and without patches (hbb_common is needed for its .proto files). Brand it with: python3 branding.py --web
 # The upstream tree is never committed here: only patches/ and overlay/ are.
 set -euo pipefail
 
@@ -15,7 +15,7 @@ dest="${1:-$here/work}"
 flavor="${2:-desktop}"
 case "$flavor" in
     desktop) tag_file=UPSTREAM_TAG; overlay=overlay; patches=1; submodules=(--recurse-submodules --shallow-submodules) ;;
-    web)     tag_file=UPSTREAM_TAG_WEB; overlay=web-overlay; patches=0; submodules=() ;;
+    web)     tag_file=UPSTREAM_TAG_WEB; overlay=web-overlay; patches=0; submodules=(--recurse-submodules --shallow-submodules) ;;
     *) echo "unknown flavor '$flavor' (desktop or web)" >&2; exit 1 ;;
 esac
 tag="$(tr -d '[:space:]' < "$here/$tag_file")"
