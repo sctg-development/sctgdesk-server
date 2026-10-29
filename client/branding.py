@@ -97,6 +97,13 @@ def web_rules_for(cfg):
         Rule([ts], '  "rs-sg.rustdesk.com",\n  "rs-cn.rustdesk.com",\n  "rs-us.rustdesk.com",\n',
              f'  "{cfg["RENDEZVOUS_SERVER"]}",\n'),
         Rule([ts], 'OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=', cfg['RS_PUB_KEY']),
+        # Upstream's generators expect to run in flutter/web/js; the sources are in flutter/web/v1/js
+        Rule(['flutter/web/v1/js/gen_js_from_hbb.py'], "open('../../../src/client.rs'",
+             "open('../../../../src/client.rs'"),
+        Rule(['flutter/web/v1/js/gen_js_from_hbb.py'], "open('../../../Cargo.toml'",
+             "open('../../../../Cargo.toml'"),
+        Rule(['flutter/web/v1/js/ts_proto.py'], "os.getcwd(), '..', '..', '..', 'libs'",
+             "os.getcwd(), '..', '..', '..', '..', 'libs'"),
         # The landing page asks our API server for the download links
         Rule(['flutter/web/client.html'], '__API_SERVER__', api),
         Rule(['flutter/lib/**/*.dart'], 'RustDesk', app),

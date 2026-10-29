@@ -68,7 +68,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y wget npm
+          sudo apt-get install -y wget npm python-is-python3
 
           # https://rustdesk.com/docs/en/dev/build/web/
           pushd flutter/web/v1/js
