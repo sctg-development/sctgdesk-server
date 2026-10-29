@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<!--
+    Copyright (c) 2024, Ronan Le Meillat
+    All rights reserved.
+-->
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Client download</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo-main {
+            width: 90%;
+            max-width: 140px;
+        }
+
+        .logo-sub {
+            width: 60%;
+            max-width: 84px;
+            /* 60% de 140px */
+            padding: 10px;
+        }
+
+        @media (min-width: 600px) {
+            .logo-main {
+                width: 140px;
+            }
+
+            .logo-sub {
+                width: 84px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="logo-container">
+        <img class="logo-main" src="images/logo.svg" alt="Logo principal">
+        <div>
+            <a id="windows64"><img class="logo-sub" src="images/windows.svg" alt="Logo Windows"></a>
+            <a id="osx"><img class="logo-sub" src="images/apple.svg" alt="Logo Apple"></a>
+            <a id="ios"><img class="logo-sub" src="images/ios.svg" alt="Logo iOS"></a>
+            <a id="globe" href="/sctgdesk.html"><img class="logo-sub" src="images/globe.svg" alt="Logo globe"></a>
+        </div>
+    </div>
+</body>
+<script>
+    window.onload = function () {
+        fetch('__API_SERVER__/api/software/client-download-link/w64')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('windows64').href = data.url;
+            });
+
+        fetch('__API_SERVER__/api/software/client-download-link/osx')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('osx').href = data.url;
+            });
+
+        fetch('__API_SERVER__/api/software/client-download-link/ios')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('ios').href = data.url;
+            });
+    };
+</script>
+
+</html>

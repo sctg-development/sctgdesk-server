@@ -1,0 +1,142 @@
+name: Client web build
+
+# The web client and its landing page (client.html, with the download links of the desktop clients).
+# Upstream dropped the sources of its web client after 1.4.0, so this one is built from
+# client/UPSTREAM_TAG_WEB with client/web-overlay (see client/README.md).
+#
+# - On a pull request touching the web build it only builds, to check that it still works.
+# - By hand it also copies the archives to S3.
+# - Cloudflare Pages is only updated by hand and when `publish` is ticked: it replaces the live page.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to Cloudflare Pages (replaces the live page)"
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - ".github/workflows/client-web.yml"
+      - "client/UPSTREAM_TAG_WEB"
+      - "client/web-overlay/**"
+      - "client/branding.py"
+      - "client/apply.sh"
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  FLUTTER_VERSION: "3.24.5"
+  RELEASE_NAME: web-basic
+  APP_NAME: ${{ secrets.APP_NAME }}
+  APP_NAME_LOW: ${{ secrets.APP_NAME_LOW }}
+  ORG_NAME: ${{ secrets.ORG_NAME }}
+  RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
+  RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
+  API_SERVER: ${{ secrets.API_SERVER }}
+
+jobs:
+  build-web:
+    name: build the web client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the monorepo
+        uses: actions/checkout@v4
+        with:
+          path: _mono
+
+      - name: Prepare the web tree (upstream tag + web overlay)
+        shell: bash
+        run: |
+          _mono/client/apply.sh _client web
+          echo "VERSION=$(tr -d '[:space:]' < _mono/client/UPSTREAM_TAG_WEB)" >> "$GITHUB_ENV"
+          shopt -s dotglob
+          mv _client/* .
+
+      - name: Brand the tree
+        run: python3 branding.py --web
+
+      - name: Install flutter
+        uses: subosito/flutter-action@v2.12.0
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Build the web client
+        shell: bash
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y wget npm
+
+          # https://rustdesk.com/docs/en/dev/build/web/
+          pushd flutter/web/v1/js
+          npm install yarn -g
+          npm install typescript -g
+          npm install protoc -g
+          npm install ts-proto
+          # Only works with vite <= 2.8
+          npm install vite@2.8
+          yarn install && yarn build
+          popd
+
+          pushd flutter/web
+          wget https://github.com/rustdesk/doc.rustdesk.com/releases/download/console/web_deps.tar.gz
+          tar xzf web_deps.tar.gz
+          popd
+
+          cd flutter
+          flutter build web --release --source-maps
+          flutter build web --source-maps --profile --dart-define=Dart2jsOptimization=O0 --dart2js-optimization=O1 -o build/web-debug
+          cd build
+
+          # the landing page becomes index.html, the web client is sctgdesk.html
+          for dir in web web-debug; do
+            mv "$dir/index.html" "$dir/sctgdesk.html"
+            mv "$dir/client.html" "$dir/index.html"
+          done
+          dir_name="${APP_NAME_LOW}-${VERSION}-${RELEASE_NAME}"
+          mv web "$dir_name"
+          mv web-debug "${dir_name}-debug"
+          for d in "$dir_name" "${dir_name}-debug"; do
+            tar czf "$d.tar.gz" "$d"
+            (cd "$d" && zip -q -9 -r "../$d.zip" .)
+            sha256sum "$d.tar.gz"
+          done
+          echo "WEB_DIR=$dir_name" >> "$GITHUB_ENV"
+
+      # The archives embed the address of the rendezvous server and this repository is public:
+      # they go to S3 only, never to a workflow artifact or a release.
+      - name: Copy the archives to S3
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          cd flutter/build
+          curl -fsSL -o mc https://dl.min.io/aistor/mc/release/linux-amd64/mc
+          chmod +x mc
+          ./mc alias set s3release "https://${{ secrets.AWS_S3_ENDPOINT }}" "${{ secrets.AWS_ACCESS_KEY_ID }}" "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          for f in "${WEB_DIR}.tar.gz" "${WEB_DIR}.zip"; do
+            ./mc cp "$f" "s3release/${{ secrets.AWS_S3_BUCKET }}/${APP_NAME_LOW}-releases/$f"
+          done
+
+      - name: Publish to Cloudflare Pages
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        uses: sctg-development/pages-action-without-url@main
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+          directory: flutter/build/${{ env.WEB_DIR }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the debug build to Cloudflare Pages
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        uses: sctg-development/pages-action-without-url@main
+        continue-on-error: true
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}-debug
+          directory: flutter/build/${{ env.WEB_DIR }}-debug
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
