@@ -31,6 +31,11 @@ on:
 permissions:
   contents: read
 
+# a push to the pull request replaces the build that is running: it takes about forty minutes
+concurrency:
+  group: client-windows-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   # the values of flutter-build.yml of upstream 1.5.0
   RUST_VERSION: "1.75"
@@ -59,6 +64,11 @@ jobs:
 
   bridge:
     name: flutter-rust-bridge
+    # bridge.yml asks for `actions: read` (added by a CodeQL suggestion): a called workflow cannot ask for
+    # more than its caller grants, and the workflow above only grants `contents: read`
+    permissions:
+      contents: read
+      actions: read
     uses: ./.github/workflows/bridge.yml
 
   windows-x64:
