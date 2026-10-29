@@ -1,3 +1,10 @@
+rustdesk-server (1.1.16-sctg.2) UNRELEASED; urgency=medium
+
+  * fix: a request with a malformed bearer token no longer aborts hbbs
+  * fix: --logged-in-only answers the client when the API server cannot be reached, and follows --api-port
+  * the release profile unwinds on panic instead of aborting
+  * end-to-end tests of hbbs in the CI
+
 rustdesk-server (1.1.16-sctg.1) UNRELEASED; urgency=medium
 
   * first release of the monorepo (server, API server and web console, client overlay)
