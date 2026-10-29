@@ -37,7 +37,8 @@ The client needs the upstream toolchain (Flutter, vcpkg, ...): see upstream's do
 
 ## Web client and landing page
 
-Upstream removed the sources of its web client (`flutter/web/v1/js`) after 1.4.0, so the web client is built
+Upstream removed the sources of its web client (kept in `flutter/web/v1`, which `apply.sh web` moves up to
+`flutter/web` where its tooling and `flutter build web` expect them) after 1.4.0, so the web client is built
 from `UPSTREAM_TAG_WEB` (`1.4.0`), not from `UPSTREAM_TAG`. It does not follow upstream any more.
 
 ```sh

@@ -71,7 +71,7 @@ jobs:
           sudo apt-get install -y wget npm python-is-python3
 
           # https://rustdesk.com/docs/en/dev/build/web/
-          pushd flutter/web/v1/js
+          pushd flutter/web/js
           npm install protoc -g
           # Its yarn.lock is a Yarn 3 lockfile (TypeScript 4.5, Vite 2.7 pinned). The preinstalled
           # Yarn 1 ignores it and installs today's @types/node, which TypeScript 4 cannot parse.
