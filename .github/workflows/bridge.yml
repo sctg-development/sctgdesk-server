@@ -7,6 +7,10 @@ name: Build flutter-rust-bridge
 on:
   workflow_call:
 
+permissions:
+  contents: read
+  actions: read
+
 env:
   CARGO_EXPAND_VERSION: "1.0.95"
   FLUTTER_RUST_BRIDGE_VERSION: "1.80.1"
