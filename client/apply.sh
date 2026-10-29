@@ -29,6 +29,12 @@ if [ "$patches" = 1 ] && compgen -G "$here/patches/*.patch" > /dev/null; then
     git -C "$dest" -c user.name=sctg -c user.email=sctg@localhost am --quiet "$here"/patches/*.patch
 fi
 
+# Upstream keeps the web client in flutter/web/v1, but its tooling (and `flutter build web`, which needs
+# web/index.html) expects it in flutter/web: move it up.
+if [ "$flavor" = web ]; then
+    (cd "$dest/flutter/web" && shopt -s dotglob && mv v1/* . && rmdir v1)
+fi
+
 # Files that we add or replace as is (logos, icons).
 cp -R "$here/$overlay/." "$dest/"
 cp "$here/branding.py" "$here/build-sctg.py" "$dest/"

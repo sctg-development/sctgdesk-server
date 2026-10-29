@@ -83,10 +83,10 @@ def apply_rule(root, rule, check):
 
 
 def web_rules_for(cfg):
-    """The web client of upstream (flutter/web/v1/js) and our landing page (flutter/web/client.html)."""
+    """The web client of upstream (flutter/web/js, see apply.sh) and our landing page (flutter/web/client.html)."""
     app = cfg['APP_NAME']
     api = f"{cfg['API_SERVER_PROTOCOL']}://{cfg['API_SERVER']}"
-    ts = 'flutter/web/v1/js/src/connection.ts'
+    ts = 'flutter/web/js/src/connection.ts'
     return [
         # Where the browser connects: hbbs and hbbr behind a TLS WebSocket proxy (ports 21120 and 21121)
         Rule([ts], 'const PORT = 21116', 'const PORT = 21118'),
@@ -97,13 +97,9 @@ def web_rules_for(cfg):
         Rule([ts], '  "rs-sg.rustdesk.com",\n  "rs-cn.rustdesk.com",\n  "rs-us.rustdesk.com",\n',
              f'  "{cfg["RENDEZVOUS_SERVER"]}",\n'),
         Rule([ts], 'OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=', cfg['RS_PUB_KEY']),
-        # Upstream's generators expect to run in flutter/web/js; the sources are in flutter/web/v1/js
-        Rule(['flutter/web/v1/js/gen_js_from_hbb.py'], "open('../../../src/client.rs'",
-             "open('../../../../src/client.rs'"),
-        Rule(['flutter/web/v1/js/gen_js_from_hbb.py'], "open('../../../Cargo.toml'",
-             "open('../../../../Cargo.toml'"),
-        Rule(['flutter/web/v1/js/ts_proto.py'], "os.getcwd(), '..', '..', '..', 'libs'",
-             "os.getcwd(), '..', '..', '..', '..', 'libs'"),
+        # Our rule above leaves `port` and `roffset` of getrUriFromRs unread; tsc refuses it with these
+        Rule(['flutter/web/js/tsconfig.json'], '"noUnusedLocals": true', '"noUnusedLocals": false'),
+        Rule(['flutter/web/js/tsconfig.json'], '"noUnusedParameters": true', '"noUnusedParameters": false'),
         # The landing page asks our API server for the download links
         Rule(['flutter/web/client.html'], '__API_SERVER__', api),
         Rule(['flutter/lib/**/*.dart'], 'RustDesk', app),
@@ -188,7 +184,7 @@ def main():
             misses.append(rule)
 
     # Nothing of upstream's identity may be left in the places that decide where we connect.
-    config = root / ('flutter/web/v1/js/src/connection.ts' if args.web else 'libs/hbb_common/src/config.rs')
+    config = root / ('flutter/web/js/src/connection.ts' if args.web else 'libs/hbb_common/src/config.rs')
     leaked = [v for v in (UPSTREAM_RENDEZVOUS, UPSTREAM_KEY, 'rs-sg.rustdesk.com', 'rs-cn.rustdesk.com',
                           'rs-us.rustdesk.com') if config.is_file() and v in read(config)]
     if leaked and not args.check:
