@@ -120,6 +120,27 @@ jobs:
             ./mc cp "$f" "s3release/${{ secrets.AWS_S3_BUCKET }}/${APP_NAME_LOW}-releases/$f"
           done
 
+      # The custom domain of a Pages project serves its production branch only: a deployment to any other
+      # branch is a preview. The tree here is upstream's clone, in a detached HEAD, so without a branch the
+      # action deploys to "HEAD" and the live page does not change. Ask the project which branch is its own.
+      - name: Find the production branch of the Pages projects
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        shell: bash
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_PROJECT: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+        run: |
+          production_branch() {
+            curl -fsS -H "Authorization: Bearer $CF_TOKEN" \
+              "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT/pages/projects/$1" | jq -er '.result.production_branch'
+          }
+          main=$(production_branch "$CF_PROJECT")      # must exist: a failure stops here
+          debug=$(production_branch "$CF_PROJECT-debug" || true)
+          echo "production branch: $main (debug project: ${debug:-none})"
+          echo "PAGES_BRANCH=$main" >> "$GITHUB_ENV"
+          echo "PAGES_BRANCH_DEBUG=$debug" >> "$GITHUB_ENV"
+
       - name: Publish to Cloudflare Pages
         if: github.event_name == 'workflow_dispatch' && inputs.publish
         uses: sctg-development/pages-action-without-url@main
@@ -128,7 +149,22 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
           directory: flutter/build/${{ env.WEB_DIR }}
+          branch: ${{ env.PAGES_BRANCH }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      # Fail loudly if it still was not a production deployment, instead of leaving the old page up.
+      - name: Check that the live page was replaced
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        shell: bash
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_PROJECT: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+        run: |
+          environment=$(curl -fsS -H "Authorization: Bearer $CF_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT/pages/projects/$CF_PROJECT" | jq -er '.result.latest_deployment.environment')
+          echo "latest deployment: $environment"
+          [ "$environment" = production ] || { echo "::error::the deployment is a $environment one, the live page did not change"; exit 1; }
 
       - name: Publish the debug build to Cloudflare Pages
         if: github.event_name == 'workflow_dispatch' && inputs.publish
@@ -139,4 +175,5 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}-debug
           directory: flutter/build/${{ env.WEB_DIR }}-debug
+          branch: ${{ env.PAGES_BRANCH_DEBUG }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
