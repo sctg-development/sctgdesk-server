@@ -1,0 +1,285 @@
+name: Client build (Windows)
+
+# The Windows 64 bit client of the SCTGDesk brand: upstream RustDesk at client/UPSTREAM_TAG, our patches,
+# overlay and branding (client/README.md), built the way upstream builds its own (flutter-build.yml of the
+# same tag: job build-for-windows-flutter, x86_64), then signed and packed in one portable .exe.
+#
+# - On a pull request touching this build it builds only.
+# - By hand it also copies the .exe to S3, as `<app>-<version>-x86_64.exe` next to the other clients: the
+#   download link of the landing page follows (api-s3software, a `{version}` key).
+# The result is never a workflow artifact nor a release: it embeds the address of the rendezvous server and
+# this repository is public.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Copy the .exe to S3 (it becomes the download of the landing page)"
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - ".github/workflows/client-windows.yml"
+      - ".github/workflows/bridge.yml"
+      - ".github/workflows/third-party-RustDeskTempTopMostWindow.yml"
+      - "client/branding.py"
+      - "client/build-sctg.py"
+      - "client/apply.sh"
+      - "client/UPSTREAM_TAG"
+      - "client/patches/**"
+      - "client/overlay/**"
+
+permissions:
+  contents: read
+
+env:
+  # the values of flutter-build.yml of upstream 1.5.0
+  RUST_VERSION: "1.75"
+  LLVM_VERSION: "15.0.6"
+  FLUTTER_VERSION: "3.24.5"
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+  VCPKG_COMMIT_ID: "9e593bb18ea69cc5095e012465dcd675a822ed0d"
+  # the brand (client/branding.py)
+  APP_NAME: ${{ secrets.APP_NAME }}
+  APP_NAME_LOW: ${{ secrets.APP_NAME_LOW }}
+  ORG_NAME: ${{ secrets.ORG_NAME }}
+  RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
+  RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
+  API_SERVER: ${{ secrets.API_SERVER }}
+
+jobs:
+  topmost:
+    name: RustDeskTempTopMostWindow
+    uses: ./.github/workflows/third-party-RustDeskTempTopMostWindow.yml
+    with:
+      upload-artifact: true
+      target: windows-2022
+      configuration: Release
+      platform: x64
+      target_version: Windows10
+
+  bridge:
+    name: flutter-rust-bridge
+    uses: ./.github/workflows/bridge.yml
+
+  windows-x64:
+    name: windows x86_64
+    needs: [topmost, bridge]
+    runs-on: windows-2022
+    steps:
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Checkout the monorepo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          path: _mono
+
+      - name: Prepare the client tree (upstream tag + patches + overlay)
+        shell: bash
+        run: |
+          git config --global core.longpaths true
+          echo "VERSION=$(tr -d '[:space:]' < _mono/client/UPSTREAM_TAG)" >> "$GITHUB_ENV"
+          _mono/client/apply.sh _client
+          shopt -s dotglob
+          mv _client/* .
+          rm -rf _client _mono
+
+      - name: Restore bridge files
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: bridge-artifact
+          path: ./
+
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@ebc0426251bc40c7cd31162802432c68818ab8f0 # v2.0.9
+        with:
+          version: ${{ env.LLVM_VERSION }}
+
+      - name: Install flutter
+        uses: subosito/flutter-action@2783a3f08e1baf891508463f8c6653c258246225 # v2.12.0
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          architecture: x64
+
+      # https://github.com/flutter/flutter/issues/155685
+      - name: Replace engine with rustdesk custom flutter engine
+        run: |
+          flutter doctor -v
+          flutter precache --windows
+          Invoke-WebRequest -Uri https://github.com/rustdesk/engine/releases/download/main/windows-x64-release.zip -OutFile windows-x64-release.zip
+          Expand-Archive -Path windows-x64-release.zip -DestinationPath windows-x64-release
+          mv -Force windows-x64-release/*  C:/hostedtoolcache/windows/flutter/stable-${{ env.FLUTTER_VERSION }}-x64/bin/cache/artifacts/engine/windows-x64-release/
+
+      - name: Patch flutter
+        shell: bash
+        run: |
+          cp .github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff $(dirname $(dirname $(which flutter)))
+          cd $(dirname $(dirname $(which flutter)))
+          if [[ "3.24.5" == ${{ env.FLUTTER_VERSION }} ]]; then
+            git apply flutter_3.24.4_dropdown_menu_enableFilter.diff
+          fi
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: x86_64-pc-windows-msvc
+          components: "rustfmt"
+
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          prefix-key: windows-2022
+
+      - name: Setup vcpkg with Github Actions binary cache
+        uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11
+        with:
+          vcpkgDirectory: C:\vcpkg
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+          doNotCache: false
+
+      - name: Install vcpkg dependencies
+        env:
+          VCPKG_DEFAULT_HOST_TRIPLET: x64-windows-static
+        run: |
+          if ! $VCPKG_ROOT/vcpkg \
+            install \
+            --triplet x64-windows-static \
+            --x-install-root="$VCPKG_ROOT/installed"; then
+            find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
+              echo "$_1:"
+              echo "======"
+              cat "$_1"
+              echo "======"
+              echo ""
+            done
+            exit 1
+          fi
+        shell: bash
+
+      # build-sctg.py brands the tree (client/branding.py), then runs upstream's build.py
+      - name: Build the client
+        run: |
+          python3 .\build-sctg.py --portable --flutter --skip-portable-pack --hwcodec --vram
+          mv ./flutter/build/windows/x64/runner/Release ./rustdesk
+
+          Invoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip
+          Expand-Archive usbmmidd_v2.zip -DestinationPath .
+          Remove-Item -Path usbmmidd_v2\Win32 -Recurse
+          Remove-Item -Path "usbmmidd_v2\deviceinstaller64.exe", "usbmmidd_v2\deviceinstaller.exe", "usbmmidd_v2\usbmmidd.bat"
+          mv -Force .\usbmmidd_v2 ./rustdesk
+
+          try {
+            Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/rustdesk_printer_driver_v4-1.4.zip -OutFile rustdesk_printer_driver_v4-1.4.zip
+            Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/printer_driver_adapter.zip -OutFile printer_driver_adapter.zip
+            Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/sha256sums -OutFile sha256sums
+
+            $checksum_driver = (Select-String -Path .\sha256sums -Pattern '^([a-fA-F0-9]{64}) \*rustdesk_printer_driver_v4-1.4\.zip$').Matches.Groups[1].Value
+            $downloadsum_driver = Get-FileHash -Path rustdesk_printer_driver_v4-1.4.zip -Algorithm SHA256
+            $checksum_adapter = (Select-String -Path .\sha256sums -Pattern '^([a-fA-F0-9]{64}) \*printer_driver_adapter\.zip$').Matches.Groups[1].Value
+            $downloadsum_adapter = Get-FileHash -Path printer_driver_adapter.zip -Algorithm SHA256
+            if ($checksum_driver -eq $downloadsum_driver.Hash -and $checksum_adapter -eq $downloadsum_adapter.Hash) {
+                Write-Output "rustdesk_printer_driver_v4-1.4, checksums match, extract the file."
+                Expand-Archive rustdesk_printer_driver_v4-1.4.zip -DestinationPath .
+                mkdir ./rustdesk/drivers
+                mv -Force .\rustdesk_printer_driver_v4-1.4 ./rustdesk/drivers/RustDeskPrinterDriver
+                Expand-Archive printer_driver_adapter.zip -DestinationPath .
+                mv -Force .\printer_driver_adapter.dll ./rustdesk
+            } elseif ($checksum_driver -ne $downloadsum_driver.Hash) {
+                Write-Output "rustdesk_printer_driver_v4-1.4, checksums do not match, ignore the file."
+            } else {
+                Write-Output "printer_driver_adapter.dll, checksums do not match, ignore the file."
+            }
+          } catch {
+              Write-Host "Ingore the printer driver error."
+          }
+
+      - name: find Runner.res
+        # Runner.rc does not contain the actual version, but Runner.res does
+        continue-on-error: true
+        shell: bash
+        run: |
+          runner_res=$(find . -name "Runner.res");
+          if [ "$runner_res" == "" ]; then
+            echo "Runner.res: not found";
+          else
+            echo "Runner.res: $runner_res";
+            cp $runner_res ./libs/portable/Runner.res;
+            ls -l ./libs/portable/Runner.res;
+          fi
+
+      - name: Download RustDeskTempTopMostWindow
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: topmostwindow-artifacts-x64
+          path: "./rustdesk"
+
+      # The certificates are stored as the secrets MACOS_P12_BASE64, MACOS2_... and MACOS3_... (there are
+      # three of them, and one password); signing is skipped when they are not set.
+      - name: Extract the signing certificates
+        shell: bash
+        env:
+          P12_1: ${{ secrets.MACOS_P12_BASE64 }}
+          P12_2: ${{ secrets.MACOS2_P12_BASE64 }}
+          P12_3: ${{ secrets.MACOS3_P12_BASE64 }}
+        run: |
+          [ -n "$P12_1" ] || { echo "no certificate, the files are not signed"; exit 0; }
+          echo "$P12_1" | base64 --decode > certificate.pfx
+          [ -z "$P12_2" ] || echo "$P12_2" | base64 --decode > certificate2.pfx
+          [ -z "$P12_3" ] || echo "$P12_3" | base64 --decode > certificate3.pfx
+          ls certificate*.pfx
+
+      - name: Get SignTool location
+        uses: eltorio/action-signtoolLocation@main
+        id: signtoolLocation
+
+      - name: Sign the files
+        shell: powershell
+        continue-on-error: true
+        env:
+          P12_PASSWORD: ${{ secrets.MACOS_P12_PASSWORD }}
+        run: |
+          if (-not (Test-Path .\certificate.pfx)) { Write-Host "no certificate, nothing signed"; exit 0 }
+          $signtool = "${{ steps.signtoolLocation.outputs.signtoolLocation }}"
+          foreach ($pattern in './rustdesk/*.exe', './rustdesk/*.dll') {
+            & $signtool sign /tr http://timestamp.digicert.com /td sha256 /fd SHA256 /f ./certificate.pfx /p $env:P12_PASSWORD $pattern
+          }
+
+      - name: Build the self-extracting executable
+        shell: bash
+        run: |
+          sed -i '/dpiAware/d' res/manifest.xml
+          pushd ./libs/portable
+          pip3 install -r requirements.txt
+          mv ../../rustdesk/rustdesk.exe "../../rustdesk/${APP_NAME}.exe"
+          python3 ./generate.py -f ../../rustdesk/ -o . -e "../../rustdesk/${APP_NAME}.exe"
+          popd
+          mkdir -p ./SignOutput
+          mv ./target/release/rustdesk-portable-packer.exe "./SignOutput/${APP_NAME_LOW}-${VERSION}-x86_64.exe"
+          ls -l ./SignOutput
+
+      - name: Sign the self-extracting executable
+        shell: powershell
+        continue-on-error: true
+        env:
+          P12_PASSWORD: ${{ secrets.MACOS_P12_PASSWORD }}
+        run: |
+          if (-not (Test-Path .\certificate.pfx)) { Write-Host "no certificate, nothing signed"; exit 0 }
+          & "${{ steps.signtoolLocation.outputs.signtoolLocation }}" sign /tr http://timestamp.digicert.com /td sha256 /fd SHA256 /f ./certificate.pfx /p $env:P12_PASSWORD ./SignOutput/*.exe
+
+      - name: Copy the executable to S3
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        shell: pwsh
+        env:
+          S3_ENDPOINT: ${{ secrets.AWS_S3_ENDPOINT }}
+          S3_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          S3_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        run: |
+          curl.exe -fsSL -o mc.exe https://dl.min.io/aistor/mc/release/windows-amd64/mc.exe
+          .\mc.exe alias set s3release "https://$env:S3_ENDPOINT" "$env:S3_KEY" "$env:S3_SECRET"
+          .\mc.exe cp ".\SignOutput\$env:APP_NAME_LOW-$env:VERSION-x86_64.exe" "s3release/$env:S3_BUCKET/$env:APP_NAME_LOW-releases/"
