@@ -176,6 +176,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 software_releases_latest,
                 software_version_latest,
                 software_download,
+                software_download_client,
                 software_releases_tag,
                 webconsole_index,
                 webconsole_index_html,
@@ -1970,6 +1971,13 @@ async fn users_client(
 )]
 async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<()>> {
     log::debug!("software");
+    Ok(Json(SoftwareResponse {
+        url: signed_client_url(key).await?,
+    }))
+}
+
+/// Signed download link of the newest client of a platform (`w64`, `w32`, `osx`, `osx-arm64`, `ios`).
+async fn signed_client_url(key: &str) -> Result<String, status::NotFound<()>> {
     let config = get_s3_config_file().await.map_err(|e| {
         log::error!("cannot read the S3 configuration: {}", e);
         status::NotFound(())
@@ -1982,13 +1990,28 @@ async fn software(key: &str) -> Result<Json<SoftwareResponse>, status::NotFound<
         "ios" => config.s3config.ioskey.clone(),
         _ => return Err(status::NotFound(())),
     };
-    let url = get_latest_signed_release_url(config, template.as_str())
+    get_latest_signed_release_url(config, template.as_str())
         .await
         .map_err(|e| {
             log::error!("cannot get the download link of {}: {}", key, e);
             status::NotFound(())
-        })?;
-    Ok(Json(SoftwareResponse { url }))
+        })
+}
+
+/// Download the newest client of a platform
+///
+/// Redirects to a freshly signed S3 link, so the address can be opened at any time, unlike the signed link of
+/// `client-download-link/<key>`, which expires. The update card of the clients opens it.
+///
+/// # Arguments
+///
+/// * `key` - `w64` and `w32` (Windows 64 and 32 bits), `osx` (Mac with an Intel processor), `osx-arm64`
+///   (Mac with Apple Silicon) or `ios`
+#[openapi(tag = "software")]
+#[get("/api/software/download/<key>")]
+async fn software_download_client(key: &str) -> Result<Redirect, status::NotFound<()>> {
+    log::debug!("software_download_client");
+    Ok(Redirect::temporary(signed_client_url(key).await?))
 }
 
 /// # Retrieve the server version
