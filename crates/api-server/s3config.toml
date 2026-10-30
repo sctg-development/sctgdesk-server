@@ -28,8 +28,8 @@ Windows64Key = "master/sctgdesk-releases/sctgdesk-1.2.6-x86_64.exe"
 # The path of the S3 compatible storage containing the Windows 32-bit version
 Windows32Key = "master/sctgdesk-releases/sctgdesk-{version}-i686.exe"
 # The path of the S3 compatible storage containing the MacOS Intel version
-OSXKey = "master/sctgdesk-releases/sctgdesk-1.2.6.dmg"
+OSXKey = "master/sctgdesk-releases/sctgdesk-{version}-x86_64.dmg"
 # The path of the S3 compatible storage containing the MacOS Apple silicon version
-OSXArm64Key = "master/sctgdesk-releases/sctgdesk-1.2.6.dmg"
+OSXArm64Key = "master/sctgdesk-releases/sctgdesk-{version}-aarch64.dmg"
 # The path of the S3 compatible storage containing the IOs version
 IOSKey = "master/sctgdesk-releases/sctgdesk-1.2.6.ipa"
