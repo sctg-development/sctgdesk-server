@@ -39,13 +39,14 @@ A key of that file (`Windows64Key`, `OSXKey`, `IOSKey`, ...) is either the objec
 
 ```toml
 Windows64Key = "master/sctgdesk-releases/sctgdesk-{version}-x86_64.exe"
-OSXKey       = "master/sctgdesk-releases/sctgdesk-{version}.dmg"
+OSXKey       = "master/sctgdesk-releases/sctgdesk-{version}-x86_64.dmg"
+OSXArm64Key  = "master/sctgdesk-releases/sctgdesk-{version}-aarch64.dmg"
 IOSKey       = "master/sctgdesk-releases/sctgdesk-{version}.ipa"
 ListBucket   = "master"   # Oracle Cloud only, see below
 ```
 
 The API then lists the bucket for the prefix before `{version}` and picks the key with the highest `x.y.z`: the
-whole key has to match, so `sctgdesk-{version}.dmg` does not pick `sctgdesk-1.4.0-web-basic.zip`, and `1.10.0` is
+whole key has to match, so `sctgdesk-{version}-x86_64.dmg` does not pick `sctgdesk-1.4.0-web-basic.zip`, and `1.10.0` is
 higher than `1.9.3`. The answer is kept for five minutes. `GET /api/software/version/latest` reports the version
 found that way. A key without `{version}` works as before and does not call the bucket. If the bucket cannot be
 listed, the link answers 404 and the reason is in the log.

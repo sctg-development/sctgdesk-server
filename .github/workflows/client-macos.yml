@@ -1,0 +1,264 @@
+name: Client build (macOS)
+
+# The macOS clients of the SCTGDesk brand, Intel and Apple Silicon: upstream RustDesk at client/UPSTREAM_TAG,
+# our patches, overlay and branding (client/README.md), built the way upstream builds its own
+# (flutter-build.yml of the same tag: job build-for-macOS), each on a runner of its own architecture,
+# then signed, notarized and packed in a .dmg.
+#
+# - On a pull request touching this build it builds only.
+# - By hand it also copies the .dmg files to S3, as `<app>-<version>-x86_64.dmg` and
+#   `<app>-<version>-aarch64.dmg` next to the other clients: the download links of the landing page follow
+#   (api-s3software, `{version}` keys).
+# The result is never a workflow artifact nor a release: it embeds the address of the rendezvous server and
+# this repository is public.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Copy the .dmg files to S3 (they become the downloads of the landing page)"
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - ".github/workflows/client-macos.yml"
+      - ".github/workflows/bridge.yml"
+      - "client/branding.py"
+      - "client/apply.sh"
+      - "client/UPSTREAM_TAG"
+      - "client/patches/**"
+      - "client/overlay/**"
+
+permissions:
+  contents: read
+
+# a push to the pull request replaces the build that is running
+concurrency:
+  group: client-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # the values of flutter-build.yml of upstream 1.5.0
+  FLUTTER_VERSION: "3.24.5"
+  MAC_RUST_VERSION: "1.81" # cidre requires 1.81 on macOS
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+  VCPKG_COMMIT_ID: "9e593bb18ea69cc5095e012465dcd675a822ed0d"
+  # the brand (client/branding.py)
+  APP_NAME: ${{ secrets.APP_NAME }}
+  APP_NAME_LOW: ${{ secrets.APP_NAME_LOW }}
+  ORG_NAME: ${{ secrets.ORG_NAME }}
+  RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
+  RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
+  API_SERVER: ${{ secrets.API_SERVER }}
+  # its team id replaces upstream's one (branding.py)
+  MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+
+jobs:
+  bridge:
+    name: flutter-rust-bridge
+    # bridge.yml asks for `actions: read`: a called workflow cannot ask for more than its caller grants
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/bridge.yml
+
+  macos:
+    name: macOS ${{ matrix.job.arch }}
+    needs: [bridge]
+    runs-on: ${{ matrix.job.os }}
+    env:
+      # the signing steps are skipped when there is no certificate
+      P12_BASE64: ${{ secrets.MACOS_P12_BASE64 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - {
+              target: x86_64-apple-darwin,
+              os: macos-15-intel,
+              arch: x86_64,
+              mc: darwin-amd64,
+              extra-build-args: "",
+            }
+          - {
+              target: aarch64-apple-darwin,
+              os: macos-15,
+              arch: aarch64,
+              mc: darwin-arm64,
+              extra-build-args: "--screencapturekit",
+            }
+    steps:
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Checkout the monorepo
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          path: _mono
+
+      - name: Prepare the client tree (upstream tag + patches + overlay)
+        shell: bash
+        run: |
+          echo "VERSION=$(tr -d '[:space:]' < _mono/client/UPSTREAM_TAG)" >> "$GITHUB_ENV"
+          _mono/client/apply.sh _client
+          shopt -s dotglob
+          mv _client/* .
+          rm -rf _client _mono
+
+      - name: Import the codesign certificate
+        if: env.P12_BASE64 != ''
+        uses: apple-actions/import-codesign-certs@253ddeeac23f2bdad1646faac5c8c2832e800071 # v1
+        with:
+          p12-file-base64: ${{ secrets.MACOS_P12_BASE64 }}
+          p12-password: ${{ secrets.MACOS_P12_PASSWORD }}
+          keychain: build
+
+      - name: Check the signing identity
+        if: env.P12_BASE64 != ''
+        run: |
+          security default-keychain -s build.keychain
+          security find-identity -v
+
+      - name: Import the notarization key
+        if: env.P12_BASE64 != ''
+        uses: timheuer/base64-to-file@adaa40c0c581f276132199d4cf60afa07ce60eac # v1.2
+        with:
+          fileName: notarize.json
+          fileDir: ${{ github.workspace }}
+          encodedString: ${{ secrets.MACOS_NOTARIZE_JSON }}
+
+      - name: Install rcodesign
+        if: env.P12_BASE64 != ''
+        run: |
+          pushd /tmp
+          wget https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/apple-codesign-0.22.0-macos-universal.tar.gz
+          tar -zxvf apple-codesign-0.22.0-macos-universal.tar.gz
+          mv apple-codesign-0.22.0-macos-universal/rcodesign /usr/local/bin
+          popd
+
+      - name: Install build runtime
+        run: |
+          brew install llvm create-dmg
+          command -v pkg-config || brew install pkg-config
+
+      # NASM 3 is a rewrite that the multimedia libraries cannot use: 2.16 from the official release
+      - name: Install NASM
+        run: |
+          wget https://www.nasm.us/pub/nasm/releasebuilds/2.16.03/macosx/nasm-2.16.03-macosx.zip
+          unzip nasm-2.16.03-macosx.zip
+          sudo cp nasm-2.16.03/nasm /usr/local/bin/nasm
+          nasm --version
+
+      - name: Install flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Patch flutter
+        run: |
+          cd $(dirname $(dirname $(which flutter)))
+          git apply "${{ github.workspace }}/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff"
+
+      - name: Workaround for flutter issue
+        shell: bash
+        run: |
+          cd "$(dirname "$(which flutter)")"
+          # https://github.com/flutter/flutter/issues/133533
+          sed -i -e 's/_setFramesEnabledState(false);/\/\/_setFramesEnabledState(false);/g' ../packages/flutter/lib/src/scheduler/binding.dart
+          grep -n '_setFramesEnabledState(false);' ../packages/flutter/lib/src/scheduler/binding.dart
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: ${{ env.MAC_RUST_VERSION }}
+          targets: ${{ matrix.job.target }}
+          components: "rustfmt"
+
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          prefix-key: ${{ matrix.job.os }}
+
+      - name: Restore bridge files
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: bridge-artifact
+          path: ./
+
+      - name: Setup vcpkg with Github Actions binary cache
+        uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11
+        with:
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+          doNotCache: false
+
+      - name: Install vcpkg dependencies
+        run: |
+          if ! $VCPKG_ROOT/vcpkg \
+            install \
+            --x-install-root="$VCPKG_ROOT/installed"; then
+            find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
+              echo "$_1:"
+              echo "======"
+              cat "$_1"
+              echo "======"
+              echo ""
+            done
+            exit 1
+          fi
+
+      # branding.py first, then upstream's build.py: build-sctg.py would also sign, without the entitlements
+      # and the notarization that follow
+      - name: Build the client
+        run: |
+          python3 branding.py --root .
+          if [ "${{ matrix.job.target }}" = "aarch64-apple-darwin" ]; then
+            MIN_MACOS_VERSION="12.3"
+            sed -i -e "s/MACOSX_DEPLOYMENT_TARGET\=[0-9]*.[0-9]*/MACOSX_DEPLOYMENT_TARGET=${MIN_MACOS_VERSION}/" build.py
+            sed -i -e "s/platform :osx, '.*'/platform :osx, '${MIN_MACOS_VERSION}'/" flutter/macos/Podfile
+            sed -i -e "s/osx_minimum_system_version = \"[0-9]*.[0-9]*\"/osx_minimum_system_version = \"${MIN_MACOS_VERSION}\"/" Cargo.toml
+            sed -i -e "s/MACOSX_DEPLOYMENT_TARGET = [0-9]*.[0-9]*;/MACOSX_DEPLOYMENT_TARGET = ${MIN_MACOS_VERSION};/" flutter/macos/Runner.xcodeproj/project.pbxproj
+          fi
+          ls flutter/macos/Runner
+          python3 build.py --flutter --hwcodec --unix-file-copy-paste ${{ matrix.job.extra-build-args }}
+          ls -d flutter/build/macos/Build/Products/Release/*.app
+
+      - name: Sign the app and pack the dmg
+        run: |
+          APP="./flutter/build/macos/Build/Products/Release/${APP_NAME}.app"
+          DMG="${APP_NAME_LOW}-${VERSION}-${{ matrix.job.arch }}.dmg"
+          # more attempts to unmount the image
+          CREATE_DMG="$(readlink -f "$(command -v create-dmg)")"
+          sed -i -e 's/MAXIMUM_UNMOUNTING_ATTEMPTS=3/MAXIMUM_UNMOUNTING_ATTEMPTS=7/' "$CREATE_DMG"
+          if [ -n "$P12_BASE64" ]; then
+            security default-keychain -s build.keychain
+            security unlock-keychain -p "${{ secrets.MACOS_P12_PASSWORD }}" build.keychain
+            bash ./.github/scripts/sign-macos-app.sh "$APP" "$MACOS_CODESIGN_IDENTITY" ./flutter/macos/Runner/Release.entitlements
+          else
+            echo "no certificate, the app is not signed"
+          fi
+          create-dmg --icon "${APP_NAME}.app" 200 190 --hide-extension "${APP_NAME}.app" --window-size 800 400 --app-drop-link 600 185 "$DMG" "$APP"
+          if [ -n "$P12_BASE64" ]; then
+            codesign --force --options runtime -s "$MACOS_CODESIGN_IDENTITY" --deep --strict "$DMG" -vvv
+            # Apple refuses with REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED while an agreement of the developer account
+            # is not accepted (developer.apple.com / App Store Connect): the dmg is then signed but not notarized
+            # and Gatekeeper warns at the first launch. The build is not failed for that, the warning says it.
+            rcodesign notary-submit --api-key-path "${{ github.workspace }}/notarize.json" --staple "$DMG" \
+              || echo "::warning::the dmg is signed but NOT notarized (see the error above)"
+          fi
+          ls -l ./*.dmg
+
+      - name: Copy the dmg to S3
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        env:
+          S3_ENDPOINT: ${{ secrets.AWS_S3_ENDPOINT }}
+          S3_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          S3_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        run: |
+          curl -fsSL -o mc https://dl.min.io/aistor/mc/release/${{ matrix.job.mc }}/mc
+          chmod +x mc
+          ./mc alias set s3release "https://$S3_ENDPOINT" "$S3_KEY" "$S3_SECRET"
+          ./mc cp "./${APP_NAME_LOW}-${VERSION}-${{ matrix.job.arch }}.dmg" "s3release/$S3_BUCKET/${APP_NAME_LOW}-releases/"
