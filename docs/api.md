@@ -51,6 +51,9 @@ higher than `1.9.3`. The answer is kept for five minutes. `GET /api/software/ver
 found that way. A key without `{version}` works as before and does not call the bucket. If the bucket cannot be
 listed, the link answers 404 and the reason is in the log.
 
+`GET /api/software/download/<key>` (`w64`, `w32`, `osx`, `osx-arm64`, `ios`) redirects to a freshly signed link of the
+newest client, so its address does not expire: the update card of the clients opens it for their platform.
+
 On Oracle Cloud, `Bucket` is the namespace and the keys start with the real bucket (`master/...`): set
 `ListBucket` to that bucket, otherwise the listing goes to the wrong place and finds nothing.
 

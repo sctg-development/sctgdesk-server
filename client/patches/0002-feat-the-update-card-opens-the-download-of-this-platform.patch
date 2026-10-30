@@ -1,0 +1,111 @@
+From f7b03095e95533047124c2d746c4d9fc8a63250f Mon Sep 17 00:00:00 2001
+From: sctg <sctg@localhost>
+Date: Fri, 30 Oct 2026 18:40:51 +0100
+Subject: [PATCH] feat: the update card opens the download of this platform
+
+For upstream a branded client is a custom client and hides the update card.
+Show it, and open the download page of our API server for this platform
+(Windows 64 or 32 bits, Mac Intel or Apple Silicon) instead of rustdesk.com.
+The in-app update stays off: upstream restricts it to GitHub releases.
+---
+ .../lib/desktop/pages/desktop_home_page.dart  | 11 +++++---
+ flutter/lib/mobile/pages/connection_page.dart |  5 ++--
+ src/common.rs                                 | 26 ++++++++++++++++++-
+ 3 files changed, 35 insertions(+), 7 deletions(-)
+
+diff --git a/flutter/lib/desktop/pages/desktop_home_page.dart b/flutter/lib/desktop/pages/desktop_home_page.dart
+index 6d370cb..6802b2e 100644
+--- a/flutter/lib/desktop/pages/desktop_home_page.dart
++++ b/flutter/lib/desktop/pages/desktop_home_page.dart
+@@ -428,14 +428,17 @@ class _DesktopHomePageState extends State<DesktopHomePage>
+   }
+ 
+   Widget buildHelpCards(String updateUrl) {
+-    if (!bind.isCustomClient() &&
+-        updateUrl.isNotEmpty &&
++    // our client is a custom client for upstream, which hides the update card: here the card opens the
++    // download of this platform (updateUrl, from check_software_update in src/common.rs)
++    if (updateUrl.isNotEmpty &&
+         !isCardClosed &&
+         bind.mainUriPrefixSync().contains('rustdesk')) {
+-      final isToUpdate = (isWindows || isMacOS) && bind.mainIsInstalled();
++      final isToUpdate =
++          !bind.isCustomClient() && (isWindows || isMacOS) && bind.mainIsInstalled();
+       String btnText = isToUpdate ? 'Update' : 'Download';
+       GestureTapCallback onPressed = () async {
+-        final Uri url = Uri.parse('https://rustdesk.com/download');
++        final Uri url = Uri.parse(
++            bind.isCustomClient() ? updateUrl : 'https://rustdesk.com/download');
+         await launchUrl(url);
+       };
+       if (isToUpdate) {
+diff --git a/flutter/lib/mobile/pages/connection_page.dart b/flutter/lib/mobile/pages/connection_page.dart
+index ff5dc82..279c512 100644
+--- a/flutter/lib/mobile/pages/connection_page.dart
++++ b/flutter/lib/mobile/pages/connection_page.dart
+@@ -84,7 +84,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
+       slivers: [
+         SliverList(
+             delegate: SliverChildListDelegate([
+-          if (!bind.isCustomClient() && !isIOS)
++          if (!isIOS)
+             Obx(() => _buildUpdateUI(stateGlobal.updateUrl.value)),
+           _buildRemoteIDTextField(),
+         ])),
+@@ -124,7 +124,8 @@ class _ConnectionPageState extends State<ConnectionPage> {
+         ? const SizedBox(height: 0)
+         : InkWell(
+             onTap: () async {
+-              final url = 'https://rustdesk.com/download';
++              final url =
++                  bind.isCustomClient() ? updateUrl : 'https://rustdesk.com/download';
+               // https://pub.dev/packages/url_launcher#configuration
+               // https://developer.android.com/training/package-visibility/use-cases#open-urls-custom-tabs
+               //
+diff --git a/src/common.rs b/src/common.rs
+index 1d9a059..6dbfa63 100644
+--- a/src/common.rs
++++ b/src/common.rs
+@@ -1024,6 +1024,28 @@ pub fn check_software_update() {
+     }
+ }
+ 
++/// The page of our API server that redirects to the newest client of this platform (api-server,
++/// `/api/software/download/<key>`), or to its download page when there is no client for it.
++fn client_download_url(api: &str) -> String {
++    let key = if cfg!(target_os = "windows") {
++        if cfg!(target_arch = "x86") {
++            Some("w32")
++        } else if cfg!(target_arch = "x86_64") {
++            Some("w64")
++        } else {
++            None
++        }
++    } else if cfg!(target_os = "macos") {
++        Some(if cfg!(target_arch = "aarch64") { "osx-arm64" } else { "osx" })
++    } else {
++        None
++    };
++    match key {
++        Some(key) => format!("{}/api/software/download/{}", api, key),
++        None => format!("{}/api/software/download", api),
++    }
++}
++
+ // The url is the one of our API server, which answers like api.rustdesk.com/version/latest.
+ #[tokio::main(flavor = "current_thread")]
+ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
+@@ -1067,7 +1089,9 @@ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
+         {
+             let mut m = HashMap::new();
+             m.insert("name", "check_software_update_finish");
+-            m.insert("url", &response_url);
++            // what the update button opens: our API server sends the user to the download of this platform
++            let download_url = client_download_url(&api);
++            m.insert("url", &download_url);
+             if let Ok(data) = serde_json::to_string(&m) {
+                 let _ = crate::flutter::push_global_event(crate::flutter::APP_TYPE_MAIN, data);
+             }
+-- 
+2.50.1 (Apple Git-155)
+
