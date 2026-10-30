@@ -242,7 +242,11 @@ jobs:
           create-dmg --icon "${APP_NAME}.app" 200 190 --hide-extension "${APP_NAME}.app" --window-size 800 400 --app-drop-link 600 185 "$DMG" "$APP"
           if [ -n "$P12_BASE64" ]; then
             codesign --force --options runtime -s "$MACOS_CODESIGN_IDENTITY" --deep --strict "$DMG" -vvv
-            rcodesign notary-submit --api-key-path "${{ github.workspace }}/notarize.json" --staple "$DMG"
+            # Apple refuses with REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED while an agreement of the developer account
+            # is not accepted (developer.apple.com / App Store Connect): the dmg is then signed but not notarized
+            # and Gatekeeper warns at the first launch. The build is not failed for that, the warning says it.
+            rcodesign notary-submit --api-key-path "${{ github.workspace }}/notarize.json" --staple "$DMG" \
+              || echo "::warning::the dmg is signed but NOT notarized (see the error above)"
           fi
           ls -l ./*.dmg
 
