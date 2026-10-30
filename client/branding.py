@@ -101,6 +101,10 @@ def web_rules_for(cfg):
         # Our rule above leaves `port` and `roffset` of getrUriFromRs unread; tsc refuses it with these
         Rule(['flutter/web/js/tsconfig.json'], '"noUnusedLocals": true', '"noUnusedLocals": false'),
         Rule(['flutter/web/js/tsconfig.json'], '"noUnusedParameters": true', '"noUnusedParameters": false'),
+        # Upstream's Flutter code waits for window.onInitFinished (lib/models/web_model.dart, PlatformFFI.init), which
+        # the JavaScript of the tag never calls: the app stays on its loading spinner forever
+        Rule(['flutter/web/js/src/globals.js'], "console.log('init done');\n}",
+             "console.log('init done');\n  window.onInitFinished && window.onInitFinished();\n}"),
         # The landing page asks our API server for the download links
         Rule(['flutter/web/client.html'], '__API_SERVER__', api),
         Rule(['flutter/lib/**/*.dart'], 'RustDesk', app),
