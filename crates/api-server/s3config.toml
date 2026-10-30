@@ -26,7 +26,7 @@ Bucket = "aezoz24elapn"
 # The path of the S3 compatible storage containing the Windows 64-bit version
 Windows64Key = "master/sctgdesk-releases/sctgdesk-1.2.6-x86_64.exe"
 # The path of the S3 compatible storage containing the Windows 32-bit version
-Windows32Key = "master/sctgdesk-releases/sctgdesk-1.2.6-i686.exe"
+Windows32Key = "master/sctgdesk-releases/sctgdesk-{version}-i686.exe"
 # The path of the S3 compatible storage containing the MacOS Intel version
 OSXKey = "master/sctgdesk-releases/sctgdesk-1.2.6.dmg"
 # The path of the S3 compatible storage containing the MacOS Apple silicon version
