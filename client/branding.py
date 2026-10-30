@@ -13,6 +13,7 @@ Settings come from the environment (the CI passes them as secrets):
   RS_PUB_KEY            public key of hbbs (the content of id_ed25519.pub)
   API_SERVER            host[:port] of the API server
   API_SERVER_PROTOCOL   http or https (default https)
+  COPYRIGHT_HOLDER      optional, added to upstream's in the copyright (default SCTG Development)
   MACOS_CODESIGN_IDENTITY  optional, "Name (TEAMID)": its TEAMID replaces the upstream team id
 
   branding.py [--root DIR] [--check] [--disable-api-server-forced] [--local-build]
@@ -109,6 +110,7 @@ def web_rules_for(cfg):
 def rules_for(cfg, forced_api, local_build):
     app, low = cfg['APP_NAME'], cfg['APP_NAME'].lower()
     org = cfg['ORG_NAME']
+    holder = os.environ.get('COPYRIGHT_HOLDER') or 'SCTG Development'
     api = f"{cfg['API_SERVER_PROTOCOL']}://{cfg['API_SERVER']}"
     site = f'https://{org}.eu.org'.lower()
     rules = [
@@ -119,8 +121,14 @@ def rules_for(cfg, forced_api, local_build):
         # About pages and download links
         Rule(['flutter/lib/desktop/pages/desktop_setting_page.dart',
               'flutter/lib/mobile/pages/settings_page.dart'], 'https://rustdesk.com', site),
-        Rule(['flutter/lib/desktop/pages/desktop_setting_page.dart'], 'Purslane Tech Pte. Ltd.',
-             f'{org.capitalize()} and Purslane Tech Pte. Ltd.'),
+        # The copyright keeps upstream's holder and adds ours: each rule anchors on what follows the holder, so that
+        # a second run does not add it twice.
+        Rule(['flutter/lib/desktop/pages/desktop_setting_page.dart'], 'Pte. Ltd.\\n$license',
+             f'Pte. Ltd. and {holder}\\n$license'),
+        Rule(['src/ui/index.tis'], '2026 Purslane Tech Pte. Ltd.\\', f'2026 Purslane Tech Pte. Ltd. and {holder}\\'),
+        Rule(['flutter/windows/runner/Runner.rc', 'Cargo.toml', 'libs/portable/Cargo.toml',
+              'flutter/macos/Runner/Configs/AppInfo.xcconfig'],
+             'Pte. Ltd. All rights reserved.', f'Pte. Ltd. and {holder} All rights reserved.'),
         Rule(['flutter/lib/**/*.dart'], 'https://rustdesk.com/download', f'{api}/api/software/download'),
         Rule(['flutter/lib/desktop/pages/desktop_home_page.dart'], "contains('rustdesk')", f"contains('{low}')"),
         # Names
