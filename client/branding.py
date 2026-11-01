@@ -122,6 +122,11 @@ def rules_for(cfg, forced_api, local_build):
         Rule(['libs/hbb_common/src/config.rs'], UPSTREAM_RENDEZVOUS, cfg['RENDEZVOUS_SERVER']),
         Rule(['libs/hbb_common/src/config.rs'], UPSTREAM_KEY, cfg['RS_PUB_KEY']),
         Rule(['src/common.rs'], '"https://admin.rustdesk.com".to_owned()', f'"{api}".to_owned()'),
+        # In WebSocket mode a client reaches a domain on ws(s)://<domain>/ws/id, wss only when the "api-server" option
+        # starts with https. That option is empty for us (our API server is forced above), so the client used ws:
+        # on port 80, in clear, with its token. Use the scheme of our API server.
+        Rule(['libs/hbb_common/src/websocket.rs'], 'let api_server = Config::get_option("api-server");',
+             f'let api_server = "{api}".to_owned();'),
         # About pages and download links
         Rule(['flutter/lib/desktop/pages/desktop_setting_page.dart',
               'flutter/lib/mobile/pages/settings_page.dart'], 'https://rustdesk.com', site),
