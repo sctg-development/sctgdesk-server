@@ -27,7 +27,8 @@ permissions:
   deployments: write
 
 env:
-  FLUTTER_VERSION: "3.24.5"
+  # the one of upstream 1.2.5 (flutter-build.yml of that tag), the web sources of UPSTREAM_TAG_WEB
+  FLUTTER_VERSION: "3.19.6"
   RELEASE_NAME: web-basic
   APP_NAME: ${{ secrets.APP_NAME }}
   APP_NAME_LOW: ${{ secrets.APP_NAME_LOW }}

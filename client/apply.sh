@@ -5,8 +5,12 @@
 #
 # Then, from DIR: ./build-sctg.py --flutter ...   (brands the tree, then runs upstream's build.py)
 #
-# `web` prepares the web client instead, from UPSTREAM_TAG_WEB (upstream dropped its sources after
-# 1.4.0), with web-overlay/ and without patches (hbb_common is needed for its .proto files). Brand it with: python3 branding.py --web
+# `web` prepares the web client instead, from UPSTREAM_TAG_WEB, with web-overlay/ and without patches
+# (hbb_common is needed for its .proto files). Brand it with: python3 branding.py --web
+# Upstream's open source web JavaScript (flutter/web/js, then v1) only works with the Flutter code of the same
+# time: its README says "v1 is not compatible with current Flutter source code". 1.2.5 is the last tag where
+# they match (from 1.2.6 on the Dart calls session_start, which the JavaScript does not handle), so the tag
+# must not be raised without checking that.
 # The upstream tree is never committed here: only patches/ and overlay/ are.
 set -euo pipefail
 
@@ -29,9 +33,9 @@ if [ "$patches" = 1 ] && compgen -G "$here/patches/*.patch" > /dev/null; then
     git -C "$dest" -c user.name=sctg -c user.email=sctg@localhost am --quiet "$here"/patches/*.patch
 fi
 
-# Upstream keeps the web client in flutter/web/v1, but its tooling (and `flutter build web`, which needs
+# From 1.2.6 upstream keeps the web client in flutter/web/v1, but its tooling (and `flutter build web`, which needs
 # web/index.html) expects it in flutter/web: move it up.
-if [ "$flavor" = web ]; then
+if [ "$flavor" = web ] && [ -d "$dest/flutter/web/v1" ]; then
     (cd "$dest/flutter/web" && shopt -s dotglob && mv v1/* . && rmdir v1)
 fi
 
