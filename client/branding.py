@@ -120,6 +120,10 @@ def web_rules_for(cfg):
         # ("Key mismatch"), so the key of the brand is the default of both requests (punch hole and relay)
         Rule(['flutter/web/js/src/connection.ts'], 'licence_key: localStorage.getItem("key") || undefined,',
              f'licence_key: localStorage.getItem("key") || "{cfg["RS_PUB_KEY"]}",'),
+        # Without an "api-server" option (a fresh browser) the web client asks admin.rustdesk.com for the login options,
+        # so the OAuth2 buttons never show: the API server of the brand is the default
+        Rule(['flutter/web/js/src/globals.js'], "  return 'https://admin.rustdesk.com';\n}",
+             f"  return '{api}';\n}}"),
         # The landing page asks our API server for the download links
         Rule(['flutter/web/client.html'], '__API_SERVER__', api),
         Rule(['flutter/lib/**/*.dart'], 'RustDesk', app),
