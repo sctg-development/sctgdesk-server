@@ -105,6 +105,21 @@ def web_rules_for(cfg):
         # the JavaScript of the tag never calls: the app stays on its loading spinner forever
         Rule(['flutter/web/js/src/globals.js'], "console.log('init done');\n}",
              "console.log('init done');\n  window.onInitFinished && window.onInitFinished();\n}"),
+        # The web client of 1.2.5 is half way through upstream's rewrite: its Dart bridge throws on three calls that the
+        # home page and the toolbar make, which stops the app on its loading spinner or on the first connection
+        Rule(['flutter/lib/web/bridge.dart'],
+             'String mainGetAppNameSync({dynamic hint}) {\n    throw UnimplementedError();',
+             f'String mainGetAppNameSync({{dynamic hint}}) {{\n    return "{app}";'),
+        Rule(['flutter/lib/web/bridge.dart'],
+             'bool mainIsOptionFixed({required String key, dynamic hint}) {\n    throw UnimplementedError();',
+             'bool mainIsOptionFixed({required String key, dynamic hint}) {\n    return false;'),
+        Rule(['flutter/lib/web/bridge.dart'],
+             'bool mainGetUseTextureRender({dynamic hint}) {\n    throw UnimplementedError();',
+             'bool mainGetUseTextureRender({dynamic hint}) {\n    return false;'),
+        # The web client has no settings dialog for the key: hbbs started with -k refuses a request without it
+        # ("Key mismatch"), so the key of the brand is the default of both requests (punch hole and relay)
+        Rule(['flutter/web/js/src/connection.ts'], 'licence_key: localStorage.getItem("key") || undefined,',
+             f'licence_key: localStorage.getItem("key") || "{cfg["RS_PUB_KEY"]}",'),
         # The landing page asks our API server for the download links
         Rule(['flutter/web/client.html'], '__API_SERVER__', api),
         Rule(['flutter/lib/**/*.dart'], 'RustDesk', app),
