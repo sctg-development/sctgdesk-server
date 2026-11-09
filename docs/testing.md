@@ -29,6 +29,7 @@ request, and plain HTTP to the API. They exist because each of these failed in p
 | `logged_in_only_answers_when_the_api_server_is_unreachable` | with `--logged-in-only` the client waited forever for an answer |
 | `logged_in_only_checks_tokens_on_the_configured_api_port` | the token check ignored `--api-port` and called port 21114 |
 | `key_exchange_works_with_the_official_client_logic` | a change that breaks the official client's handshake |
+| `a_session_survives_a_restart` | every restart of `hbbs` logged all users out (the sessions were only in memory); also checks `/api/device-group/accessible` and that a logout is final |
 
 `hbbs` listens on fixed ports (21115, 21116, 21118), so these tests run one after the other and need the ports free:
 stop a local `hbbs` first.

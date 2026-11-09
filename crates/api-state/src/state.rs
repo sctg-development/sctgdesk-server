@@ -90,6 +90,7 @@ fn secs_from_epoch() -> u64 {
 impl ApiState {
     pub async fn new_with_db<P: AsRef<Path>>(db_filename: P) -> Self {
         let db = Database::open(db_filename).await;
+        db.purge_old_sessions().await;
         Self {
             last_maintenance_time: AtomicU64::new(0),
             access_tokens: Default::default(),
@@ -194,7 +195,20 @@ impl ApiState {
 
     async fn get_access_token(&self, user_id: Vec<u8>, username: &String, is_admin: bool) -> Token {
         let access_token = Token::new_random();
+        self.register_session(access_token, user_id.clone(), username, is_admin)
+            .await;
+        self.db.save_session(&access_token, &user_id).await;
+        access_token
+    }
 
+    /// Adds a session to the state (a new login, or one restored from the database).
+    async fn register_session(
+        &self,
+        access_token: Token,
+        user_id: Vec<u8>,
+        username: &String,
+        is_admin: bool,
+    ) {
         let mut state_access_tokens = self.access_tokens.write().await;
         let mut state_sessions = self.sessions.write().await;
         let mut state_users = self.users.write().await;
@@ -228,14 +242,26 @@ impl ApiState {
         };
 
         let _ = state_sessions.sessions.insert(session_id, session_info);
-        let _ = state_access_tokens.insert(access_token.clone(), access_token_info);
-        access_token
+        let _ = state_access_tokens.insert(access_token, access_token_info);
     }
 
+    /// A session that the state does not know (the server was restarted since the login) is looked up in the
+    /// database, and restored when it is still valid.
     pub async fn find_session(&self, access_token: &Token) -> Option<AccessTokenInfo> {
-        let state_access_tokens = self.access_tokens.read().await;
-
-        state_access_tokens.get(access_token).map(|t| t.clone())
+        if let Some(info) = self.access_tokens.read().await.get(access_token) {
+            return Some(info.clone());
+        }
+        let (user_id, username, is_admin) = self.db.find_session_user(access_token).await?;
+        // two requests can restore the same session at once: the second one finds it
+        {
+            let state_access_tokens = self.access_tokens.read().await;
+            if let Some(info) = state_access_tokens.get(access_token) {
+                return Some(info.clone());
+            }
+        }
+        self.register_session(*access_token, user_id, &username, is_admin)
+            .await;
+        self.access_tokens.read().await.get(access_token).cloned()
     }
 
     pub async fn get_user_address_book(&self, user_id: UserId) -> Option<AddressBook> {
@@ -327,6 +353,7 @@ impl ApiState {
 
         state_sessions.sessions.remove(&user.session_id);
         state_access_tokens.remove(&user.access_token);
+        self.db.delete_session(&user.access_token).await;
 
         Some(())
     }
@@ -730,5 +757,84 @@ impl ApiState {
     }
     pub async fn update_shared_address_book(&self, guid: &str, name: &str) -> Option<()> {
         self.db.update_shared_address_book(guid, name).await
+    }
+}
+
+#[cfg(test)]
+mod session_tests {
+    use super::*;
+    use crate::bearer::AuthenticatedUserInfo;
+    use crate::password::UserPasswordInfo;
+
+    fn temp_db(name: &str) -> std::path::PathBuf {
+        let p =
+            std::env::temp_dir().join(format!("sessions-{}-{}.sqlite3", name, std::process::id()));
+        for ext in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{}{}", p.display(), ext));
+        }
+        p
+    }
+
+    async fn state_with_user(path: &std::path::Path) -> ApiState {
+        let state = ApiState::new_with_db(path).await;
+        state
+            .add_user(AddUserRequest {
+                name: "alice".into(),
+                password: "pw-alice".into(),
+                confirm_password: "pw-alice".into(),
+                email: "a@example.org".into(),
+                is_admin: false,
+                group_name: "Default".into(),
+            })
+            .await;
+        state
+    }
+
+    /// The session of a login is still valid after the server restarted, until the logout.
+    #[tokio::test]
+    async fn a_session_survives_a_restart_until_logout() {
+        let path = temp_db("restart");
+        let state = state_with_user(&path).await;
+        let (_, token) = state
+            .user_login(
+                &"alice".to_string(),
+                UserPasswordInfo::from_password("pw-alice"),
+                false,
+            )
+            .await
+            .expect("login");
+        drop(state);
+
+        // a new process: nothing in memory
+        let state = ApiState::new_with_db(&path).await;
+        let info = state
+            .find_session(&token)
+            .await
+            .expect("session restored after the restart");
+        let who = AuthenticatedUserInfo {
+            session_id: info.session_id,
+            user_id: info.user_id,
+            access_token: token,
+        };
+        assert_eq!(
+            state.get_current_user_name(&who).await.as_deref(),
+            Some("alice")
+        );
+
+        assert!(state.user_logout(&who).await.is_some());
+        assert!(state.find_session(&token).await.is_none());
+        drop(state);
+        let state = ApiState::new_with_db(&path).await;
+        assert!(
+            state.find_session(&token).await.is_none(),
+            "a logged out session is not restored"
+        );
+    }
+
+    #[tokio::test]
+    async fn an_unknown_token_is_refused() {
+        let path = temp_db("unknown");
+        let state = state_with_user(&path).await;
+        assert!(state.find_session(&Token::new_random()).await.is_none());
     }
 }

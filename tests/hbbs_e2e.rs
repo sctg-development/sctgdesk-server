@@ -20,8 +20,8 @@ use hbb_common::{
     config::{CONNECT_TIMEOUT, READ_TIMEOUT},
     protobuf::Message,
     rendezvous_proto::*,
-    sodiumoxide::crypto::{box_, secretbox, sign},
     socket_client,
+    sodiumoxide::crypto::{box_, secretbox, sign},
     tcp::{kx_version_for, KxTranscript, KX_PARAMS_DOMAIN},
     timeout, ResultType, Stream,
 };
@@ -52,11 +52,8 @@ impl Server {
             .local_addr()
             .unwrap()
             .port();
-        let dir = std::env::temp_dir().join(format!(
-            "hbbs-e2e-{}-{}",
-            std::process::id(),
-            api_port
-        ));
+        let dir =
+            std::env::temp_dir().join(format!("hbbs-e2e-{}-{}", std::process::id(), api_port));
         std::fs::create_dir_all(&dir).unwrap();
         let mut cmd = Command::new(env!("CARGO_BIN_EXE_hbbs"));
         cmd.arg(format!("--api-port={api_port}"))
@@ -70,7 +67,11 @@ impl Server {
             cmd.env(k, v);
         }
         let child = cmd.spawn().expect("cannot start hbbs");
-        let mut server = Server { child, dir, api_port };
+        let mut server = Server {
+            child,
+            dir,
+            api_port,
+        };
         server.wait_until_ready();
         server
     }
@@ -78,13 +79,18 @@ impl Server {
     fn wait_until_ready(&mut self) {
         let start = Instant::now();
         let ready = |p: u16| TcpStream::connect(("127.0.0.1", p)).is_ok();
-        while !(ready(RENDEZVOUS_PORT) && ready(self.api_port) && self.dir.join("id_ed25519.pub").exists())
+        while !(ready(RENDEZVOUS_PORT)
+            && ready(self.api_port)
+            && self.dir.join("id_ed25519.pub").exists())
         {
             assert!(
                 self.child.try_wait().unwrap().is_none(),
                 "hbbs exited while starting"
             );
-            assert!(start.elapsed() < STARTUP_TIMEOUT, "hbbs did not start in time");
+            assert!(
+                start.elapsed() < STARTUP_TIMEOUT,
+                "hbbs did not start in time"
+            );
             std::thread::sleep(Duration::from_millis(200));
         }
     }
@@ -101,23 +107,55 @@ impl Server {
         self.child.try_wait().unwrap().is_none()
     }
 
-    /// POST to the API with the given bearer token, returns the HTTP status.
-    fn post_with_bearer(&self, path: &str, bearer: &str) -> u16 {
+    /// One HTTP request to the API: (status, body).
+    fn http(&self, method: &str, path: &str, bearer: Option<&str>, body: &str) -> (u16, String) {
         let mut stream = TcpStream::connect(("127.0.0.1", self.api_port)).unwrap();
-        stream.set_read_timeout(Some(Duration::from_secs(10))).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(10)))
+            .unwrap();
+        let auth = bearer
+            .map(|b| format!("Authorization: Bearer {b}\r\n"))
+            .unwrap_or_default();
         write!(
             stream,
-            "POST {path} HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer {bearer}\r\n\
-             Content-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{{}}"
+            "{method} {path} HTTP/1.1\r\nHost: localhost\r\n{auth}Content-Type: application/json\r\n\
+             Content-Length: {}\r\nConnection: close\r\n\r\n{body}",
+            body.len()
         )
         .unwrap();
         let mut answer = Vec::new();
         let _ = stream.read_to_end(&mut answer);
-        let text = String::from_utf8_lossy(&answer);
-        text.split_whitespace()
+        let text = String::from_utf8_lossy(&answer).into_owned();
+        let status = text
+            .split_whitespace()
             .nth(1)
             .and_then(|code| code.parse().ok())
-            .unwrap_or_else(|| panic!("no HTTP answer for bearer {bearer:?}"))
+            .unwrap_or_else(|| panic!("no HTTP answer for {method} {path}"));
+        let body = text.split("\r\n\r\n").nth(1).unwrap_or_default().to_owned();
+        (status, body)
+    }
+
+    /// POST to the API with the given bearer token, returns the HTTP status.
+    fn post_with_bearer(&self, path: &str, bearer: &str) -> u16 {
+        self.http("POST", path, Some(bearer), r#"{"id":"E2E","uuid":"ZTJl"}"#)
+            .0
+    }
+
+    /// Stops hbbs and starts it again on the same directory (same database and key pair).
+    fn restart(&mut self, extra_args: &[&str]) {
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+        self.child = Command::new(env!("CARGO_BIN_EXE_hbbs"))
+            .arg(format!("--api-port={}", self.api_port))
+            .args(extra_args)
+            .current_dir(&self.dir)
+            .env_remove("API_SERVER")
+            .env_remove("DB_URL")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("cannot restart hbbs");
+        self.wait_until_ready();
     }
 }
 
@@ -236,9 +274,13 @@ async fn punch_hole(public_key: &str, token: &str) -> PunchHoleResponse {
 
 #[hbb_common::tokio::test(crate = "hbb_common::tokio")]
 async fn key_exchange_works_with_the_official_client_logic() {
-    let _lock = ONE_SERVER_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let server = Server::start(&[], &[]);
-    let mut conn = connect_and_exchange_keys(&server.public_key()).await.unwrap();
+    let mut conn = connect_and_exchange_keys(&server.public_key())
+        .await
+        .unwrap();
     // the server must read what the client encrypts and answer in kind
     let mut msg = RendezvousMessage::new();
     msg.set_test_nat_request(TestNatRequest::default());
@@ -252,7 +294,9 @@ async fn key_exchange_works_with_the_official_client_logic() {
 
 #[test]
 fn a_malformed_bearer_token_does_not_stop_the_server() {
-    let _lock = ONE_SERVER_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let mut server = Server::start(&[], &[]);
     // the API server runs inside hbbs: a panic there used to abort the rendezvous server too
     for token in ["x", "!!!!", "AAAA", &"A".repeat(200)] {
@@ -265,8 +309,13 @@ fn a_malformed_bearer_token_does_not_stop_the_server() {
 
 #[hbb_common::tokio::test(crate = "hbb_common::tokio")]
 async fn logged_in_only_answers_when_the_api_server_is_unreachable() {
-    let _lock = ONE_SERVER_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
-    let server = Server::start(&["--logged-in-only"], &[("API_SERVER", "http://127.0.0.1:1")]);
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let server = Server::start(
+        &["--logged-in-only"],
+        &[("API_SERVER", "http://127.0.0.1:1")],
+    );
     let answer = punch_hole(&server.public_key(), "abc").await;
     assert!(
         answer.other_failure.to_lowercase().contains("unreachable"),
@@ -276,12 +325,70 @@ async fn logged_in_only_answers_when_the_api_server_is_unreachable() {
 
 #[hbb_common::tokio::test(crate = "hbb_common::tokio")]
 async fn logged_in_only_checks_tokens_on_the_configured_api_port() {
-    let _lock = ONE_SERVER_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     // no API_SERVER: it must follow --api-port, not the default 21114
     let server = Server::start(&["--logged-in-only"], &[]);
     let answer = punch_hole(&server.public_key(), "abc").await;
     assert!(
-        answer.other_failure.to_lowercase().contains("session expired"),
+        answer
+            .other_failure
+            .to_lowercase()
+            .contains("session expired"),
         "unexpected answer: {answer:?}"
+    );
+}
+
+/// A login of the API server still works after hbbs restarted, until the user logs out.
+#[test]
+fn a_session_survives_a_restart() {
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let mut server = Server::start(&[], &[]);
+    // the first start creates the admin account (default password "Hello,world!")
+    let login = r#"{"username":"admin","password":"Hello,world!","id":"E2E","uuid":"ZTJl"}"#;
+    let (status, body) = server.http("POST", "/api/login", None, login);
+    assert_eq!(status, 200, "login: {body}");
+    let token = body
+        .split("\"access_token\":\"")
+        .nth(1)
+        .and_then(|t| t.split('"').next())
+        .expect("an access token")
+        .to_owned();
+    assert_eq!(server.post_with_bearer("/api/currentUser", &token), 200);
+
+    server.restart(&[]);
+    assert_eq!(
+        server.post_with_bearer("/api/currentUser", &token),
+        200,
+        "the session was lost with the restart"
+    );
+    // the page of device groups the client asks for after login
+    let (status, body) = server.http(
+        "GET",
+        "/api/device-group/accessible?current=1&pageSize=100",
+        Some(&token),
+        "",
+    );
+    assert_eq!(status, 200, "device groups: {body}");
+    assert!(
+        body.contains("\"total\"") && body.contains("\"data\""),
+        "{body}"
+    );
+
+    let (status, _) = server.http(
+        "POST",
+        "/api/logout",
+        Some(&token),
+        r#"{"id":"E2E","uuid":"ZTJl"}"#,
+    );
+    assert_eq!(status, 200);
+    server.restart(&[]);
+    assert_eq!(
+        server.post_with_bearer("/api/currentUser", &token),
+        401,
+        "a logged out session came back"
     );
 }

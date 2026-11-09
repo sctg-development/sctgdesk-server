@@ -15,10 +15,11 @@ RustDesk clients (login, address books, heartbeat, system info, audit), the ones
 
 | Prefix | Purpose |
 |---|---|
-| `/api/login`, `/api/logout`, `/api/currentUser`, `/api/login-options` | sessions |
+| `/api/login`, `/api/logout`, `/api/currentUser`, `/api/login-options` | sessions: kept in the database (`api_session`, a hash of the token), so they survive a restart of `hbbs` for 90 days or until the logout |
 | `/api/oidc/*` | OpenID Connect login and settings |
 | `/api/ab*` | address books: personal, shared, peers, tags, rules |
 | `/api/user*`, `/api/enable-users`, `/api/group*` | users and groups |
+| `/api/device-group/accessible` | the groups, by name, for the "accessible devices" tab of the clients |
 | `/api/peers*`, `/api/heartbeat`, `/api/sysinfo`, `/api/audit`, `/api/stategies` | peers and their reports |
 | `/api/software/*` | version and download endpoints, below |
 

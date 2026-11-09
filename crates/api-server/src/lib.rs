@@ -61,6 +61,7 @@ use utils::{
     AbSharedProfilesResponse, AbTag, BearerAuthToken, OidcAuthRequest, OidcAuthUrl, OidcResponse,
     OidcState, OidcUser, OidcUserInfo, OidcUserStatus,
 };
+use utils::{DeviceGroupPayload, DeviceGroupsResponse};
 
 use base64::prelude::{Engine as _, BASE64_STANDARD};
 use rocket::{
@@ -177,6 +178,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 software_version_latest,
                 software_download,
                 software_download_client,
+                device_group_accessible,
                 software_releases_tag,
                 webconsole_index,
                 webconsole_index_html,
@@ -1933,6 +1935,35 @@ async fn users_client(
     };
 
     Ok(Json(response))
+}
+
+/// # Device groups accessible to the user
+///
+/// The clients (1.4 and later) ask for it to fill the "accessible devices" tab; `total` and `data` are what they
+/// read, in pages of `pageSize` starting at `current` = 1. The groups of this server are returned, by name.
+#[openapi(tag = "group")]
+#[get(
+    "/api/device-group/accessible?<current>&<pageSize>",
+    format = "application/json"
+)]
+async fn device_group_accessible(
+    state: &State<ApiState>,
+    _user: AuthenticatedUser,
+    current: Option<u32>,
+    #[allow(non_snake_case)] pageSize: Option<u32>,
+) -> Json<DeviceGroupsResponse> {
+    state.check_maintenance().await;
+    let groups = state.get_groups(0, 10_000).await.unwrap_or_default();
+    let total = groups.len() as u32;
+    let page_size = pageSize.unwrap_or(100).max(1) as usize;
+    let first = (current.unwrap_or(1).max(1) as usize - 1).saturating_mul(page_size);
+    let data = groups
+        .into_iter()
+        .skip(first)
+        .take(page_size)
+        .map(|g| DeviceGroupPayload { name: g.name })
+        .collect();
+    Json(DeviceGroupsResponse { total, data })
 }
 
 /// Get the software download url
