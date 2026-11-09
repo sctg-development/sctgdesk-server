@@ -116,6 +116,80 @@ impl Database {
             .await
             .unwrap();
         // Load and run migrations
+
+        // The sessions of the API server. A plain query and not db.sql: the sqlx macros check db.sql at
+        // compile time against a database that does not have this table yet.
+        for statement in [
+            "CREATE TABLE IF NOT EXISTS api_session (\
+                token_hash blob primary key not null, \
+                user blob not null, \
+                created_at datetime not null default(current_timestamp)) without rowid",
+            "CREATE INDEX IF NOT EXISTS index_api_session_user ON api_session (user)",
+        ] {
+            sqlx::query(statement).execute(&mut *conn).await.unwrap();
+        }
+    }
+
+    /// Sessions older than this are forgotten.
+    const SESSION_LIFETIME_DAYS: i64 = 90;
+
+    fn token_hash(token: &utils::Token) -> Vec<u8> {
+        use sha2::{Digest, Sha256};
+        Sha256::digest(token.to_base64().as_bytes()).to_vec()
+    }
+
+    /// Remembers a session across restarts (a hash of the token is stored, not the token).
+    pub async fn save_session(&self, token: &utils::Token, user_id: &UserId) {
+        let res =
+            sqlx::query("INSERT OR REPLACE INTO api_session (token_hash, user) VALUES (?, ?)")
+                .bind(Self::token_hash(token))
+                .bind(user_id.clone())
+                .execute(&self.pool)
+                .await;
+        if let Err(e) = res {
+            log::error!("cannot save the session: {}", e);
+        }
+    }
+
+    pub async fn delete_session(&self, token: &utils::Token) {
+        let res = sqlx::query("DELETE FROM api_session WHERE token_hash = ?")
+            .bind(Self::token_hash(token))
+            .execute(&self.pool)
+            .await;
+        if let Err(e) = res {
+            log::error!("cannot delete the session: {}", e);
+        }
+    }
+
+    pub async fn purge_old_sessions(&self) {
+        let res = sqlx::query(&format!(
+            "DELETE FROM api_session WHERE created_at < datetime('now', '-{} days')",
+            Self::SESSION_LIFETIME_DAYS
+        ))
+        .execute(&self.pool)
+        .await;
+        if let Err(e) = res {
+            log::error!("cannot purge the old sessions: {}", e);
+        }
+    }
+
+    /// The user of a remembered session, if the session and its (active) user still exist:
+    /// (user id, name, admin).
+    pub async fn find_session_user(&self, token: &utils::Token) -> Option<(UserId, String, bool)> {
+        use sqlx::Row;
+        let row = sqlx::query(
+            "SELECT u.guid, u.name, u.role FROM api_session s JOIN user u ON u.guid = s.user \
+             WHERE s.token_hash = ? AND u.status = 1",
+        )
+        .bind(Self::token_hash(token))
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| log::error!("cannot read the session: {}", e))
+        .ok()??;
+        let guid: Vec<u8> = row.try_get(0).ok()?;
+        let name: String = row.try_get(1).ok()?;
+        let role: i64 = row.try_get(2).ok()?;
+        Some((guid, name, role == 1))
     }
 
     pub async fn find_user_by_name(

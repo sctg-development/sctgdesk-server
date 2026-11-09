@@ -713,6 +713,18 @@ pub struct GroupsResponse {
     pub data: Vec<Group>,
 }
 
+/// A device group as the clients list it (`GET /api/device-group/accessible`).
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct DeviceGroupPayload {
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, JsonSchema)]
+pub struct DeviceGroupsResponse {
+    pub total: u32,
+    pub data: Vec<DeviceGroupPayload>,
+}
+
 pub type GroupInfo = String;
 #[derive(Serialize, Deserialize, Clone, JsonSchema)]
 pub struct Group {
