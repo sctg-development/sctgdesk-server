@@ -2208,13 +2208,9 @@
         "type": "object",
         "required": [
           "admin",
-          "error",
           "name"
         ],
         "properties": {
-          "error": {
-            "type": "boolean"
-          },
           "name": {
             "type": "string"
           },

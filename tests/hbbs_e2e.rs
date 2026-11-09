@@ -358,6 +358,17 @@ fn a_session_survives_a_restart() {
         .expect("an access token")
         .to_owned();
     assert_eq!(server.post_with_bearer("/api/currentUser", &token), 200);
+    // the client treats any "error" key, even false, as a failure
+    let (_, user) = server.http(
+        "POST",
+        "/api/currentUser",
+        Some(&token),
+        r#"{"id":"E2E","uuid":"ZTJl"}"#,
+    );
+    assert!(
+        user.contains("\"name\"") && !user.contains("\"error\""),
+        "currentUser body: {user}"
+    );
 
     server.restart(&[]);
     assert_eq!(

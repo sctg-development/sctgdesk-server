@@ -433,7 +433,6 @@ async fn current_user(
         .ok_or(Err(status::Unauthorized::<()>(()))));
 
     let reply = CurrentUserResponse {
-        error: false,
         data: UserInfo {
             name: username,
             ..Default::default()

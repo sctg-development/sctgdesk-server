@@ -159,8 +159,9 @@ pub struct CurrentUserRequest {
 }
 
 #[derive(Serialize, Debug, JsonSchema)]
+/// The client reads this body as a flat user payload and treats any `error` key,
+/// even `false`, as a failure: do not add one.
 pub struct CurrentUserResponse {
-    pub error: bool,
     #[serde(flatten)]
     pub data: UserInfo,
 }
