@@ -1,4 +1,4 @@
-name: Build for Ubuntu 22.04
+name: Build for Ubuntu 26.04
 # The push trigger was removed: every merge into the default branch refreshed the `nightly` release.
 # Run it by hand (workflow_dispatch) when a nightly is wanted.
 on:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
     permissions:
       id-token: write
       contents: write
@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -35,26 +35,26 @@ jobs:
           targets: ${{env.TARGET}}
 
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/registry
           key: ubuntu-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: Cache cargo index
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/git
           key: ubuntu-cargo-git-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache cargo build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: target
           key: ubuntu-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Build project
         run: |
@@ -68,7 +68,7 @@ jobs:
           subject-path: "target/${{env.TARGET}}/release/hbbs, target/${{env.TARGET}}/release/hbbr, target/${{env.TARGET}}/release/rustdesk-utils"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ubuntu_amd64
           path: |
