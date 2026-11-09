@@ -1,4 +1,4 @@
-# Copyright 2024 SCTG Development - Ronan LE MEILLAT
+# Copyright 2024-2026 SCTG Development - Ronan LE MEILLAT
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Single multi-stage image, built natively for linux/amd64 and linux/arm64 (static musl binaries).
