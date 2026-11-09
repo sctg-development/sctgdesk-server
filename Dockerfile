@@ -29,6 +29,7 @@ FROM ubuntu:resolute
 RUN mkdir -p /usr/local/bin
 COPY --from=builder /build/bin/hbbs /usr/local/bin/hbbs
 COPY --from=builder /build/bin/hbbr /usr/local/bin/hbbr
-COPY --from=builder /build/bin/rustdesk-utils /usr/local/bin/rustdesk-utils
+COPY --from=builder /build/bin/rustdesk-utils /usr/local/bin/sctgdesk-utils
+RUN ln -svf /usr/local/bin/sctgdesk-utils /usr/local/bin/rustdesk-utils
 RUN mkdir -p /usr/local/share/sctgdesk
 WORKDIR /usr/local/share/sctgdesk
