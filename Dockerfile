@@ -3,7 +3,7 @@
 
 # Single multi-stage image, built natively for linux/amd64 and linux/arm64 (static musl binaries).
 # The libs/hbb_common git submodule must be checked out in the build context.
-FROM node:lts-bookworm AS builder
+FROM node:lts-trixie AS builder
 RUN apt-get update && apt-get install -y curl build-essential perl pkg-config libssl-dev zip git sqlite3 musl-dev musl-tools
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 RUN mkdir /build
@@ -25,7 +25,7 @@ RUN . /root/.cargo/env && cd /build \
     && mkdir -p /build/bin \
     && for b in hbbs hbbr rustdesk-utils; do cp "/build/target/$(cat /build/_target)/release/$b" /build/bin/; done
 
-FROM ubuntu:jammy
+FROM ubuntu:resolute
 RUN mkdir -p /usr/local/bin
 COPY --from=builder /build/bin/hbbs /usr/local/bin/hbbs
 COPY --from=builder /build/bin/hbbr /usr/local/bin/hbbr
