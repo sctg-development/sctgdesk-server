@@ -1,0 +1,81 @@
+name: Release
+
+# Publishing a GitHub release (the tag is `sctg-v<version>`, the version of Cargo.toml) builds and publishes everything
+# for that tag, with the tag taken from the release:
+#   - the Docker image (amd64, arm64) on Docker Hub, and the static Linux binaries on the release
+#   - the deb and rpm packages (amd64, arm64) on the release
+#   - the Windows and macOS server binaries on the release
+#   - the Windows and macOS clients on S3 (the downloads of the landing page and of the update check), and the web
+#     client on S3 and Cloudflare Pages
+#
+# A pre-release publishes the server side only: the clients on S3 and Cloudflare Pages, and the `latest` Docker
+# tag, change what users get, so they wait for a full release. To redo a part, re-run the failed jobs of this run
+# from the Actions tab (the called workflows read the release event, which a new manual run would not have).
+# Nothing here runs for a draft, a push or a tag alone.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  docker:
+    name: Docker image and Linux binaries
+    uses: ./.github/workflows/multiarch-docker-hub.yml
+    permissions:
+      id-token: write
+      contents: write
+      attestations: write
+      packages: write
+    secrets: inherit
+
+  packages:
+    name: deb and rpm
+    uses: ./.github/workflows/packages.yml
+    permissions:
+      contents: write
+    with:
+      tag: ${{ github.event.release.tag_name }}
+      publish: true
+
+  binaries:
+    name: Windows and macOS binaries
+    uses: ./.github/workflows/binaries.yml
+    permissions:
+      contents: write
+    with:
+      tag: ${{ github.event.release.tag_name }}
+      publish: true
+
+  client-windows:
+    name: Windows client
+    uses: ./.github/workflows/client-windows.yml
+    permissions:
+      contents: read
+    secrets: inherit
+    with:
+      publish: ${{ !github.event.release.prerelease }}
+
+  client-macos:
+    name: macOS client
+    uses: ./.github/workflows/client-macos.yml
+    permissions:
+      contents: read
+    secrets: inherit
+    with:
+      publish: ${{ !github.event.release.prerelease }}
+
+  client-web:
+    name: Web client
+    uses: ./.github/workflows/client-web.yml
+    permissions:
+      contents: read
+      deployments: write
+    secrets: inherit
+    with:
+      publish: ${{ !github.event.release.prerelease }}

@@ -11,7 +11,7 @@ as close to the official one as possible).
 | `overlay/` | files copied over the tree: logos and icons (our visual signature) |
 | `branding.py` | name, servers, key, URLs: string replacements, strict (a rule that matches nothing fails the build) |
 | `build-sctg.py` | entry point: brands the tree, then runs upstream's `build.py` with the remaining arguments |
-| `../.github/workflows/client-build.yaml` | the client build (from the former client repository): checks out this repository, runs `apply.sh`, then builds. **Never run**: toolchain versions were moved to upstream 1.5.0's, nothing else was changed |
+| `../.github/workflows/client-{windows,macos,web}.yml` | the client builds: check out this repository, run `apply.sh`, brand, build, sign and (when `publish` is on, or from `release.yml` for a full release) copy to S3 and Cloudflare Pages. The iOS, Android and Linux builds of the former `client-build.yaml` were removed, see the git history |
 | `apply.sh` | clones the tag, applies `patches/` and `overlay/` |
 
 ## Build
