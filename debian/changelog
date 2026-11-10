@@ -1,3 +1,11 @@
+rustdesk-server (1.1.16-sctg.3) UNRELEASED; urgency=medium
+
+  * fix: sessions survive a restart of hbbs (stored in the database), and the group endpoint answers the Flutter client
+  * fix: currentUser no longer answers with an error key, which the Flutter client took for a failure
+  * the web client: OAuth2 login, access token read for the rendezvous request, API server and device info stubs
+  * the native client settings link points to the project instead of rustdesk.com
+  * deb and rpm packages (amd64, arm64) from static musl binaries, built by a manual workflow
+
 rustdesk-server (1.1.16-sctg.2) UNRELEASED; urgency=medium
 
   * fix: a request with a malformed bearer token no longer aborts hbbs
