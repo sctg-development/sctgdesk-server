@@ -220,6 +220,11 @@ def web_rules_for(cfg):
         # ("Key mismatch"), so the key of the brand is the default of both requests (punch hole and relay)
         Rule(['flutter/web/js/src/connection.ts'], 'licence_key: localStorage.getItem("key") || undefined,',
              f'licence_key: localStorage.getItem("key") || "{cfg["RS_PUB_KEY"]}",'),
+        # The Dart code stores the login token as the local option "access_token", which the browser keeps under
+        # "option:local:access_token"; the punch hole request read "access_token" and so never sent it, and a server
+        # started with --logged-in-only answered "You have not logged in."
+        Rule(['flutter/web/js/src/connection.ts'], 'token: localStorage.getItem("access_token") || undefined,',
+             'token: localStorage.getItem("option:local:access_token") || localStorage.getItem("access_token") || undefined,'),
         # Without an "api-server" option (a fresh browser) the web client asks admin.rustdesk.com for the login options,
         # so the OAuth2 buttons never show: the API server of the brand is the default
         Rule(['flutter/web/js/src/globals.js'], "  return 'https://admin.rustdesk.com';\n}",
