@@ -48,6 +48,10 @@ lists are the two ends of the same links: a group always reaches itself. Users t
 (`PUT /api/user` ignores `is_admin` and `status` unless the caller is an administrator). Administrators see everything.
 A device on which nobody logged in belongs to nobody: only administrators see it.
 
+Ownership only decides what is shown: it does not authorize a connection (the device's own password and
+`--logged-in-only` do), and it is taken from the device id the client sends when it logs in, which the server cannot
+check. Do not rely on it to hide the existence of a device from a user that wants to find it.
+
 ## Software update endpoints
 
 | Route | Used by |
