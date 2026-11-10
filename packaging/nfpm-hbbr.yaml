@@ -1,0 +1,40 @@
+# deb and rpm of hbbr from the static musl binary (see .github/workflows/packages.yml).
+# Environment: VERSION (for example 1.1.16-sctg.3), NFPM_ARCH (amd64 or arm64), BIN_DIR (folder with the binaries).
+name: sctgdesk-server-hbbr
+arch: ${NFPM_ARCH}
+platform: linux
+version: ${VERSION}
+section: net
+priority: optional
+maintainer: SCTG Development
+vendor: SCTG Development
+homepage: https://github.com/sctg-development/sctgdesk-server
+license: AGPL-3.0-only
+description: |
+  SCTGDesk relay server (hbbr): relays the connections of RustDesk-compatible clients that cannot reach each other directly.
+  Self-host your own RustDesk-compatible server. The binary is static (musl): it needs no library of the system.
+replaces:
+  - rustdesk-server-hbbr
+conflicts:
+  - rustdesk-server-hbbr
+contents:
+  - src: ${BIN_DIR}/hbbr
+    expand: true
+    dst: /usr/bin/hbbr
+    file_info:
+      mode: 0755
+  - src: systemd/rustdesk-hbbr.service
+    dst: /usr/lib/systemd/system/rustdesk-hbbr.service
+    file_info:
+      mode: 0644
+  - dst: /var/lib/rustdesk-server
+    type: dir
+    file_info:
+      mode: 0755
+  - dst: /var/log/rustdesk-server
+    type: dir
+    file_info:
+      mode: 0755
+scripts:
+  postinstall: packaging/hbbr.postinstall.sh
+  preremove: packaging/hbbr.preremove.sh
