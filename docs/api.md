@@ -23,27 +23,34 @@ RustDesk clients (login, address books, heartbeat, system info, audit), the ones
 | `/api/peers*`, `/api/heartbeat`, `/api/sysinfo`, `/api/audit`, `/api/stategies` | peers and their reports |
 | `/api/software/*` | version and download endpoints, below |
 
-## Connection history
+## Access control
 
-The server keeps the history of the connections to the devices, and a note on each one (what was done, for a report
-or an invoice). It speaks the protocol of the RustDesk clients (1.5), nothing has to be configured except that the
-clients know the API server (the clients built with `client/` do):
+A bearer token only says who the user is; what the user may see and do depends on the user's rights and group.
 
-| Route | Used by |
+**Address books.** The right of a user on an address book is 0 (none), 1 (read), 2 (read and write) or 3 (everything,
+including the rules), the highest of the rules given to the user and to the group of the user. The owner and the
+administrators have 3; a personal address book is for its owner only. `POST /api/ab/shared/profiles` tells the client
+the right of the rule, and the server enforces it on every route that takes an address book: peers and tags need 1 to
+be read and 2 to be changed, and the rules need 3. A refusal answers `403`, not `401`, which the clients take for an
+ended session.
+
+**Groups.** A group lists the groups its users may connect to (`allowed_outgoings`) and the groups that may connect
+to it (`allowed_incomings`), by uuid or by name; the API gives them back as `access_to` and `accessed_from`. The two
+lists are the two ends of the same links: a group always reaches itself. Users that are not administrators only get:
+
+| Route | What they get |
 |---|---|
-| `POST /api/audit/conn` | the **controlled** device: the connection opens (`action: new`, address), who controls and how (`peer`, `type`), the connection closes (`action: close`). Also the controlling client, to post the note with the session. Not authenticated, like in the clients |
-| `GET /api/audit/conn/active?id&session_id` | the controlling client, with its token, to get the guid of the record of its session; the record then belongs to that account |
-| `PUT /api/audit` `{guid, note}` | the controlling client, at the end of the connection; the console. Allowed to the account of the connection and to administrators |
-| `GET /api/audit/conn?current&pageSize&q&from&to` | the console, or a user: administrators get everything, the others their own connections. `q` searches the device (id and name), the controlling device, the account, the address and the note |
+| `GET /api/users` | the users of their group and of the groups their group may connect to |
+| `GET /api/device-group/accessible` | those groups |
+| `GET /api/peers` | the devices of those users: a device belongs to the user who last logged in on it |
 
-A device is asked for a note at the end of a connection when its user turns on **Ask for a note at the end of the
-connection** in the client settings (`allow-ask-for-note`). The history is in the console, page **Connections**, with
-a search, dates, the note to edit, and a CSV export.
+`/api/peers/count/*` and `/api/peers/cpus` are for administrators, and a user cannot change their own rights or status
+(`PUT /api/user` ignores `is_admin` and `status` unless the caller is an administrator). Administrators see everything.
+A device on which nobody logged in belongs to nobody: only administrators see it.
 
-The posts of the devices are not authenticated, so the server only keeps those of devices that registered with it
-(a post for an unknown id is dropped), applies a retried post once (the clients send a `nonce`), and keeps at most 4000
-characters of a note. A device can still post false records about *itself*; the account of a record is only known when
-the controlling client asked for its guid with a token.
+Ownership only decides what is shown: it does not authorize a connection (the device's own password and
+`--logged-in-only` do), and it is taken from the device id the client sends when it logs in, which the server cannot
+check. Do not rely on it to hide the existence of a device from a user that wants to find it.
 
 ## Software update endpoints
 

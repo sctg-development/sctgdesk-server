@@ -584,3 +584,300 @@ fn a_session_survives_a_restart() {
         "a logged out session came back"
     );
 }
+
+// ---- access control of the API (issues #18, #21, #27) ----
+
+fn json(body: &str) -> serde_json::Value {
+    serde_json::from_str(body).unwrap_or_else(|e| panic!("not JSON ({e}): {body}"))
+}
+
+/// Logs in on the device `device` and returns the access token.
+fn login(server: &Server, name: &str, password: &str, device: &str) -> String {
+    let body =
+        format!(r#"{{"username":"{name}","password":"{password}","id":"{device}","uuid":"ZTJl"}}"#);
+    let (status, answer) = server.http("POST", "/api/login", None, &body);
+    assert_eq!(status, 200, "login of {name}: {answer}");
+    json(&answer)["access_token"].as_str().unwrap().to_owned()
+}
+
+fn names(value: &serde_json::Value, key: &str) -> Vec<String> {
+    let mut names: Vec<String> = value["data"]
+        .as_array()
+        .unwrap_or_else(|| panic!("no data in {value}"))
+        .iter()
+        .map(|item| item[key].as_str().unwrap_or_default().to_owned())
+        .collect();
+    names.sort();
+    names
+}
+
+/// Before the fix every logged-in user could read and change any address book, saw all the users, the groups and the
+/// devices, was shown full rights on a read-only address book, and could make itself an administrator.
+#[hbb_common::tokio::test(crate = "hbb_common::tokio")]
+async fn a_user_only_gets_what_its_group_gives_access_to() {
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let server = Server::start(&[], &[]);
+    let admin = login(&server, "admin", "Hello,world!", "ADMIN");
+    let post = |path: &str, token: &str, body: &str| server.http("POST", path, Some(token), body);
+    let get = |path: &str, token: &str| server.http("GET", path, Some(token), "");
+
+    // three groups; A may connect to B, nobody to C
+    for group in ["grpA", "grpB", "grpC"] {
+        let body = format!(
+            r#"{{"name":"{group}","note":"","allowed_outgoings":[],"allowed_incomings":[]}}"#
+        );
+        assert_eq!(post("/api/group", &admin, &body).0, 200);
+    }
+    let (_, groups) = get("/api/groups?current=1&pageSize=100", &admin);
+    let guid_of = |name: &str| -> String {
+        json(&groups)["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|g| g["name"] == name)
+            .unwrap_or_else(|| panic!("no group {name}"))["guid"]
+            .as_str()
+            .unwrap()
+            .to_owned()
+    };
+    let (guid_a, guid_b) = (guid_of("grpA"), guid_of("grpB"));
+    let update = format!(
+        r#"{{"guid":"{guid_a}","name":"grpA","note":"","allowed_outgoings":["{guid_b}"],"allowed_incomings":[]}}"#
+    );
+    let (status, answer) = server.http("PUT", "/api/group", Some(&admin), &update);
+    assert_eq!(status, 200, "{answer}");
+    // the access is stored and given back, from both sides
+    let (_, group_a) = get(&format!("/api/group/{guid_a}"), &admin);
+    assert_eq!(
+        json(&group_a)["access_to"],
+        json(&format!(r#"["{guid_b}"]"#)),
+        "{group_a}"
+    );
+    let (_, group_b) = get(&format!("/api/group/{guid_b}"), &admin);
+    assert_eq!(
+        json(&group_b)["accessed_from"],
+        json(&format!(r#"["{guid_a}"]"#)),
+        "{group_b}"
+    );
+
+    for (user, group) in [("alice", "grpA"), ("bob", "grpB"), ("carol", "grpC")] {
+        let body = format!(
+            r#"{{"name":"{user}","password":"pw-{user}-123","confirm-password":"pw-{user}-123","email":"{user}@x.org","is_admin":false,"group_name":"{group}"}}"#
+        );
+        assert_eq!(post("/api/user", &admin, &body).0, 200);
+    }
+
+    // devices: one per user, registered by hand (a real one registers over the rendezvous protocol)
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect(&format!("sqlite://{}/db_v2.sqlite3", server.dir.display()))
+        .await
+        .expect("the database of hbbs");
+    for peer in ["PEER_A", "PEER_B", "PEER_C", "PEER_X"] {
+        sqlx::query(
+            "INSERT INTO peer (guid, id, uuid, pk, info) VALUES (randomblob(16), ?, randomblob(16), randomblob(32), '{}')",
+        )
+        .bind(peer)
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+    // logging in on a device makes it the user's (PEER_X is nobody's)
+    let alice = login(&server, "alice", "pw-alice-123", "PEER_A");
+    let bob = login(&server, "bob", "pw-bob-123", "PEER_B");
+    let carol = login(&server, "carol", "pw-carol-123", "PEER_C");
+
+    // #27: users, groups and devices
+    let (_, users) = get("/api/users?current=1&pageSize=50", &alice);
+    assert_eq!(
+        names(&json(&users), "name"),
+        ["alice", "bob"],
+        "alice sees her group and the one she may reach: {users}"
+    );
+    let (_, users) = get("/api/users?current=1&pageSize=50", &bob);
+    assert_eq!(names(&json(&users), "name"), ["bob"], "{users}");
+    let (_, users) = get("/api/users?current=1&pageSize=50", &carol);
+    assert_eq!(names(&json(&users), "name"), ["carol"], "{users}");
+    let (_, users) = get("/api/users?current=1&pageSize=50", &admin);
+    assert_eq!(
+        names(&json(&users), "name").len(),
+        4,
+        "the administrator sees everybody: {users}"
+    );
+
+    let groups_of = |token: &str| {
+        let (status, body) = get("/api/device-group/accessible?current=1&pageSize=100", token);
+        assert_eq!(status, 200, "{body}");
+        let value = json(&body);
+        assert_eq!(
+            value["total"],
+            value["data"].as_array().unwrap().len(),
+            "{body}"
+        );
+        names(&value, "name")
+    };
+    assert_eq!(groups_of(&alice), ["grpA", "grpB"]);
+    assert_eq!(groups_of(&bob), ["grpB"]);
+    assert_eq!(groups_of(&admin), ["Default", "grpA", "grpB", "grpC"]);
+
+    let peers_of = |token: &str| {
+        let (status, body) = get("/api/peers", token);
+        assert_eq!(status, 200, "{body}");
+        names(&json(&body), "id")
+    };
+    assert_eq!(peers_of(&alice), ["PEER_A", "PEER_B"]);
+    assert_eq!(peers_of(&bob), ["PEER_B"]);
+    assert_eq!(peers_of(&carol), ["PEER_C"]);
+    assert_eq!(peers_of(&admin), ["PEER_A", "PEER_B", "PEER_C", "PEER_X"]);
+    // statistics are for the administrator
+    assert_ne!(get("/api/peers/count/all", &alice).0, 200);
+    assert_ne!(get("/api/peers/cpus", &alice).0, 200);
+    assert_eq!(get("/api/peers/count/all", &admin).0, 200);
+
+    // an address book shared with grpA, read only
+    let (_, book) = post(
+        "/api/ab/shared/add",
+        &admin,
+        r#"{"name":"secret","note":null}"#,
+    );
+    let ab = json(&book)["data"][0]["guid"].as_str().unwrap().to_owned();
+    let rule = |rule: u32| format!(r#"{{"guid":"{ab}","group":"{guid_a}","rule":{rule}}}"#);
+    assert_eq!(post("/api/ab/rule", &admin, &rule(1)).0, 200);
+    let peer = r#"{"id":"123456789","alias":"CONFIDENTIAL","username":"root","password":"s3cret"}"#;
+    assert_eq!(post(&format!("/api/ab/peer/add/{ab}"), &admin, peer).0, 200);
+
+    // #18: the right the client is told is the right of the rule, and it is enforced
+    let rule_of = |token: &str| {
+        let (_, body) = post("/api/ab/shared/profiles", token, "");
+        let value = json(&body);
+        value["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|b| b["name"] == "secret")
+            .map(|b| b["rule"].as_u64().unwrap())
+    };
+    assert_eq!(rule_of(&alice), Some(1));
+    assert_eq!(rule_of(&bob), None, "bob has no rule on this address book");
+    let list = format!("/api/ab/peers?current=1&pageSize=100&ab={ab}");
+    assert_eq!(post(&list, &alice, "").0, 200, "a read-only user reads");
+    assert_eq!(
+        post(
+            &format!("/api/ab/peer/add/{ab}"),
+            &alice,
+            r#"{"id":"666","alias":"x"}"#
+        )
+        .0,
+        403
+    );
+    assert_eq!(
+        server
+            .http(
+                "DELETE",
+                &format!("/api/ab/peer/{ab}"),
+                Some(&alice),
+                r#"["123456789"]"#
+            )
+            .0,
+        403
+    );
+    assert_eq!(
+        post(
+            &format!("/api/ab/tag/add/{ab}"),
+            &alice,
+            r#"{"name":"t","color":1}"#
+        )
+        .0,
+        403
+    );
+    assert_eq!(post(&list, &admin, "").0, 200);
+    let (_, peers) = post(&list, &admin, "");
+    assert_eq!(json(&peers)["total"], 1, "nothing was changed: {peers}");
+
+    // #21: no rule, no access, whatever the guid is known
+    assert_eq!(post(&list, &bob, "").0, 403);
+    assert_eq!(
+        post(
+            &format!("/api/ab/peer/add/{ab}"),
+            &bob,
+            r#"{"id":"666","alias":"x"}"#
+        )
+        .0,
+        403
+    );
+    assert_eq!(post(&format!("/api/ab/tags/{ab}"), &bob, "").0, 403);
+    assert_eq!(
+        get(
+            &format!("/api/ab/rules?current=1&pageSize=10&ab={ab}"),
+            &bob
+        )
+        .0,
+        403
+    );
+    // nor does a rule of read-write give the right to hand out rights
+    assert_eq!(post("/api/ab/rule", &alice, &rule(3)).0 == 200, false);
+
+    // read and write
+    assert_eq!(post("/api/ab/rule", &admin, &rule(2)).0, 200);
+    assert_eq!(rule_of(&alice), Some(2));
+    assert_eq!(
+        post(
+            &format!("/api/ab/peer/add/{ab}"),
+            &alice,
+            r#"{"id":"777","alias":"added"}"#
+        )
+        .0,
+        200
+    );
+    let (_, peers) = post(&list, &alice, "");
+    assert_eq!(json(&peers)["total"], 2, "{peers}");
+    // the personal address book is its owner's
+    let (_, personal) = post("/api/ab/personal", &bob, "");
+    let personal = json(&personal)["guid"].as_str().unwrap().to_owned();
+    assert_eq!(
+        post(
+            &format!("/api/ab/peers?current=1&pageSize=100&ab={personal}"),
+            &bob,
+            ""
+        )
+        .0,
+        200
+    );
+    assert_eq!(
+        post(
+            &format!("/api/ab/peers?current=1&pageSize=100&ab={personal}"),
+            &alice,
+            ""
+        )
+        .0,
+        403
+    );
+
+    // a user cannot make itself an administrator
+    let (_, users) = get("/api/users?current=1&pageSize=50", &alice);
+    let alice_guid = json(&users)["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|u| u["name"] == "alice")
+        .unwrap()["guid"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let promote = format!(r#"{{"uuid":"{alice_guid}","is_admin":true,"status":0}}"#);
+    let _ = server.http("PUT", "/api/user", Some(&alice), &promote);
+    let (_, again) = server.http(
+        "POST",
+        "/api/login",
+        None,
+        r#"{"username":"alice","password":"pw-alice-123","id":"PEER_A","uuid":"ZTJl"}"#,
+    );
+    assert_eq!(
+        json(&again)["user"]["admin"],
+        false,
+        "alice promoted herself: {again}"
+    );
+    assert_eq!(get("/api/user-list?current=1&pageSize=10", &alice).0, 401);
+}

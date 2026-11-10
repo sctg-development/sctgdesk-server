@@ -683,6 +683,53 @@ impl ApiState {
         self.db.get_all_peers().await
     }
 
+    /// What a user may do with an address book: 0 nothing, 1 read, 2 read and write, 3 everything.
+    /// An administrator may do everything.
+    pub async fn ab_access(&self, user: &AuthenticatedUserInfo, ab: &str) -> u32 {
+        if self.is_current_user_admin(user).await.unwrap_or(false) {
+            return 3;
+        }
+        self.db.get_ab_access(&user.user_id, ab).await
+    }
+
+    /// The names of the groups a user may see and reach (its own, and those its group may connect to);
+    /// `None` for an administrator, who sees everything.
+    pub async fn accessible_group_names(
+        &self,
+        user: &AuthenticatedUserInfo,
+    ) -> Option<Vec<String>> {
+        if self.is_current_user_admin(user).await.unwrap_or(false) {
+            return None;
+        }
+        Some(self.db.get_accessible_group_names(&user.user_id).await)
+    }
+
+    /// The peers a user may see: all of them for an administrator; otherwise the devices of the users of the
+    /// groups it may reach, and its own.
+    pub async fn get_visible_peers(&self, user: &AuthenticatedUserInfo) -> Option<Vec<Peer>> {
+        if self.is_current_user_admin(user).await.unwrap_or(false) {
+            return self.db.get_all_peers().await;
+        }
+        let groups = self.db.get_accessible_groups(&user.user_id).await;
+        self.db.get_peers_of_groups(&user.user_id, &groups).await
+    }
+
+    /// Records that a user logged in on a device: the device is then theirs.
+    pub async fn record_device_login(&self, username: &str, device_id: &str) {
+        self.db.set_peer_owner(username, device_id).await
+    }
+
+    /// Sets the groups a group may connect to and the groups that may connect to it (uuids or names).
+    pub async fn set_group_access(
+        &self,
+        group: &str,
+        outgoing: &[String],
+        incoming: &[String],
+    ) -> Option<()> {
+        let guid = self.db.resolve_group(group).await?;
+        self.db.set_group_access(&guid, outgoing, incoming).await
+    }
+
     /// Get groups
     pub async fn get_groups(&self, offset: u32, page_size: u32) -> Option<Vec<Group>> {
         self.db.get_groups(offset, page_size).await
