@@ -23,6 +23,28 @@ RustDesk clients (login, address books, heartbeat, system info, audit), the ones
 | `/api/peers*`, `/api/heartbeat`, `/api/sysinfo`, `/api/audit`, `/api/stategies` | peers and their reports |
 | `/api/software/*` | version and download endpoints, below |
 
+## Connection history
+
+The server keeps the history of the connections to the devices, and a note on each one (what was done, for a report
+or an invoice). It speaks the protocol of the RustDesk clients (1.5), nothing has to be configured except that the
+clients know the API server (the clients built with `client/` do):
+
+| Route | Used by |
+|---|---|
+| `POST /api/audit/conn` | the **controlled** device: the connection opens (`action: new`, address), who controls and how (`peer`, `type`), the connection closes (`action: close`). Also the controlling client, to post the note with the session. Not authenticated, like in the clients |
+| `GET /api/audit/conn/active?id&session_id` | the controlling client, with its token, to get the guid of the record of its session; the record then belongs to that account |
+| `PUT /api/audit` `{guid, note}` | the controlling client, at the end of the connection; the console. Allowed to the account of the connection and to administrators |
+| `GET /api/audit/conn?current&pageSize&q&from&to` | the console, or a user: administrators get everything, the others their own connections. `q` searches the device (id and name), the controlling device, the account, the address and the note |
+
+A device is asked for a note at the end of a connection when its user turns on **Ask for a note at the end of the
+connection** in the client settings (`allow-ask-for-note`). The history is in the console, page **Connections**, with
+a search, dates, the note to edit, and a CSV export.
+
+The posts of the devices are not authenticated, so the server only keeps those of devices that registered with it
+(a post for an unknown id is dropped), applies a retried post once (the clients send a `nonce`), and keeps at most 4000
+characters of a note. A device can still post false records about *itself*; the account of a record is only known when
+the controlling client asked for its guid with a token.
+
 ## Software update endpoints
 
 | Route | Used by |
