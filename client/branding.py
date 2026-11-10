@@ -14,6 +14,7 @@ Settings come from the environment (the CI passes them as secrets):
   API_SERVER            host[:port] of the API server
   API_SERVER_PROTOCOL   http or https (default https)
   COPYRIGHT_HOLDER      optional, added to upstream's in the copyright (default SCTG Development)
+  PROJECT_URL           optional, where "set up your own server" leads (default the GitHub repository)
   MACOS_CODESIGN_IDENTITY  optional, "Name (TEAMID)": its TEAMID replaces the upstream team id
 
   branding.py [--root DIR] [--check] [--disable-api-server-forced] [--local-build]
@@ -271,6 +272,8 @@ def rules_for(cfg, forced_api, local_build):
     holder = os.environ.get('COPYRIGHT_HOLDER') or 'SCTG Development'
     api = f"{cfg['API_SERVER_PROTOCOL']}://{cfg['API_SERVER']}"
     site = f'https://{org}.eu.org'.lower()
+    # Where a user who wants a server of their own is sent (the link at the bottom of the main window)
+    project = os.environ.get('PROJECT_URL') or 'https://github.com/sctg-development/sctgdesk-server'
     rules = [
         # Where the client connects by default
         Rule(['libs/hbb_common/src/config.rs'], UPSTREAM_RENDEZVOUS, cfg['RENDEZVOUS_SERVER']),
@@ -284,6 +287,11 @@ def rules_for(cfg, forced_api, local_build):
         # About pages and download links
         Rule(['flutter/lib/desktop/pages/desktop_setting_page.dart',
               'flutter/lib/mobile/pages/settings_page.dart'], 'https://rustdesk.com', site),
+        # "Set up your own server": upstream's pricing page (Flutter) and blog article (Sciter) sell its own server
+        Rule(['flutter/lib/desktop/pages/connection_page.dart'], 'const url = "https://rustdesk.com/pricing";',
+             f'const url = "{project}";'),
+        Rule(['src/ui/index.tis'], 'handler.open_url("https://rustdesk.com/blog/id-relay-set/");',
+             f'handler.open_url("{project}");'),
         # The copyright keeps upstream's holder and adds ours: each rule anchors on what follows the holder, so that
         # a second run does not add it twice.
         Rule(['flutter/lib/desktop/pages/desktop_setting_page.dart'], 'Pte. Ltd.\\n$license',
