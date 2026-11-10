@@ -18,6 +18,12 @@ on:
         description: "Copy the .exe to S3 (it becomes the download of the landing page)"
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      publish:
+        description: "Copy to S3 (and Cloudflare Pages for the web client)"
+        type: boolean
+        default: false
   pull_request:
     paths:
       - ".github/workflows/client-windows.yml"
@@ -286,7 +292,7 @@ jobs:
           & "${{ steps.signtoolLocation.outputs.signtoolLocation }}" sign /tr http://timestamp.digicert.com /td sha256 /fd SHA256 /f ./certificate.pfx /p $env:P12_PASSWORD ./SignOutput/*.exe
 
       - name: Copy the executable to S3
-        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        if: inputs.publish
         shell: pwsh
         env:
           S3_ENDPOINT: ${{ secrets.AWS_S3_ENDPOINT }}
@@ -453,7 +459,7 @@ jobs:
           & "${{ steps.signtoolLocation.outputs.signtoolLocation }}" sign /tr http://timestamp.digicert.com /td sha256 /fd SHA256 /f ./certificate.pfx /p $env:P12_PASSWORD ./SignOutput/*.exe
 
       - name: Copy the executable to S3
-        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        if: inputs.publish
         shell: pwsh
         env:
           S3_ENDPOINT: ${{ secrets.AWS_S3_ENDPOINT }}

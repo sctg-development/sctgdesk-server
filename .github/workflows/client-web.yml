@@ -14,6 +14,12 @@ on:
         description: "Publish to Cloudflare Pages (replaces the live page)"
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      publish:
+        description: "Copy to S3 (and Cloudflare Pages for the web client)"
+        type: boolean
+        default: false
   pull_request:
     paths:
       - ".github/workflows/client-web.yml"
@@ -110,7 +116,7 @@ jobs:
       # The archives embed the address of the rendezvous server and this repository is public:
       # they go to S3 only, never to a workflow artifact or a release.
       - name: Copy the archives to S3
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || inputs.publish
         shell: bash
         run: |
           cd flutter/build
@@ -125,7 +131,7 @@ jobs:
       # branch is a preview. The tree here is upstream's clone, in a detached HEAD, so without a branch the
       # action deploys to "HEAD" and the live page does not change. Ask the project which branch is its own.
       - name: Find the production branch of the Pages projects
-        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        if: inputs.publish
         shell: bash
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -143,7 +149,7 @@ jobs:
           echo "PAGES_BRANCH_DEBUG=$debug" >> "$GITHUB_ENV"
 
       - name: Publish to Cloudflare Pages
-        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        if: inputs.publish
         uses: sctg-development/pages-action-without-url@main
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -155,7 +161,7 @@ jobs:
 
       # Fail loudly if it still was not a production deployment, instead of leaving the old page up.
       - name: Check that the live page was replaced
-        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        if: inputs.publish
         shell: bash
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -168,7 +174,7 @@ jobs:
           [ "$environment" = production ] || { echo "::error::the deployment is a $environment one, the live page did not change"; exit 1; }
 
       - name: Publish the debug build to Cloudflare Pages
-        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        if: inputs.publish
         uses: sctg-development/pages-action-without-url@main
         continue-on-error: true
         with:

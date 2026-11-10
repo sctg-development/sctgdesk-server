@@ -18,6 +18,12 @@ on:
         description: "Copy the .dmg files to S3 (they become the downloads of the landing page)"
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      publish:
+        description: "Copy to S3 (and Cloudflare Pages for the web client)"
+        type: boolean
+        default: false
   pull_request:
     paths:
       - ".github/workflows/client-macos.yml"
@@ -251,7 +257,7 @@ jobs:
           ls -l ./*.dmg
 
       - name: Copy the dmg to S3
-        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        if: inputs.publish
         env:
           S3_ENDPOINT: ${{ secrets.AWS_S3_ENDPOINT }}
           S3_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}

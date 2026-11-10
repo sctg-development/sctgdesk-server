@@ -4,7 +4,7 @@ Open work, roughly in priority order. Nothing here is a promise; each item is a 
 
 ## Make the consolidation trustworthy
 
-- **Run the CI on GitHub.** The workflows (`ci.yml`, `client-build.yaml`) were written and checked locally only.
+- **Run the CI on GitHub.** `ci.yml` and the release pipeline (`release.yml`) were written and checked locally only; the clients, packages and binaries workflows have run on GitHub.
 - **Fix `crates/api-oauth2` tests**, which do not compile, and re-enable them in CI.
 - **Triage `cargo audit`** (dozens of advisories, informational for now) and add `cargo-deny` for licenses.
 - **Adapt or remove** what was inherited and never checked: `docker/`, `docker-classic/`, `kubernetes/`, `update-api-server.sh`,

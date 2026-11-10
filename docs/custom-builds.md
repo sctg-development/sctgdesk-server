@@ -63,7 +63,11 @@ release. Change the maintainer, vendor and name in the three YAML files for a pa
 
 ### Releases from GitHub Actions
 
-Two workflows, run by hand from the *Actions* tab, publish to the release of a tag. Both ask for the **tag**
+Publishing a GitHub release runs `release.yml`, which builds and publishes everything for the tag of the release:
+the Docker image, the Linux packages, the Windows and macOS server binaries, and (full release) the clients on S3
+and Cloudflare Pages. The jobs, the secrets and the pre-release rule are in [Versions and releases](releases.md#the-release-pipeline).
+
+`packages.yml` and `binaries.yml` can also be run by hand from the *Actions* tab. They ask for the **tag**
 (`sctg-v<version>`, which must match `Cargo.toml` or the run stops) and for `publish` (off: build and test only; on:
 upload to the release, created as a pre-release if missing):
 
@@ -72,9 +76,9 @@ upload to the release, created as a pre-release if missing):
 | `Linux packages (deb, rpm)` (`packages.yml`) | deb and rpm of hbbs, hbbr and utils for amd64 and arm64, installed in Debian and Fedora containers as a test |
 | `Windows and macOS binaries` (`binaries.yml`) | zip archives with the three binaries for Windows (amd64, arm64) and macOS (Intel, Apple Silicon) |
 
-To use them in a fork, fork the repository (submodules included), change the version and the names, push a branch and
-run the workflows there: they need no secret. The workflows inherited from the former repositories (`windows.yml`,
-`macos-intel-build.yml`, `ubuntu.yml`, `main.yml`, the Docker one) are **not verified**.
+To use them in a fork, fork the repository (submodules included), change the version and the names and run the two
+workflows by hand on a branch: they need no secret. The Docker and client jobs of `release.yml` need the secrets of
+the list in [releases](releases.md#the-release-pipeline): set your own, or remove those jobs from your copy.
 
 ### Docker image
 
@@ -119,8 +123,8 @@ python3 branding.py --check           # what would change, writes nothing
 
 The build needs the upstream toolchain (Flutter, vcpkg, a C++ toolchain, Xcode on macOS, ...): follow RustDesk's own
 build documentation for the tag in `client/UPSTREAM_TAG`. `client/README.md` lists what differs from upstream and what
-is **not verified**: the client was prepared against a clean checkout of upstream 1.5.0, and its build workflow
-(`client-build.yaml`) has not been run since the consolidation. Treat a first build as work to do, not as a recipe.
+is **not verified**: the client was prepared against a clean checkout of upstream 1.5.0, and the iOS,
+Android and Linux clients have no workflow any more. Treat a first build of those as work to do, not as a recipe.
 
 Your icons and logos go in `client/overlay/` (copied over the tree). Windows, Android and iOS icons are still
 upstream's.

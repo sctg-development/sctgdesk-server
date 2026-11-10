@@ -1,11 +1,23 @@
 name: Linux packages (deb, rpm)
 
 # Static musl binaries of hbbs, hbbr and rustdesk-utils for amd64 and arm64, packed as deb and rpm with nfpm
-# (packaging/). Run by hand. Without `publish` it builds, packs and installs the packages in containers, and
+# (packaging/). Run by release.yml when a release is published, or by hand. Without `publish` it builds, packs and installs the packages in containers, and
 # publishes nothing; with `publish` it also uploads them to the GitHub release of the tag, created as a pre-release
 # when it does not exist yet. A release is a decision of the maintainer (docs/releases.md).
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, sctg-v<version> as in Cargo.toml (for example sctg-v1.1.16-sctg.3)"
+        required: true
+        type: string
+      publish:
+        description: "Upload the packages to the pre-release of the tag"
+        required: false
+        default: false
+        type: boolean
+  # called by release.yml with the tag of the release and publish on
+  workflow_call:
     inputs:
       tag:
         description: "Release tag, sctg-v<version> as in Cargo.toml (for example sctg-v1.1.16-sctg.3)"
