@@ -83,6 +83,106 @@ def apply_rule(root, rule, check):
     return changed, applied
 
 
+# The native client does the OAuth2 login in Rust (src/hbbs_http/account.rs); the Dart bridge of the web client of 1.2.5
+# throws on it, and on the id, uuid and device info that every login sends. The same steps in JavaScript, with the
+# same results for the Dart code of the login dialog (state_msg, failed_msg, url, auth_body).
+WEB_LOGIN_JS = """// ===== login of the browser (client/branding.py) =====
+const OIDC_QUERY_TIMEOUT_MS = 3 * 60 * 1000;
+let oidcSession = { state_msg: '', failed_msg: '', url: null, auth_body: null };
+
+function getWebUuid() {
+  let u = localStorage.getItem('web-uuid');
+  if (!u) {
+    u = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + String(Math.random());
+    localStorage.setItem('web-uuid', u);
+  }
+  return btoa(u);
+}
+
+function getWebId() {
+  return 'web-' + getWebUuid().replace(/[^A-Za-z0-9]/g, '').slice(0, 8);
+}
+
+function getLoginDeviceInfo() {
+  return JSON.stringify({ os: 'Web', type: 'browser', name: navigator.userAgent });
+}
+
+function oidcAuthResult() {
+  return JSON.stringify({
+    state_msg: oidcSession.state_msg,
+    failed_msg: oidcSession.failed_msg,
+    url: oidcSession.url,
+    auth_body: oidcSession.auth_body
+  });
+}
+
+function oidcAuthCancel() {
+  if (oidcSession.win) oidcSession.win.close();
+  oidcSession = { state_msg: '', failed_msg: '', url: null, auth_body: null };
+}
+
+async function oidcAuth(value) {
+  const { op, remember_me } = JSON.parse(value);
+  const s = { state_msg: 'Requesting account auth', failed_msg: '', url: null, auth_body: null, win: null };
+  oidcSession = s;
+  // Opened here, while the click is still being handled: a window opened later is blocked
+  s.win = window.open('', '_blank');
+  const stop = (msg) => {
+    s.failed_msg = msg;
+    if (s.win) s.win.close();
+  };
+  const api = getApiServer();
+  const id = getWebId();
+  const uuid = getWebUuid();
+  try {
+    const r = await (await fetch(api + '/api/oidc/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ op, id, uuid, deviceInfo: JSON.parse(getLoginDeviceInfo()) })
+    })).json();
+    if (oidcSession !== s) return;
+    if (typeof r.error === 'string') return stop(r.error);
+    if (!r.code || !r.url) return stop('Invalid auth response');
+    if (s.win) {
+      s.win.location.href = r.url;
+    } else {
+      s.url = r.url; // the window was blocked: the Dart code opens the URL
+    }
+    s.state_msg = 'Waiting account auth';
+    const begin = Date.now();
+    while (oidcSession === s && Date.now() - begin < OIDC_QUERY_TIMEOUT_MS) {
+      try {
+        const q = await (await fetch(api + '/api/oidc/auth-query?' + new URLSearchParams({ code: r.code, id, uuid }))).json();
+        if (oidcSession !== s) return;
+        if (!q) {
+          // null: nothing authorised yet, like the native client the format error is ignored
+        } else if (typeof q.error === 'string') {
+          if (!q.error.includes('No authed oidc is found')) return stop(q.error);
+        } else if (q.access_token) {
+          if (remember_me && q.type === 'access_token') {
+            localStorage.setItem('option:local:access_token', q.access_token);
+            localStorage.setItem('option:local:user_info', JSON.stringify({ name: q.user && q.user.name, status: q.user && q.user.status }));
+          }
+          if (s.win) s.win.close();
+          s.state_msg = 'Login account auth';
+          s.auth_body = q;
+          return;
+        }
+      } catch (e) {
+        console.log('oidc query failed', e);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    if (oidcSession === s) stop('timeout');
+  } catch (e) {
+    if (oidcSession === s) stop(String(e));
+  }
+}
+// ===== end of the login of the browser =====
+
+"""
+
+
 def web_rules_for(cfg):
     """The web client of upstream (flutter/web/js, see apply.sh) and our landing page (flutter/web/client.html)."""
     app = cfg['APP_NAME']
@@ -124,6 +224,36 @@ def web_rules_for(cfg):
         # so the OAuth2 buttons never show: the API server of the brand is the default
         Rule(['flutter/web/js/src/globals.js'], "  return 'https://admin.rustdesk.com';\n}",
              f"  return '{api}';\n}}"),
+        # The login of the browser (OAuth2, and the id, uuid and device info of the password login): JavaScript
+        Rule(['flutter/web/js/src/globals.js'], 'function getApiServer() {\n', WEB_LOGIN_JS + 'function getApiServer(/* brand */) {\n'),
+        Rule(['flutter/web/js/src/globals.js'], "    case 'option':\n      value = JSON.parse(value);\n      localStorage.setItem(value.name, value.value);\n",
+             "    case 'account_auth':\n      oidcAuth(value);\n      break;\n    case 'account_auth_cancel':\n      oidcAuthCancel();\n      break;\n"
+             "    case 'option':\n      value = JSON.parse(value);\n      localStorage.setItem(value.name, value.value); // brand\n"),
+        Rule(['flutter/web/js/src/globals.js'], "    case 'api_server':\n      return getApiServer();\n",
+             "    case 'account_auth_result':\n      return oidcAuthResult();\n    case 'web_id':\n      return getWebId();\n"
+             "    case 'web_uuid':\n      return getWebUuid();\n    case 'login_device_info':\n      return getLoginDeviceInfo();\n"
+             "    case 'api_server':\n      return getApiServer(); // brand\n"),
+        Rule(['flutter/lib/web/bridge.dart'],
+             'Future<void> mainAccountAuth(\n      {required String op, required bool rememberMe, dynamic hint}) {\n    throw UnimplementedError();',
+             'Future<void> mainAccountAuth(\n      {required String op, required bool rememberMe, dynamic hint}) {\n'
+             "    // synchronous: the browser opens the login window only while the click is being handled\n"
+             "    js.context.callMethod('setByName', ['account_auth', jsonEncode({'op': op, 'remember_me': rememberMe})]);\n"
+             '    return Future.value();'),
+        Rule(['flutter/lib/web/bridge.dart'],
+             'Future<void> mainAccountAuthCancel({dynamic hint}) {\n    throw UnimplementedError();',
+             "Future<void> mainAccountAuthCancel({dynamic hint}) {\n    js.context.callMethod('setByName', ['account_auth_cancel', '']);\n    return Future.value();"),
+        Rule(['flutter/lib/web/bridge.dart'],
+             'Future<String> mainAccountAuthResult({dynamic hint}) {\n    throw UnimplementedError();',
+             "Future<String> mainAccountAuthResult({dynamic hint}) {\n    return Future.value(js.context.callMethod('getByName', ['account_auth_result']) as String);"),
+        Rule(['flutter/lib/web/bridge.dart'],
+             'Future<String> mainGetMyId({dynamic hint}) {\n    throw UnimplementedError();',
+             "Future<String> mainGetMyId({dynamic hint}) {\n    return Future.value(js.context.callMethod('getByName', ['web_id']) as String);"),
+        Rule(['flutter/lib/web/bridge.dart'],
+             'Future<String> mainGetUuid({dynamic hint}) {\n    throw UnimplementedError();',
+             "Future<String> mainGetUuid({dynamic hint}) {\n    return Future.value(js.context.callMethod('getByName', ['web_uuid']) as String);"),
+        Rule(['flutter/lib/web/bridge.dart'],
+             'String mainGetLoginDeviceInfo({dynamic hint}) {\n    throw UnimplementedError();',
+             "String mainGetLoginDeviceInfo({dynamic hint}) {\n    return js.context.callMethod('getByName', ['login_device_info']) as String;"),
         # The landing page asks our API server for the download links
         Rule(['flutter/web/client.html'], '__API_SERVER__', api),
         Rule(['flutter/lib/**/*.dart'], 'RustDesk', app),
