@@ -57,6 +57,7 @@ jobs:
     uses: ./.github/workflows/client-windows.yml
     permissions:
       contents: read
+      actions: read # for bridge.yml, called by the client workflow
     secrets: inherit
     with:
       publish: ${{ !github.event.release.prerelease }}
@@ -66,6 +67,7 @@ jobs:
     uses: ./.github/workflows/client-macos.yml
     permissions:
       contents: read
+      actions: read # for bridge.yml, called by the client workflow
     secrets: inherit
     with:
       publish: ${{ !github.event.release.prerelease }}
