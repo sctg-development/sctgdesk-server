@@ -1,0 +1,143 @@
+name: Windows and macOS binaries
+
+# hbbs, hbbr and rustdesk-utils for Windows (amd64, arm64) and macOS (Intel, Apple Silicon), zipped. Run by hand.
+# Without `publish` it builds and checks the binaries and publishes nothing; with `publish` it also uploads the zip
+# files and their SHA-256 sums to the GitHub release of the tag, created as a pre-release when it does not exist yet.
+# The Linux packages have their own workflow (packages.yml). A release is a decision of the maintainer
+# (docs/releases.md).
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, sctg-v<version> as in Cargo.toml (for example sctg-v1.1.16-sctg.3)"
+        required: true
+        type: string
+      publish:
+        description: "Upload the archives to the pre-release of the tag"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: binaries-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: ${{ matrix.os_name }} ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os_name: windows, arch: x86_64,  runner: windows-latest, target: x86_64-pc-windows-msvc,  ext: .exe }
+          - { os_name: windows, arch: aarch64, runner: windows-11-arm, target: aarch64-pc-windows-msvc, ext: .exe }
+          - { os_name: macos,   arch: x86_64,  runner: macos-15-intel, target: x86_64-apple-darwin,     ext: "" }
+          - { os_name: macos,   arch: aarch64, runner: macos-15,       target: aarch64-apple-darwin,    ext: "" }
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      # the sqlx macros check the queries against a database at compile time
+      DATABASE_URL: sqlite://${{ github.workspace }}/db_v2.sqlite3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: The tag matches the version of Cargo.toml
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          case "$TAG" in sctg-v*) ;; *) echo "::error::the tag must start with sctg-v"; exit 1;; esac
+          version="${TAG#sctg-v}"
+          cargo_version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)
+          if [ "$version" != "$cargo_version" ]; then
+            echo "::error::the tag says $version but Cargo.toml says $cargo_version: the binaries would report the wrong version"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: binaries-${{ matrix.target }}
+
+      # The web console and the API documentation are embedded in the binaries
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Windows: link the C runtime statically, so that the binaries do not need the Visual C++ redistributable
+      - name: Build
+        env:
+          RUSTFLAGS: ${{ matrix.os_name == 'windows' && '-C target-feature=+crt-static' || '' }}
+        run: cargo build --release --locked --bins --target ${{ matrix.target }}
+
+      - name: The binaries run and report the version
+        run: |
+          bin="target/${{ matrix.target }}/release"
+          for b in hbbs hbbr rustdesk-utils; do ls -l "$bin/$b${{ matrix.ext }}"; done
+          "$bin/rustdesk-utils${{ matrix.ext }}" genkeypair > /dev/null
+          "$bin/hbbs${{ matrix.ext }}" --version | tee version.txt
+          grep -q "$VERSION" version.txt || { echo "::error::hbbs does not report $VERSION"; exit 1; }
+
+      - name: Archive
+        run: |
+          name="sctgdesk-server-${VERSION}-${{ matrix.os_name }}-${{ matrix.arch }}"
+          bin="target/${{ matrix.target }}/release"
+          mkdir -p "dist/$name"
+          for b in hbbs hbbr rustdesk-utils; do cp "$bin/$b${{ matrix.ext }}" "dist/$name/"; done
+          cp LICENSE "dist/$name/"
+          cd dist
+          if [ "${{ matrix.os_name }}" = windows ]; then
+            powershell -NoProfile -Command "Compress-Archive -Path '$name' -DestinationPath '$name.zip'"
+          else
+            zip -qr "$name.zip" "$name"
+          fi
+          rm -rf "$name"
+          ls -l
+
+      # Only to hand the archives to the publish job; deleted after a day
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.os_name }}-${{ matrix.arch }}
+          path: dist/*.zip
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    name: Upload to the pre-release
+    needs: build
+    if: ${{ inputs.publish }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: binaries-*
+          merge-multiple: true
+      - name: Create the pre-release if needed, then upload
+        run: |
+          cd dist
+          sha256sum ./*.zip | tee SHA256SUMS-windows-macos
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            # the Linux packages workflow may create it at the same time
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "$TAG" \
+              --notes "Pre-release. Binaries of hbbs, hbbr and rustdesk-utils. SHA-256 sums in SHA256SUMS-*." \
+              || gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null
+          fi
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber ./*.zip SHA256SUMS-windows-macos
