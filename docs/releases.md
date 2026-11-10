@@ -5,8 +5,8 @@
 Server versions follow `<upstream version>-sctg.<n>`, for example `1.1.16-sctg.1`: the upstream release the code
 is based on, then our own counter. The former `1.1.99-xx` numbers were chosen to sort above upstream and
 caused collisions with upstream's tags (issue #13); they are not used any more. (Decision proposed in
-[ADR 0002](adr/0002-upstream-sync-strategy.md); the package version in `Cargo.toml` still says `1.1.99-47` until
-the first release under the new scheme.)
+[ADR 0002](adr/0002-upstream-sync-strategy.md).) The version is set in `Cargo.toml`, `crates/api-server/Cargo.toml`,
+`Cargo.lock`, `web/console/package.json` (and its lock file) and `debian/changelog`, in one commit.
 
 ## Tags
 
@@ -34,6 +34,19 @@ that the binaries are static and installs the packages in a Debian and a Fedora 
   the unit, then `systemctl enable --now rustdesk-hbbs rustdesk-hbbr`. An upgrade restarts the services that run.
 - The units run as root, like the former packages; the data is in `/var/lib/rustdesk-server`, the logs in
   `/var/log/rustdesk-server`.
+
+## Windows and macOS binaries
+
+The `Windows and macOS binaries` workflow (`.github/workflows/binaries.yml`, run by hand, same `tag` and `publish`
+inputs) builds `hbbs`, `hbbr` and `rustdesk-utils` on GitHub runners for Windows amd64 and arm64 (`windows-latest`,
+`windows-11-arm`, C runtime linked statically) and macOS Intel and Apple Silicon (`macos-15-intel`, `macos-15`),
+checks that they run and report the version of the tag, and zips them as
+`sctgdesk-server-<version>-<windows|macos>-<x86_64|aarch64>.zip`. With `publish` the archives and
+`SHA256SUMS-windows-macos` go to the release of the tag, created as a pre-release if missing. The binaries are not
+signed (Windows) nor signed and notarized (macOS).
+
+Order of a release: bump the version in a pull request, merge it, run the two workflows without `publish`, then with
+`publish`, test the assets of the pre-release, and only then promote it to a release.
 
 The release workflows inherited from the former repositories are **not verified** since the consolidation; check
 `.github/workflows/` before relying on them.

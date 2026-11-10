@@ -1,10 +1,10 @@
 <p align="center">
-  <a href="#quick-start">Quick start</a> •
-  <a href="#docker">Docker</a> •
-  <a href="#how-to-create-a-keypair">Keypair</a> •
-  <a href="#building-from-source">Build</a> •
-  <a href="#env-variables">Variables</a> •
-  <a href="https://sctg-development.github.io/sctgdesk-server/">Developer manual</a><br>
+  <a href="#install">Install</a> •
+  <a href="#first-run">First run</a> •
+  <a href="#configuration">Configuration</a> •
+  <a href="#clients">Clients</a> •
+  <a href="#build-it-yourself">Build</a> •
+  <a href="https://sctg-development.github.io/sctgdesk-server/">Manual</a><br>
   [<a href="README-FR.md">French</a>] | [<a href="README-DE.md">Deutsch</a>] | [<a href="README-NL.md">Nederlands</a>] | [<a href="README-TW.md">繁體中文</a>] | [<a href="README-ZH.md">简体中文</a>] | [<a href="README-RU.md">Русский</a>]<br>
 </p>
 
@@ -13,46 +13,65 @@
 ![Docker Pulls](https://img.shields.io/docker/pulls/sctg/sctgdesk-server)
 [![CI](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml/badge.svg)](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml)
 
-[**Binary Download**](https://github.com/sctg-development/sctgdesk-server/releases) •
-[**Developer manual**](https://sctg-development.github.io/sctgdesk-server/) •
-[**Contributing**](CONTRIBUTING.md)
+SCTGDesk is a self-hosted remote-desktop server, with its own clients, derived from
+[RustDesk](https://github.com/rustdesk/rustdesk). It is free software under the **AGPL-3.0**.
 
-SCTGDesk is a self-hosted remote-desktop server (and a client) derived from [RustDesk](https://github.com/rustdesk/rustdesk), free and open source under the **AGPL-3.0**.
+> **SCTGDesk is an independent project. It is not affiliated with, endorsed by or sponsored by the RustDesk project
+> or Purslane Ltd.** "RustDesk" is the name of that project; it is used here only to say what this software is
+> derived from and compatible with.
 
-> **SCTGDesk is an independent project. It is not affiliated with, endorsed by or sponsored by the RustDesk project or Purslane Ltd.**
-> "RustDesk" is the name of that project; it is used here only to say what this software is derived from and compatible with.
+This repository is the whole project: the server, the API server, the web console and the client overlay. It replaces
+the former repositories `sctgdesk-api-server` and `sctgdesk`, which are archived.
 
-What it adds to the RustDesk server (`hbbs`, `hbbr`):
+## What you get
 
-* The server side of the **encrypted TCP/WebSocket connection** (key exchange versions 0 and 1). Upstream's open-source server does not implement it.
-* An **API server** compatible with the RustDesk clients, embedded in `hbbs` (still a preliminary implementation):
-  * Support for personal address book
-  * Support for shared address book at group level
-    * read-only, read-write, admin
-  * Support for shared address book at user level
-    * read-only, read-write, admin
-* A simple **web console**.
+* The RustDesk server: `hbbs` (ID and rendezvous server) and `hbbr` (relay), plus `rustdesk-utils` (key pairs,
+  connectivity check). Compatible with the official RustDesk clients.
+* The server side of the **encrypted TCP and WebSocket connection** (key exchange versions 0 and 1), which the
+  open-source upstream server does not implement. This is what makes the **web client** work.
+* A **REST API** embedded in `hbbs`, compatible with the clients: login (password, OpenID Connect / OAuth2:
+  GitHub, GitLab, Google, Dex...), sessions that survive a restart, personal and shared address books (per user and
+  per group, read-only / read-write / admin), users and groups, software-update endpoints.
+* A **web console** to manage all of that, and interactive API documentation.
+* An option to refuse unauthenticated control (`--logged-in-only`).
+* A **client** (`client/`): upstream RustDesk plus a small overlay, branded at build time with your name, servers and
+  key; and a **web client**.
 
-The web console is at `http://<server-ip>:21114/` (see [Default admin user](#default-admin-user)).
-The API documentation is built into the server at `http://<server-ip>:21114/api/doc/`.
+Compatibility comes first: the server must keep working with official RustDesk clients, and our changes to upstream
+files are kept small so that new upstream releases can be merged.
 
-The client (`client/`) is upstream RustDesk plus a small overlay. The server is meant to keep working with the official RustDesk clients: compatibility comes first.
+## Install
 
-## License and source code
+Pick one. Whatever you choose, you need a **key pair** and the ports below.
 
-SCTGDesk is distributed under the [GNU Affero General Public License v3](LICENSE). The source code of every release is in this repository, at the tag of that release. If you modify this software and let other people use it over a network, section 13 of the license requires you to offer them the corresponding source code of your modified version.
+### Linux packages (deb, rpm)
 
-## Star the project
+Each release has `sctgdesk-server-hbbs`, `sctgdesk-server-hbbr` and `sctgdesk-server-utils` for **amd64** and
+**arm64**, as `.deb` and `.rpm`, built from static musl binaries (no library dependency). They replace the former
+`rustdesk-server-*` packages.
 
-**If you appreciate my work, please consider giving it a star! 🤩 or a** [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/sctg-development)
+```bash
+sudo apt install ./sctgdesk-server-hbbs_*_amd64.deb ./sctgdesk-server-hbbr_*_amd64.deb ./sctgdesk-server-utils_*_amd64.deb
+# or: sudo dnf install ./sctgdesk-server-*.rpm
+```
 
-## Quick start
+A first install starts nothing: edit the units (`systemctl edit --full rustdesk-hbbs`, see
+[the deployment guide](docs/deployment.md)), then `sudo systemctl enable --now rustdesk-hbbs rustdesk-hbbr`. An
+upgrade restarts the services that were running. Data is in `/var/lib/rustdesk-server`, logs in
+`/var/log/rustdesk-server`; the units run as root.
 
-With Docker, save this as `docker-compose.yml`:
+### Binaries (Linux, Windows, macOS)
+
+The [releases](https://github.com/sctg-development/sctgdesk-server/releases) page also has zip archives with `hbbs`,
+`hbbr` and `rustdesk-utils` for Windows (amd64, arm64) and macOS (Intel, Apple Silicon), with `SHA256SUMS-*` files.
+Unpack, then run them from the directory where the data should live (see [First run](#first-run)).
+
+### Docker
+
+Images are published on [Docker hub](https://hub.docker.com/r/sctg/sctgdesk-server/) as `sctg/sctgdesk-server`.
+Save as `docker-compose.yml`, replacing `sctgdesk.example.com` with the address of your server:
 
 ```yaml
-version: '3'
-
 networks:
   sctgdesk-net:
     external: false
@@ -90,34 +109,118 @@ services:
     restart: unless-stopped
 ```
 
-Replace `sctgdesk.example.com` with the address of your server, then:
-
 ```bash
-mkdir -p data
-docker-compose up
+mkdir -p data && docker compose up -d
 ```
 
-Open the ports `21114` to `21119` (TCP, and `21116` also in UDP) on your firewall.
+For SELinux, append `:z` to the volume, or use `--security-opt label=disable`. Without `--net=host` direct peer-to-peer
+connections cannot work (everything goes through the relay). A Helm chart is in `deploy/helm` (to be refactored) and
+an example manifest in `kubernetes/`.
 
-## Binaries
+### Ports
 
-Binaries are available for the following platforms:  
-- Linux x86_64 statically linked
-- Linux arm64 statically linked
-- Linux armv7 statically linked
-- MacOS Intel
-- MacOS Apple Silicon
-- Windows x86_64
+| Port | Protocol | Used by | Purpose |
+|---|---|---|---|
+| 21114 | TCP | `hbbs` | REST API, web console, API documentation (`--api-port`) |
+| 21115 | TCP | `hbbs` | NAT type test |
+| 21116 | TCP + **UDP** | `hbbs` | ID / rendezvous |
+| 21117 | TCP | `hbbr` | relay |
+| 21118 | TCP | `hbbs` | WebSocket (web client) |
+| 21119 | TCP | `hbbr` | WebSocket (web client) |
 
-Get them from the [releases](https://github.com/sctg-development/sctgdesk-server/releases) page. Released binaries after v1.1.99-40 are attested with GitHub Actions: you can check the attestation by looking up the sha256sum of the binary on `https://search.sigstore.dev/?hash=<sha256>`, for example.
+Open them on your firewall. The API and WebSocket ports should be behind a TLS reverse proxy on the Internet: see
+the [deployment guide](docs/deployment.md).
 
-### Default admin user
+## First run
 
-The default admin user is created with the username `admin` and the password `Hello,world!`. **Change the password at the first login** on the web console: it is public.
+`hbbs` and `hbbr` keep their data (key pair, SQLite database) in the **current directory**.
 
-## API server
+```bash
+mkdir -p /var/lib/sctgdesk && cd /var/lib/sctgdesk
+hbbr &
+hbbs -r relay.example.com &
+```
 
-The API server and the web console are part of `hbbs` and of this repository (`crates/api-server`, `web/`). The standalone repository [sctgdesk-api-server](https://github.com/sctg-development/sctgdesk-api-server) is replaced by this one: file API and web console issues here.
+On the first start `hbbs` creates `id_ed25519` (secret) and `id_ed25519.pub` (the **public key**, which you give to
+your clients). To make a key pair yourself, or to check one:
+
+```bash
+rustdesk-utils genkeypair
+rustdesk-utils validatekeypair <public key> <secret key>
+```
+
+To refuse clients that do not have the key, start both servers with `-k <key>` (or `KEY=<key>`). Check that a
+server answers on all its ports with `rustdesk-utils doctor <server>`.
+
+**Default admin.** The web console is at `http://<server>:21114/` and the API documentation at
+`http://<server>:21114/api/doc/`. A new database has the user `admin` with the password `Hello,world!`, which is
+public: **change it at the first login**.
+
+## Configuration
+
+`hbbs` and `hbbr` take options on the command line (`hbbs --help`) and from environment variables, or an `.env`
+file.
+
+| variable | binary | description |
+| --- | --- | --- |
+| ALWAYS_USE_RELAY | hbbs | if set to **"Y"** disallows direct peer connection |
+| DB_URL | hbbs | path of the SQLite database (default `./db_v2.sqlite3`) |
+| LOGGED_IN_ONLY | hbbs | if set to **"Y"** only logged-in users can control a peer (same as `--logged-in-only`) |
+| REQUIRE_KX_V1 | hbbs | if set to **"Y"** refuses clients that use the legacy (version 0) TCP key exchange (same as `--require-kx-v1`) |
+| DOWNGRADE_START_CHECK | hbbr | delay (in seconds) before downgrade check |
+| DOWNGRADE_THRESHOLD | hbbr | threshold of downgrade check (bit/ms) |
+| KEY | hbbs/hbbr | if set force the use of a specific key, if set to **"_"** force the use of any key |
+| LIMIT_SPEED | hbbr | speed limit (in Mb/s) |
+| OAUTH2_CONFIG_FILE | hbbs | path of the OAuth2 / OpenID Connect providers file (`oauth2.toml`) |
+| OAUTH2_CREATE_USER | hbbs | if set to **"1"** create a user at the first login with a provider |
+| PORT | hbbs/hbbr | listening port (21116 for hbbs - 21117 for hbbr) |
+| RELAY | hbbs | IP address/DNS name of the machines running hbbr (separated by comma) |
+| RUST_LOG | all | set debug level (error\|warn\|info\|debug\|trace) |
+| S3CONFIG_FILE | hbbs | path of the software-update file (`s3config.toml`) |
+| SINGLE_BANDWIDTH | hbbr | max bandwidth for a single connection (in Mb/s) |
+| TOTAL_BANDWIDTH | hbbr | max total bandwidth (in Mb/s) |
+
+### Only logged-in users can control
+
+`--logged-in-only` (or `LOGGED_IN_ONLY=Y`) makes `hbbs` ask the API server whether the token of the client is a live
+session before it connects two peers. Anyone can still register their device, but nobody can control a device
+without logging in. A client that is not logged in sees "The connection is not allowed. You have not logged in."; one
+whose session ended sees "Your session expired."
+
+### Login with GitHub, GitLab, Google, Dex...
+
+Copy `oauth2.toml` and fill in the providers you use (each needs an application registered with the provider, whose
+callback is your API server), then set `OAUTH2_CONFIG_FILE=oauth2.toml`, and `OAUTH2_CREATE_USER=1` to create the
+user at the first login. See the [deployment guide](docs/deployment.md#login-with-openid-connect-and-oauth2).
+
+### Updates of the client
+
+The clients can look for new versions on your API server instead of GitHub: it answers
+`POST /api/software/version/latest` (the check of current RustDesk clients) and `GET /api/software/releases/latest`.
+The latest version and the download links are read from `s3config.toml` (S3-compatible storage), see
+[the REST API](docs/api.md#software-update-endpoints).
+
+## Clients
+
+* **Official RustDesk clients** work with this server: give them your server and your public key.
+* **The SCTGDesk client** is upstream RustDesk plus our overlay (name, icons, default servers and key). You build it
+  for your own servers, see [custom builds](docs/custom-builds.md#the-client). The **web client** is built from
+  the same overlay.
+
+## Build it yourself
+
+You need a Rust toolchain and, for the web console, Node.js 20.
+
+```bash
+git clone --recurse-submodules https://github.com/sctg-development/sctgdesk-server
+cd sctgdesk-server
+export DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3     # the sqlx macros check queries at compile time
+cargo build --release --locked                         # hbbs, hbbr, rustdesk-utils in target/release
+```
+
+Set `SCTGDESK_SKIP_WEB_BUILD=1` to build without Node.js (the console is then a placeholder). The
+[developer manual](https://sctg-development.github.io/sctgdesk-server/) covers building, testing, custom server and
+client builds, packaging, releases and syncing with upstream.
 
 ## Screenshots
 
@@ -144,7 +247,7 @@ The API server and the web console are part of `hbbs` and of this repository (`c
 
 <img width="1502" alt="apidoc" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/88fe7910-fe62-43e5-a16c-70dc1201e040">
 
-### Use in the client
+### In the client
 
 <img width="913" alt="Capture d’écran 2024-05-24 à 12 14 34" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/1b253577-dce2-4163-9a49-ba4b3da37812">
 
@@ -152,219 +255,27 @@ The API server and the web console are part of `hbbs` and of this repository (`c
 
 <img width="927" alt="Capture d’écran 2024-05-24 à 12 07 32" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/f447f5fa-bc77-4bc6-858a-c6cadf9b7f6c">
 
-## Updates of the client
+## Security
 
-The client can look for new versions on your API server instead of GitHub: the server answers `POST /api/software/version/latest` (the check made by current RustDesk clients) and `GET /api/software/releases/latest`. The client in `client/` is already set up this way (see its [README](client/README.md)). The latest version and the download page are read from `s3config.toml`.
+* The embedded API server is not protected against abuse: put a TLS reverse proxy (HAProxy, NGINX, Caddy...) in front
+  of it, and of the WebSocket ports. A HAProxy example is in the [deployment guide](docs/deployment.md#tls-reverse-proxy).
+* Change the default admin password, keep `id_ed25519` secret and back it up: changing it makes every client reject
+  your server.
+* Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
-# Security
+## License and source code
 
+SCTGDesk is distributed under the [GNU Affero General Public License v3](LICENSE). The source code of every release
+is in this repository, at the tag of that release. If you modify this software and let other people use it over a
+network, section 13 of the license requires you to offer them the corresponding source code of your modified version.
 
-The embedded API server is not secured nor protected agains DDOS attacks. A good practice is to use a reverse proxy in front of the API server. NGINX is a good choice for this purpose. HAProxy is also a good choice.  
-We use HAProxy in front of the API server in our production environment.
-This is our configuration file for HAProxy it is provided as an example only. You should adapt it to your own needs.:
+Check the SHA-256 sums published with each release before running a downloaded binary.
 
-```haproxy
-global
-    log /dev/log    local0
-    log /dev/log    local1 notice
-    chroot /var/lib/haproxy
-    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
-    stats timeout 30s
-    user haproxy
-    group haproxy
-    daemon
+## Contributing
 
-defaults
-    log global
-    retries 2
-    timeout connect 3000ms
-    timeout server 5000ms
-    timeout client 5000ms
+[Developer manual](https://sctg-development.github.io/sctgdesk-server/) · [CONTRIBUTING.md](CONTRIBUTING.md) ·
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) · [SECURITY.md](SECURITY.md). For general self-hosting questions, the
+[RustDesk documentation](https://rustdesk.com/docs/en/self-host/) also applies.
 
-frontend hbbs_wss
-    bind 0.0.0.0:21120 ssl crt /etc/haproxy/hbb.pem
-    default_backend hbbs_wss_backend
-
-frontend hbbs_api
-    mode http
-    option forwardfor
-    bind 0.0.0.0:21114 ssl crt /etc/haproxy/api.pem
-    http-request set-header X-Forwarded-Proto https
-    default_backend hbbs_api_backend
-
-frontend hbbs_api_443
-    mode http
-    option forwardfor
-    bind 0.0.0.0:443 ssl crt /etc/haproxy/api.pem
-    http-request set-header X-Forwarded-Proto https
-    filter compression
-    compression algo gzip
-    compression type text/css text/html text/javascript application/javascript text/plain text/xml application/json
-    compression offload
-    default_backend hbbs_api_backend
-
-frontend hbbr_wss
-    bind 0.0.0.0:21121 ssl crt /etc/haproxy/hbb.pem
-    default_backend hbbr_wss_backend
-
-backend hbbs_api_backend
-    mode http
-    server srv_main 127.0.0.1:21113
-
-backend hbbs_wss_backend
-    server srv_main 127.0.0.1:21118
-
-backend hbbr_wss_backend
-    server srv_main 127.0.0.1:21119
-```
-
-The hbbs server is launched with
-
-```service
-[Unit]
-Description=SCTGDesk signal server
-
-[Service]
-Type=simple
-LimitNOFILE=1000000
-ExecStart=/usr/bin/hbbs --api-port=21113 -k <your-secret-key> --mask=10.10.0.235/24 -r rendez-vous.example.org -R rendez-vous.example.org
-#Environment="RUST_LOG=debug"
-Environment="ALWAYS_USE_RELAY=Y"
-Environment="OAUTH2_CREATE_USER=1"
-Environment="S3CONFIG_FILE=s3config.toml"
-Environment="OAUTH2_CONFIG_FILE=oauth2.toml"
-WorkingDirectory=/var/lib/rustdesk-server/
-User=
-Group=
-Restart=always
-StandardOutput=append:/var/log/rustdesk-server/hbbs.log
-StandardError=append:/var/log/rustdesk-server/hbbs.error
-# Restart service after 10 seconds if node service crashes
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-# Limit Unwanted Access
-
-To restrict access to your server, you can use the `--logged-in-only` option or set the `LOGGED_IN_ONLY=Y` environment variable for the `hbbs` server. This will limit control to logged-in users only.
-
-Even with this option enabled, users can still register on the Rendez-vous server, but they won't be able to control another user's peer. If someone tries to control a peer without being logged in, they'll receive an error message:
-
-<img width="524" alt="Error message for unauthenticated control attempt" src="https://github.com/user-attachments/assets/cfa46504-39d8-46a7-9072-3ece6818b4a3">
-
-By enabling this feature, you can add an extra layer of security to your server and prevent unauthorized access.
-
-**Configuring `LOGGED_IN_ONLY`**
-
-To enable this feature:
-
-1. Set the `LOGGED_IN_ONLY=Y` environment variable for the `hbbs` server.
-2. Alternatively, you can use the `--logged-in-only` option when running the `hbbs` server.
-
-**Example**
-
-To set the `LOGGED_IN_ONLY` environment variable, you can add the following line to your `~/.bashrc` file or equivalent:
-```bash
-export LOGGED_IN_ONLY=Y
-```
-
-## Building from source
-
-You need a Rust toolchain and, for the web console, Node.js ≥ 20.
-
-```bash
-git submodule update --init                   # libs/hbb_common
-export DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3
-cargo build --release
-```
-
-On Windows with cmd.exe: `set "DATABASE_URL=sqlite://%CD%/db_v2.sqlite3" && cargo build --release`.
-
-To build without Node.js (the web console is then a placeholder), set `SCTGDESK_SKIP_WEB_BUILD=1`.
-
-Three executables are generated in `target/release`:
-
-* hbbs - ID/Rendezvous server with the API server
-* hbbr - relay server
-* rustdesk-utils - command line utilities (key pairs, connectivity check)
-
-See the [developer manual](https://sctg-development.github.io/sctgdesk-server/) and [docs/building.md](docs/building.md) for the details.
-
-## Docker
-
-Docker images are published on [Docker hub](https://hub.docker.com/r/sctg/sctgdesk-server/) (`sctg/sctgdesk-server:latest`, for amd64, arm64v8 and arm32v7). They are built on `ubuntu-22.04` with only the main binaries (`hbbr` and `hbbs`) added.
-
-You can start them directly with `docker run`:
-
-```bash
-docker run --name hbbs --net=host -v "$PWD/data:/usr/local/share/sctgdesk" -d sctg/sctgdesk-server:latest hbbs -r <relay-server-ip[:port]>
-docker run --name hbbr --net=host -v "$PWD/data:/usr/local/share/sctgdesk" -d sctg/sctgdesk-server:latest hbbr
-```
-
-or without `--net=host`, but direct P2P connections cannot work:
-
-```bash
-docker run --name hbbs -p 21114:21114 -p 21115:21115 -p 21116:21116 -p 21116:21116/udp -p 21118:21118 -v "$PWD/data:/usr/local/share/sctgdesk" -d sctg/sctgdesk-server:latest hbbs -r <relay-server-ip[:port]>
-docker run --name hbbr -p 21117:21117 -p 21119:21119 -v "$PWD/data:/usr/local/share/sctgdesk" -d sctg/sctgdesk-server:latest hbbr
-```
-
-The `relay-server-ip` parameter is the IP address (or DNS name) of the server running these containers. The **optional** `port` has to be used if you use a port different from **21117** for `hbbr`.
-
-For systems using SELinux, replace `/usr/local/share/sctgdesk` by `/usr/local/share/sctgdesk:z` for the containers to run correctly, or disable SELinux container separation with `--security-opt label=disable`.
-
-> [!NOTE]
-> In China, the image may be replaced with a version number (for example `sctg/sctgdesk-server:1.1.99-37`): otherwise an old version may be pulled because of image acceleration.
-
-## How to create a keypair
-
-A keypair is needed for encryption; you can provide it, as explained before, but you need a way to create one.
-
-You can use this command to generate a keypair:
-
-```bash
-/usr/bin/rustdesk-utils genkeypair
-```
-
-If you don't have (or don't want) the `rustdesk-utils` package installed on your system, you can invoke the same command with docker:
-
-```bash
-docker run --rm --entrypoint /usr/bin/rustdesk-utils  sctg/sctgdesk-server:latest genkeypair
-```
-
-The output will be something like this:
-
-```text
-Public Key:  8BLLhtzUBU/XKAH4mep3p+IX4DSApe7qbAwNH9nv4yA=
-Secret Key:  egAVd44u33ZEUIDTtksGcHeVeAwywarEdHmf99KM5ajwEsuG3NQFT9coAfiZ6nen4hfgNICl7upsDA0f2e/jIA==
-```
-
-## Env variables
-
-`hbbs` and `hbbr` can be configured using these environment variables. You can specify them as usual or use an `.env` file.
-
-| variable | binary | description |
-| --- | --- | --- |
-| ALWAYS_USE_RELAY | hbbs | if set to **"Y"** disallows direct peer connection |
-| DB_URL | hbbs | path of the SQLite database (default `./db_v2.sqlite3`) |
-| LOGGED_IN_ONLY | hbbs | if set to **"Y"** only logged-in users can control a peer (same as `--logged-in-only`) |
-| REQUIRE_KX_V1 | hbbs | if set to **"Y"** refuses clients that use the legacy (version 0) TCP key exchange (same as `--require-kx-v1`) |
-| DOWNGRADE_START_CHECK | hbbr | delay (in seconds) before downgrade check |
-| DOWNGRADE_THRESHOLD | hbbr | threshold of downgrade check (bit/ms) |
-| KEY | hbbs/hbbr | if set force the use of a specific key, if set to **"_"** force the use of any key |
-| LIMIT_SPEED | hbbr | speed limit (in Mb/s) |
-| OAUTH2_CONFIG_FILE | hbbs | path for oauth2 config file |
-| OAUTH2_CREATE_USER | hbbs | if set to **"1"** create a user if it doesn't exist |
-| PORT | hbbs/hbbr | listening port (21116 for hbbs - 21117 for hbbr) |
-| RELAY | hbbs | IP address/DNS name of the machines running hbbr (separated by comma) |
-| RUST_LOG | all | set debug level (error\|warn\|info\|debug\|trace) |
-| S3CONFIG_FILE | hbbs | path for s3 config file |
-| SINGLE_BANDWIDTH | hbbr | max bandwidth for a single connection (in Mb/s) |
-| TOTAL_BANDWIDTH | hbbr | max total bandwidth (in Mb/s) |
-
-## Documentation and contributing
-
-* [Developer manual](https://sctg-development.github.io/sctgdesk-server/): architecture, key exchange, API, building, upstream sync, roadmap.
-* [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [SECURITY.md](SECURITY.md).
-* For general self-hosting questions about the RustDesk server, the [RustDesk documentation](https://rustdesk.com/docs/en/self-host/) also applies.
+If you like this work, consider giving it a star, or
+[sponsoring it](https://github.com/sponsors/sctg-development).

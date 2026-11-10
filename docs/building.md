@@ -1,10 +1,12 @@
 # Building from source
 
-This page is a stop-gap until the developer manual (mdBook) lands.
+How to build and test from a checkout. For your own binaries and packages see [Custom builds](custom-builds.md); for
+running a server, [Deploying a server](deployment.md).
 
 ## Requirements
 
-- Rust (stable), a C toolchain (libsodium is built from source)
+- Rust (stable), a C toolchain (libsodium is built from source), `git` with submodules
+  (`git clone --recurse-submodules`, or `git submodule update --init`)
 - Node.js 20 and npm, only to build the web console and the API documentation
 
 ## Build and test
