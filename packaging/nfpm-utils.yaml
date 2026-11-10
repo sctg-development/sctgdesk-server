@@ -1,0 +1,25 @@
+# deb and rpm of rustdesk-utils from the static musl binary (see .github/workflows/packages.yml).
+# Environment: VERSION, NFPM_ARCH, BIN_DIR as for nfpm-hbbs.yaml.
+name: sctgdesk-server-utils
+arch: ${NFPM_ARCH}
+platform: linux
+version: ${VERSION}
+section: net
+priority: optional
+maintainer: SCTG Development
+vendor: SCTG Development
+homepage: https://github.com/sctg-development/sctgdesk-server
+license: AGPL-3.0-only
+description: |
+  Tools of the SCTGDesk server: rustdesk-utils (key pair generation and validation, connection diagnostics).
+  The binary is static (musl): it needs no library of the system.
+replaces:
+  - rustdesk-server-utils
+conflicts:
+  - rustdesk-server-utils
+contents:
+  - src: ${BIN_DIR}/rustdesk-utils
+    expand: true
+    dst: /usr/bin/rustdesk-utils
+    file_info:
+      mode: 0755

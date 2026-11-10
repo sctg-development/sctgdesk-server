@@ -1,0 +1,171 @@
+name: Linux packages (deb, rpm)
+
+# Static musl binaries of hbbs, hbbr and rustdesk-utils for amd64 and arm64, packed as deb and rpm with nfpm
+# (packaging/). Run by hand. Without `publish` it builds, packs and installs the packages in containers, and
+# publishes nothing; with `publish` it also uploads them to the GitHub release of the tag, created as a pre-release
+# when it does not exist yet. A release is a decision of the maintainer (docs/releases.md).
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, sctg-v<version> as in Cargo.toml (for example sctg-v1.1.16-sctg.3)"
+        required: true
+        type: string
+      publish:
+        description: "Upload the packages to the pre-release of the tag"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: packages-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  NFPM_VERSION: "2.48.0"
+  DATABASE_URL: sqlite://${{ github.workspace }}/db_v2.sqlite3
+
+jobs:
+  packages:
+    name: ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-26.04
+            target: x86_64-unknown-linux-musl
+            nfpm_os_arch: x86_64
+          - arch: arm64
+            runner: ubuntu-26.04-arm
+            target: aarch64-unknown-linux-musl
+            nfpm_os_arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: The tag matches the version of Cargo.toml
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          case "$TAG" in sctg-v*) ;; *) echo "::error::the tag must start with sctg-v"; exit 1;; esac
+          version="${TAG#sctg-v}"
+          cargo_version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)
+          if [ "$version" != "$cargo_version" ]; then
+            echo "::error::the tag says $version but Cargo.toml says $cargo_version: the binaries would report the wrong version"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools pkg-config
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: packages-${{ matrix.target }}
+
+      # The web console and the API documentation are embedded in the binaries
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build
+        run: cargo build --release --locked --bins --target ${{ matrix.target }}
+
+      - name: The binaries are static and run
+        run: |
+          bin="target/${{ matrix.target }}/release"
+          for b in hbbs hbbr rustdesk-utils; do
+            if ldd "$bin/$b" 2>&1 | grep -qE 'not a dynamic executable|statically linked'; then
+              echo "$b is static"
+            else
+              echo "::error::$b is not static"; ldd "$bin/$b" || true; exit 1
+            fi
+          done
+          "$bin/rustdesk-utils" genkeypair > /dev/null
+
+      - name: Install nfpm
+        run: |
+          base="https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VERSION}"
+          archive="nfpm_${NFPM_VERSION}_Linux_${{ matrix.nfpm_os_arch }}.tar.gz"
+          curl -fsSL -o "$archive" "$base/$archive"
+          curl -fsSL -o checksums.txt "$base/checksums.txt"
+          grep " $archive\$" checksums.txt | sha256sum -c -
+          sudo tar -xzf "$archive" -C /usr/local/bin nfpm
+
+      - name: Pack
+        env:
+          NFPM_ARCH: ${{ matrix.arch }}
+          BIN_DIR: target/${{ matrix.target }}/release
+        run: |
+          mkdir dist
+          for p in hbbs hbbr utils; do
+            for f in deb rpm; do
+              nfpm package --config "packaging/nfpm-$p.yaml" --packager "$f" --target dist/
+            done
+          done
+          cd dist && sha256sum * | tee "SHA256SUMS-${{ matrix.arch }}"
+
+      # Install them on a Debian and a Fedora of the same architecture (no systemd in the containers: the maintainer
+      # scripts skip it) and run a binary from each
+      - name: Install the deb on Debian
+        run: |
+          docker run --rm -v "$PWD/dist:/p:ro" debian:12 sh -c '
+            apt-get update -qq && apt-get install -y -qq /p/*.deb >/dev/null &&
+            dpkg -l "sctgdesk-server-*" | tail -n 3 && rustdesk-utils genkeypair >/dev/null &&
+            test -f /usr/lib/systemd/system/rustdesk-hbbs.service && test -f /usr/lib/systemd/system/rustdesk-hbbr.service &&
+            apt-get remove -y -qq sctgdesk-server-hbbs sctgdesk-server-hbbr sctgdesk-server-utils >/dev/null &&
+            test ! -e /usr/bin/hbbs'
+      - name: Install the rpm on Fedora
+        run: |
+          docker run --rm -v "$PWD/dist:/p:ro" fedora:latest sh -c '
+            dnf install -y -q /p/*.rpm >/dev/null &&
+            rpm -qa "sctgdesk-server-*" && rustdesk-utils genkeypair >/dev/null &&
+            test -f /usr/lib/systemd/system/rustdesk-hbbs.service && test -f /usr/lib/systemd/system/rustdesk-hbbr.service &&
+            dnf remove -y -q sctgdesk-server-hbbs sctgdesk-server-hbbr sctgdesk-server-utils >/dev/null &&
+            test ! -e /usr/bin/hbbs'
+
+      # Only to hand the packages to the publish job; deleted after a day
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.publish }}
+        with:
+          name: packages-${{ matrix.arch }}
+          path: dist/*
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    name: Upload to the pre-release
+    needs: packages
+    if: ${{ inputs.publish }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: packages-*
+          merge-multiple: true
+      - name: Create the pre-release if needed, then upload
+        run: |
+          ls -l dist
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "$TAG" \
+              --notes "Pre-release. deb and rpm packages (amd64 and arm64) of hbbs, hbbr and rustdesk-utils, built from static musl binaries. SHA-256 sums in SHA256SUMS-*."
+          fi
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber dist/*
