@@ -76,6 +76,18 @@ jobs:
         with:
           node-version: 20
 
+      # libsodium-sys bundles x64 and x86 libraries for MSVC only: on arm64 the linker rejects them ("library machine
+      # type 'x64' conflicts with target machine type 'ARM64'"). Build libsodium for arm64 with vcpkg (static, static
+      # C runtime, like the RUSTFLAGS below) and point the crate at it.
+      - name: libsodium for Windows arm64
+        if: ${{ matrix.os_name == 'windows' && matrix.arch == 'aarch64' }}
+        run: |
+          root="${VCPKG_INSTALLATION_ROOT:-C:/vcpkg}"
+          "$root/vcpkg.exe" install libsodium:arm64-windows-static
+          lib="$root/installed/arm64-windows-static/lib"
+          ls -l "$lib"
+          echo "SODIUM_LIB_DIR=$lib" >> "$GITHUB_ENV"
+
       # Windows: link the C runtime statically, so that the binaries do not need the Visual C++ redistributable
       - name: Build
         env:
