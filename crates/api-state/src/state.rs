@@ -42,7 +42,7 @@ pub struct ApiState {
     users: RwLock<HashMap<UserId, UserInfo>>,
     address_books: RwLock<HashMap<UserId, AddressBookInfo>>,
     oidc_sessions: RwLock<HashMap<String, OidcState>>,
-    db: Database,
+    pub(crate) db: Database,
     oauth2_providers: RwLock<Vec<ProviderConfig>>,
 }
 

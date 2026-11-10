@@ -340,6 +340,187 @@ async fn logged_in_only_checks_tokens_on_the_configured_api_port() {
     );
 }
 
+// ---- the history of the connections, with the protocol of the RustDesk clients (issue #29) ----
+
+fn audit_json(body: &str) -> serde_json::Value {
+    serde_json::from_str(body).unwrap_or_else(|e| panic!("not JSON ({e}): {body}"))
+}
+
+fn audit_login(server: &Server, name: &str, password: &str) -> String {
+    let body =
+        format!(r#"{{"username":"{name}","password":"{password}","id":"CTRL","uuid":"ZTJl"}}"#);
+    let (status, answer) = server.http("POST", "/api/login", None, &body);
+    assert_eq!(status, 200, "login of {name}: {answer}");
+    audit_json(&answer)["access_token"]
+        .as_str()
+        .unwrap()
+        .to_owned()
+}
+
+/// The device posts the connection, the controlling client finds the record, leaves a note, and the administrator
+/// and the user find it in the history.
+#[hbb_common::tokio::test(crate = "hbb_common::tokio")]
+async fn a_connection_is_recorded_with_its_note() {
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let server = Server::start(&[], &[]);
+    let admin = audit_login(&server, "admin", "Hello,world!");
+    for user in ["alice", "bob"] {
+        let body = format!(
+            r#"{{"name":"{user}","password":"pw-{user}-123","confirm-password":"pw-{user}-123","email":"{user}@x.org","is_admin":false,"group_name":"Default"}}"#
+        );
+        assert_eq!(server.http("POST", "/api/user", Some(&admin), &body).0, 200);
+    }
+    let alice = audit_login(&server, "alice", "pw-alice-123");
+    let bob = audit_login(&server, "bob", "pw-bob-123");
+    // a device registered with the server (a real one registers over the rendezvous protocol)
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect(&format!("sqlite://{}/db_v2.sqlite3", server.dir.display()))
+        .await
+        .expect("the database of hbbs");
+    sqlx::query(
+        "INSERT INTO peer (guid, id, uuid, pk, info) VALUES (randomblob(16), 'DEV1', randomblob(16), randomblob(32), '{\"hostname\":\"print-server\"}')",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    let post = |body: &str| server.http("POST", "/api/audit/conn", None, body);
+    let history = |token: &str, query: &str| {
+        let (status, body) = server.http(
+            "GET",
+            &format!("/api/audit/conn?current=1&pageSize=50{query}"),
+            Some(token),
+            "",
+        );
+        assert_eq!(status, 200, "{body}");
+        audit_json(&body)
+    };
+    // the session id of a client is a u64
+    let session = u64::MAX;
+
+    // what the controlled device sends: the connection, then who controls, then the end
+    assert_eq!(post(&format!(r#"{{"id":"DEV1","uuid":"dXVpZA==","conn_id":1,"session_id":{session},"nonce":"n1","action":"new","ip":"10.0.0.5"}}"#)).0, 200);
+    // a retried post is applied once
+    assert_eq!(post(&format!(r#"{{"id":"DEV1","uuid":"dXVpZA==","conn_id":1,"session_id":{session},"nonce":"n1","action":"new","ip":"10.0.0.5"}}"#)).0, 200);
+    assert_eq!(post(&format!(r#"{{"id":"DEV1","uuid":"dXVpZA==","conn_id":1,"session_id":{session},"nonce":"n2","peer":["CTRL","Alice PC"],"type":0}}"#)).0, 200);
+    // an unknown device, and a device that sends nothing useful, leave no trace
+    assert_eq!(
+        post(&format!(
+            r#"{{"id":"NOBODY","conn_id":1,"session_id":{session},"nonce":"n3","action":"new"}}"#
+        ))
+        .0,
+        200
+    );
+    assert_eq!(post("{}").0, 200);
+    let all = history(&admin, "");
+    assert_eq!(all["total"], 1, "{all}");
+    let record = &all["data"][0];
+    assert_eq!(
+        (record["device_id"].as_str(), record["device_name"].as_str()),
+        (Some("DEV1"), Some("print-server"))
+    );
+    assert_eq!(
+        (
+            record["controller_id"].as_str(),
+            record["controller_name"].as_str(),
+            record["ip"].as_str()
+        ),
+        (Some("CTRL"), Some("Alice PC"), Some("10.0.0.5"))
+    );
+    assert!(
+        record["ended_at"].is_null() && record["user"].is_null(),
+        "{record}"
+    );
+
+    // the controlling client asks for the guid of the session (with its token), then leaves a note at the end
+    let path = format!("/api/audit/conn/active?id=DEV1&session_id={session}&conn_type=0");
+    assert_eq!(
+        server.http("GET", &path, None, "").0,
+        401,
+        "a token is needed"
+    );
+    let (status, answer) = server.http("GET", &path, Some(&alice), "");
+    assert_eq!(status, 200, "{answer}");
+    let guid = audit_json(&answer)
+        .as_str()
+        .expect("the guid as a JSON string")
+        .to_owned();
+    assert_eq!(
+        audit_json(
+            &server
+                .http(
+                    "GET",
+                    &format!("/api/audit/conn/active?id=DEV1&session_id=1&conn_type=0"),
+                    Some(&alice),
+                    ""
+                )
+                .1
+        ),
+        serde_json::Value::Null
+    );
+    // it is alice's now: nobody else gets it, nor sets its note
+    assert_eq!(
+        audit_json(&server.http("GET", &path, Some(&bob), "").1),
+        serde_json::Value::Null
+    );
+    let note = |token: &str, text: &str| {
+        server
+            .http(
+                "PUT",
+                "/api/audit",
+                Some(token),
+                &format!(r#"{{"guid":"{guid}","note":"{text}"}}"#),
+            )
+            .0
+    };
+    assert_eq!(note(&bob, "not mine"), 403);
+    assert_eq!(note(&alice, "replaced the toner, 20 minutes"), 200);
+    assert_eq!(
+        history(&admin, "")["data"][0]["note"],
+        "replaced the toner, 20 minutes"
+    );
+    assert_eq!(history(&admin, "")["data"][0]["user"], "alice");
+
+    // the end of the connection
+    assert_eq!(
+        post(&format!(
+            r#"{{"id":"DEV1","conn_id":1,"session_id":{session},"nonce":"n4","action":"close"}}"#
+        ))
+        .0,
+        200
+    );
+    assert!(!history(&admin, "")["data"][0]["ended_at"].is_null());
+
+    // search, and who sees what
+    assert_eq!(history(&admin, "&q=toner")["total"], 1);
+    assert_eq!(
+        history(&admin, "&q=print-server")["total"],
+        1,
+        "the name of the device"
+    );
+    assert_eq!(history(&admin, "&q=alice")["total"], 1, "the account");
+    assert_eq!(history(&admin, "&q=nothing-like-this")["total"], 0);
+    assert_eq!(history(&admin, "&from=2999-01-01")["total"], 0);
+    assert_eq!(
+        history(&admin, "&from=2000-01-01&to=2999-01-01")["total"],
+        1
+    );
+    assert_eq!(history(&alice, "")["total"], 1, "alice sees her connection");
+    assert_eq!(history(&bob, "")["total"], 0, "bob does not see it");
+    // an administrator may set any note; the posted one of the controlling client (with the session) also works
+    assert_eq!(note(&admin, "checked"), 200);
+    assert_eq!(
+        post(&format!(
+            r#"{{"id":"DEV1","session_id":{session},"note":"from the client"}}"#
+        ))
+        .0,
+        200
+    );
+    assert_eq!(history(&admin, "")["data"][0]["note"], "from the client");
+}
+
 /// A login of the API server still works after hbbs restarted, until the user logs out.
 #[test]
 fn a_session_survives_a_restart() {
