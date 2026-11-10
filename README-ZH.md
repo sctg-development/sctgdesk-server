@@ -13,57 +13,64 @@
 ![Docker Pulls](https://img.shields.io/docker/pulls/sctg/sctgdesk-server)
 [![CI](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml/badge.svg)](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml)
 
-SCTGDesk 是一个自托管的远程桌面服务器，拥有自己的客户端，源自[锈桌](https://github.com/rustdesk/rustdesk).它是自由软件，属于**AGPL-3.0**.
+SCTGDesk is a self-hosted remote-desktop server, with its own clients, derived from
+[RustDesk](https://github.com/rustdesk/rustdesk). It is free software under the **AGPL-3.0**.
 
-> **SCTGDesk 是一个独立项目。它与 RustDesk 项目没有任何关联、认可或赞助
-> 或称Purslane有限公司。**“RustDesk”是该项目的名称;这里仅用来说明该软件是什么
-> 源自并兼容。
+> **SCTGDesk is an independent project. It is not affiliated with, endorsed by or sponsored by the RustDesk project
+> or Purslane Ltd.** "RustDesk" is the name of that project; it is used here only to say what this software is
+> derived from and compatible with.
 
-这个仓库包含了整个项目：服务器、API 服务器、网页控制台和客户端覆盖层。它取代了
-前仓库`sctgdesk-api-server`以及`sctgdesk`这些都已存档。
+This repository is the whole project: the server, the API server, the web console and the client overlay. It replaces
+the former repositories `sctgdesk-api-server` and `sctgdesk`, which are archived.
 
-## 你能得到什么
+## What you get
 
-*   RustDesk服务器：`hbbs`（ID和约会服务器）以及`hbbr`（中继），加`rustdesk-utils`（密钥对，
-    连接性检查）。兼容官方 RustDesk 客户端。
-*   服务器端**加密的 TCP 和 WebSocket 连接**（密钥交换版本0和1），其中
-    开源上游服务器不实现。这正是使**网页客户端**工作。
-*   A**REST API**嵌入于`hbbs`，与客户端兼容：登录（密码，OpenID Connect / OAuth2：
-    GitHub、GitLab、Google、Dex等）、重启后能存活的会话、个人和共享通讯录（每个用户和
-    按组，只读/读写/管理员），用户和组，软件更新端点。
-*   A**网页控制台**管理所有这些，以及交互式API文档。
-*   拒绝未认证控制的选项（`--logged-in-only`).
-*   A**客户端**(`client/`）：上游的RustDesk加上一个小叠加层，在构建时用你的品牌、服务器和
-    键;以及**网页客户端**.
+*   The RustDesk server: `hbbs` (ID and rendezvous server) and `hbbr` (relay), plus `rustdesk-utils` (key pairs,
+    connectivity check). Compatible with the official RustDesk clients.
+*   The server side of the **encrypted TCP and WebSocket connection** (key exchange versions 0 and 1), which the
+    open-source upstream server does not implement. This is what makes the **web client** work.
+*   A **REST API** embedded in `hbbs`, compatible with the clients: login (password, OpenID Connect / OAuth2:
+    GitHub, GitLab, Google, Dex...), sessions that survive a restart, personal and shared address books (per user and
+    per group, read-only / read-write / admin), users and groups, software-update endpoints.
+*   A **web console** to manage all of that, and interactive API documentation.
+*   A **connection history** with a note on each connection (what was done), searchable and exportable to CSV, filled by the RustDesk clients.
+*   An option to refuse unauthenticated control (`--logged-in-only`).
+*   A **client** (`client/`): upstream RustDesk plus a small overlay, branded at build time with your name, servers and
+    key; and a **web client**.
 
-兼容性优先：服务器必须持续与官方 RustDesk 客户端协作，并对上游进行更改
-文件保持较小，以便合并新的上游版本。
+Compatibility comes first: the server must keep working with official RustDesk clients, and our changes to upstream
+files are kept small so that new upstream releases can be merged.
 
-## 安装
+## Install
 
-选一个。无论你选什么，都需要一个**密钥对**以及下方的端口。
+Pick one. Whatever you choose, you need a **key pair** and the ports below.
 
-### Linux 软件包（deb，rpm）
+### Linux packages (deb, rpm)
 
-每个版本都包括`sctgdesk-server-hbbs`,`sctgdesk-server-hbbr`以及`sctgdesk-server-utils`对于**AMD64**以及**arm64**， 作为`.deb`以及`.rpm`，由静态的musl二进制构建（无库依赖）。它们取代了前者`rustdesk-server-*`包裹。
+Each release has `sctgdesk-server-hbbs`, `sctgdesk-server-hbbr` and `sctgdesk-server-utils` for **amd64** and
+**arm64**, as `.deb` and `.rpm`, built from static musl binaries (no library dependency). They replace the former
+`rustdesk-server-*` packages.
 
 ```bash
 sudo apt install ./sctgdesk-server-hbbs_*_amd64.deb ./sctgdesk-server-hbbr_*_amd64.deb ./sctgdesk-server-utils_*_amd64.deb
 # or: sudo dnf install ./sctgdesk-server-*.rpm
 ```
 
-第一次安装什么都不启动：编辑单元 （`systemctl edit --full rustdesk-hbbs`，见[部署指南](docs/deployment.md)），则`sudo systemctl enable --now rustdesk-hbbs rustdesk-hbbr`.一个
-升级会重新启动正在运行的服务。数据已经进入`/var/lib/rustdesk-server`，日志`/var/log/rustdesk-server`;这些单元以根节点运行。
+A first install starts nothing: edit the units (`systemctl edit --full rustdesk-hbbs`, see
+[the deployment guide](docs/deployment.md)), then `sudo systemctl enable --now rustdesk-hbbs rustdesk-hbbr`. An
+upgrade restarts the services that were running. Data is in `/var/lib/rustdesk-server`, logs in
+`/var/log/rustdesk-server`; the units run as root.
 
-### 二进制（Linux、Windows、macOS）
+### Binaries (Linux, Windows, macOS)
 
-该[发行](https://github.com/sctg-development/sctgdesk-server/releases)页面还包含压缩包`hbbs`,`hbbr`以及`rustdesk-utils`适用于Windows（amd64，arm64）和macOS（英特尔，苹果硅），由`SHA256SUMS-*`文件。
-解压后，从数据应存放的目录运行它们（参见[首次运行](#first-run)).
+The [releases](https://github.com/sctg-development/sctgdesk-server/releases) page also has zip archives with `hbbs`,
+`hbbr` and `rustdesk-utils` for Windows (amd64, arm64) and macOS (Intel, Apple Silicon), with `SHA256SUMS-*` files.
+Unpack, then run them from the directory where the data should live (see [First run](#first-run)).
 
 ### Docker
 
-图片发布于[Docker 枢纽](https://hub.docker.com/r/sctg/sctgdesk-server/)作为`sctg/sctgdesk-server`.
-保存为`docker-compose.yml`，替换`sctgdesk.example.com`附上你的服务器地址：
+Images are published on [Docker hub](https://hub.docker.com/r/sctg/sctgdesk-server/) as `sctg/sctgdesk-server`.
+Save as `docker-compose.yml`, replacing `sctgdesk.example.com` with the address of your server:
 
 ```yaml
 networks:
@@ -107,27 +114,27 @@ services:
 mkdir -p data && docker compose up -d
 ```
 
-关于SELinux，请补充`:z`对体积或使用`--security-opt label=disable`.没有`--net=host`直接点对点
-连接无法正常工作（所有设备都通过继电器）。舵手图已输入`deploy/helm`（待重构）以及
-一个例子体现在`kubernetes/`.
+For SELinux, append `:z` to the volume, or use `--security-opt label=disable`. Without `--net=host` direct peer-to-peer
+connections cannot work (everything goes through the relay). A Helm chart is in `deploy/helm` (to be refactored) and
+an example manifest in `kubernetes/`.
 
-### 移植版本
+### Ports
 
-|端口 |协议 |使用 |目的 |
+| Port | Protocol | Used by | Purpose |
 |---|---|---|---|
-|21114 |TCP |`hbbs`|REST API、网页控制台、API 文档（`--api-port`) |
-|21115 |TCP |`hbbs`|NAT 类型测试 |
-|21116 |TCP +**UDP**|`hbbs`|身份证 / 集合点 |
-|21117 |TCP |`hbbr`|接力 |
-|21118 |TCP |`hbbs`|WebSocket（网页客户端） |
-|21119 |TCP |`hbbr`|WebSocket（网页客户端） |
+| 21114 | TCP | `hbbs` | REST API, web console, API documentation (`--api-port`) |
+| 21115 | TCP | `hbbs` | NAT type test |
+| 21116 | TCP + **UDP** | `hbbs` | ID / rendezvous |
+| 21117 | TCP | `hbbr` | relay |
+| 21118 | TCP | `hbbs` | WebSocket (web client) |
+| 21119 | TCP | `hbbr` | WebSocket (web client) |
 
-在防火墙上打开它们。API 和 WebSocket 端口应该放在互联网上的 TLS 反向代理后面：参见
-该[部署指南](docs/deployment.md).
+Open them on your firewall. The API and WebSocket ports should be behind a TLS reverse proxy on the Internet: see
+the [deployment guide](docs/deployment.md).
 
-## 首次运行
+## First run
 
-`hbbs`以及`hbbr`将他们的数据（密钥对、SQLite 数据库）保存在**现行目录**.
+`hbbs` and `hbbr` keep their data (key pair, SQLite database) in the **current directory**.
 
 ```bash
 mkdir -p /var/lib/sctgdesk && cd /var/lib/sctgdesk
@@ -135,71 +142,75 @@ hbbr &
 hbbs -r relay.example.com &
 ```
 
-首次起跑`hbbs`创造`id_ed25519`（秘密）和`id_ed25519.pub`（**公钥**，你给
-你的客户）。自己制作密钥对，或检查一个：
+On the first start `hbbs` creates `id_ed25519` (secret) and `id_ed25519.pub` (the **public key**, which you give to
+your clients). To make a key pair yourself, or to check one:
 
 ```bash
 rustdesk-utils genkeypair
 rustdesk-utils validatekeypair <public key> <secret key>
 ```
 
-要拒绝没有密钥的客户端，请以`-k <key>`（或`KEY=<key>`).检查一下
-服务器在所有端口上都回复如下：`rustdesk-utils doctor <server>`.
+To refuse clients that do not have the key, start both servers with `-k <key>` (or `KEY=<key>`). Check that a
+server answers on all its ports with `rustdesk-utils doctor <server>`.
 
-**默认管理员。**网页控制台位于`http://<server>:21114/`以及API文档`http://<server>:21114/api/doc/`.一个新的数据库中，用户`admin`用密码`Hello,world!`，即
-公众：**首次登录时更改**.
+**Default admin.** The web console is at `http://<server>:21114/` and the API documentation at
+`http://<server>:21114/api/doc/`. A new database has the user `admin` with the password `Hello,world!`, which is
+public: **change it at the first login**.
 
-## 配置
+## Configuration
 
-`hbbs`以及`hbbr`在命令行中选择选项（`hbbs --help`）以及来自环境变量，或`.env`档案。
+`hbbs` and `hbbr` take options on the command line (`hbbs --help`) and from environment variables, or an `.env`
+file.
 
-|变量 |二进制 |描述 |
-|--- |--- |--- |
-|ALWAYS_USE_RELAY |HBBS |如果设置为**“Y”**禁止直接对等连接 |
-|DB_URL |hbbs |SQLite 数据库路径（默认）`./db_v2.sqlite3`) |
-|LOGGED_IN_ONLY |HBBS |如果设置为**“Y”**只有登录用户才能控制对等端（同理`--logged-in-only`) |
-|REQUIRE_KX_V1 |HBBS |如果设置为**“Y”**拒绝使用旧版（版本0）TCP密钥交换的客户端（与`--require-kx-v1`) |
-|DOWNGRADE_START_CHECK |HBRR |延迟（秒数）在降级检查前 |
-|DOWNGRADE_THRESHOLD |hbbr |降级检查阈值（bit/ms） |
-|密钥 |HBBS/HBBR |如果设置为强制使用特定密钥，则**"\_"**强制使用任意密钥 |
-|LIMIT_SPEED |hbbr |限速（单位为Mb/s） |
-|OAUTH2\_CONFIG_FILE |hbbs |OAuth2 / OpenID Connect provider 文件的路径（`oauth2.toml`) |
-|OAUTH2\_CREATE_USER |HBBS |如果设置为**"1"**首次登录时创建用户 |
-|端口 |HBBS/HBBR |监听端口（21116用于HBBS- 21117用于HBBR） |
-|中继 |HBBS |运行 hbbr 的机器的 IP 地址/DNS 名称（用逗号分隔） |
-|RUST_LOG |全部 |设置调试级别（错误|警告|信息|调试|trace）|
-|S3CONFIG_FILE |HBBS |软件更新文件的路径（`s3config.toml`) |
-|SINGLE_BANDWIDTH |hbbr |单次连接的最大带宽（单位为Mb/s） |
-|TOTAL_BANDWIDTH |hbbr |最大总带宽（单位为Mb/s） |
+| variable | binary | description |
+| --- | --- | --- |
+| ALWAYS_USE_RELAY | hbbs | if set to **"Y"** disallows direct peer connection |
+| DB_URL | hbbs | path of the SQLite database (default `./db_v2.sqlite3`) |
+| LOGGED_IN_ONLY | hbbs | if set to **"Y"** only logged-in users can control a peer (same as `--logged-in-only`) |
+| REQUIRE_KX_V1 | hbbs | if set to **"Y"** refuses clients that use the legacy (version 0) TCP key exchange (same as `--require-kx-v1`) |
+| DOWNGRADE_START_CHECK | hbbr | delay (in seconds) before downgrade check |
+| DOWNGRADE_THRESHOLD | hbbr | threshold of downgrade check (bit/ms) |
+| KEY | hbbs/hbbr | if set force the use of a specific key, if set to **"\_"** force the use of any key |
+| LIMIT_SPEED | hbbr | speed limit (in Mb/s) |
+| OAUTH2\_CONFIG_FILE | hbbs | path of the OAuth2 / OpenID Connect providers file (`oauth2.toml`) |
+| OAUTH2\_CREATE_USER | hbbs | if set to **"1"** create a user at the first login with a provider |
+| PORT | hbbs/hbbr | listening port (21116 for hbbs - 21117 for hbbr) |
+| RELAY | hbbs | IP address/DNS name of the machines running hbbr (separated by comma) |
+| RUST_LOG | all | set debug level (error|warn|info|debug|trace) |
+| S3CONFIG_FILE | hbbs | path of the software-update file (`s3config.toml`) |
+| SINGLE_BANDWIDTH | hbbr | max bandwidth for a single connection (in Mb/s) |
+| TOTAL_BANDWIDTH | hbbr | max total bandwidth (in Mb/s) |
 
-### 只有登录用户才能控制
+### Only logged-in users can control
 
-`--logged-in-only`（或`LOGGED_IN_ONLY=Y`）`hbbs`询问 API 服务器客户端的令牌是否为活体
-在连接两个节点之前，会话。任何人仍然可以注册自己的设备，但没人能控制设备
-未登录。未登录的客户端看到“连接不被允许。你尚未登录。”;一
-其会话结束时显示“您的会话已过期”。
+`--logged-in-only` (or `LOGGED_IN_ONLY=Y`) makes `hbbs` ask the API server whether the token of the client is a live
+session before it connects two peers. Anyone can still register their device, but nobody can control a device
+without logging in. A client that is not logged in sees "The connection is not allowed. You have not logged in."; one
+whose session ended sees "Your session expired."
 
-### 用GitHub、GitLab、Google、Dex等登录。
+### Login with GitHub, GitLab, Google, Dex...
 
-收到`oauth2.toml`并填写你使用的服务提供者（每个服务商都需要注册一个应用程序，该应用的提供者
-回调是你的 API 服务器），然后设置`OAUTH2_CONFIG_FILE=oauth2.toml`， 和`OAUTH2_CREATE_USER=1`以创建
-用户首次登录。参见[部署指南](docs/deployment.md#login-with-openid-connect-and-oauth2).
+Copy `oauth2.toml` and fill in the providers you use (each needs an application registered with the provider, whose
+callback is your API server), then set `OAUTH2_CONFIG_FILE=oauth2.toml`, and `OAUTH2_CREATE_USER=1` to create the
+user at the first login. See the [deployment guide](docs/deployment.md#login-with-openid-connect-and-oauth2).
 
-### 客户端更新
+### Updates of the client
 
-客户端可以在你的API服务器上寻找新版本，而不是GitHub：它回答`POST /api/software/version/latest`（当前RustDesk客户端的检查）以及`GET /api/software/releases/latest`.
-最新版本和下载链接可从以下阅读`s3config.toml`（兼容S3的存储），参见[REST API](docs/api.md#software-update-endpoints).
+The clients can look for new versions on your API server instead of GitHub: it answers
+`POST /api/software/version/latest` (the check of current RustDesk clients) and `GET /api/software/releases/latest`.
+The latest version and the download links are read from `s3config.toml` (S3-compatible storage), see
+[the REST API](docs/api.md#software-update-endpoints).
 
-## 客户
+## Clients
 
-*   **官方 RustDesk 客户端**与这台服务器合作：把你的服务器和公钥交给他们。
-*   **SCTGDesk 客户端**是上游的RustDesk加上我们的覆盖层（名称、图标、默认服务器和密钥）。你自己构建它
-    关于你自己的服务器，请参见[定制车](docs/custom-builds.md#the-client).该**网页客户端**由
-    同样的叠加层。
+*   **Official RustDesk clients** work with this server: give them your server and your public key.
+*   **The SCTGDesk client** is upstream RustDesk plus our overlay (name, icons, default servers and key). You build it
+    for your own servers, see [custom builds](docs/custom-builds.md#the-client). The **web client** is built from
+    the same overlay.
 
-## 自己组装吧
+## Build it yourself
 
-你需要一个Rust工具链，网页控制台需要Node.js 20。
+You need a Rust toolchain and, for the web console, Node.js 20.
 
 ```bash
 git clone --recurse-submodules https://github.com/sctg-development/sctgdesk-server
@@ -208,12 +219,13 @@ export DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3     # the sqlx macros check qu
 cargo build --release --locked                         # hbbs, hbbr, rustdesk-utils in target/release
 ```
 
-赛场`SCTGDESK_SKIP_WEB_BUILD=1`无需Node.js构建（控制台则是占位符）。该[开发者手册](https://sctg-development.github.io/sctgdesk-server/)涵盖构建、测试、定制服务器和
-客户端构建、打包、发布以及与上游同步。
+Set `SCTGDESK_SKIP_WEB_BUILD=1` to build without Node.js (the console is then a placeholder). The
+[developer manual](https://sctg-development.github.io/sctgdesk-server/) covers building, testing, custom server and
+client builds, packaging, releases and syncing with upstream.
 
-## 截图
+## Screenshots
 
-### 网页控制台
+### Webconsole
 
 <img width="1085" alt="login" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/fe72a374-8a98-4606-8632-3d919f9317c9">
 
@@ -231,11 +243,11 @@ cargo build --release --locked                         # hbbs, hbbr, rustdesk-ut
 
 <img width="621" alt="add rules" src="https://github.com/sctg-development/sctgdesk-api-server/assets/165936401/355f3903-2b54-4b08-abd0-e33c84a260ed">
 
-### API 文档
+### Api documentation
 
 <img width="1502" alt="apidoc" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/88fe7910-fe62-43e5-a16c-70dc1201e040">
 
-### 在客户端
+### In the client
 
 <img width="913" alt="Capture d’écran 2024-05-24 à 12 14 34" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/1b253577-dce2-4163-9a49-ba4b3da37812">
 
@@ -243,24 +255,27 @@ cargo build --release --locked                         # hbbs, hbbr, rustdesk-ut
 
 <img width="927" alt="Capture d’écran 2024-05-24 à 12 07 32" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/f447f5fa-bc77-4bc6-858a-c6cadf9b7f6c">
 
-## 安全性
+## Security
 
-*   嵌入式API服务器没有防止滥用：在前面放置一个TLS反向代理（HAProxy、NGINX、Caddy等）
-    以及WebSocket端口。HAProxy的一个示例见于[部署指南](docs/deployment.md#tls-reverse-proxy).
-*   更改默认管理员密码，保持不变`id_ed25519`秘密并备份：更改它会让每个客户都拒绝
-    你的服务器。
-*   报告以下描述的漏洞[SECURITY.md](SECURITY.md).
+*   The embedded API server is not protected against abuse: put a TLS reverse proxy (HAProxy, NGINX, Caddy...) in front
+    of it, and of the WebSocket ports. A HAProxy example is in the [deployment guide](docs/deployment.md#tls-reverse-proxy).
+*   Change the default admin password, keep `id_ed25519` secret and back it up: changing it makes every client reject
+    your server.
+*   Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
-## 许可与源代码
+## License and source code
 
-SCTGDesk 分发在[GNU Affero 通用公共许可证 v3](LICENSE).每个版本的源代码
-就在这个仓库里，在该版本的标签下。如果你修改了这个软件，并让其他人使用它，而不是
-Network，许可证第13条要求你向他们提供修改版本的相应源代码。
+SCTGDesk is distributed under the [GNU Affero General Public License v3](LICENSE). The source code of every release
+is in this repository, at the tag of that release. If you modify this software and let other people use it over a
+network, section 13 of the license requires you to offer them the corresponding source code of your modified version.
 
-在运行下载的二进制文件前，请检查每次发布时公布的SHA-256和数据。
+Check the SHA-256 sums published with each release before running a downloaded binary.
 
-## 贡献
+## Contributing
 
-[开发者手册](https://sctg-development.github.io/sctgdesk-server/)·[CONTRIBUTING.md](CONTRIBUTING.md)·[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)·[SECURITY.md](SECURITY.md).关于一般的自主机问题，请使用[RustDesk 文档](https://rustdesk.com/docs/en/self-host/)同样适用。
+[Developer manual](https://sctg-development.github.io/sctgdesk-server/) · [CONTRIBUTING.md](CONTRIBUTING.md) ·
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) · [SECURITY.md](SECURITY.md). For general self-hosting questions, the
+[RustDesk documentation](https://rustdesk.com/docs/en/self-host/) also applies.
 
-如果你喜欢这部作品，请考虑给它一颗星，或者[赞助](https://github.com/sponsors/sctg-development).
+If you like this work, consider giving it a star, or
+[sponsoring it](https://github.com/sponsors/sctg-development).

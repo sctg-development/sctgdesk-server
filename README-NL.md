@@ -32,6 +32,7 @@ De voormalige bewaarplaatsen`sctgdesk-api-server`en`sctgdesk`, die gearchiveerd 
     GitHub, GitLab, Google, Dex...), sessies die een herstart overleven, persoonlijke en gedeelde adresboeken (per gebruiker en
     per groep, alleen-lezen / lezen-schrijven / beheerders), gebruikers en groepen, software-update endpoints.
 *   A**Webconsole**om dat allemaal te beheren, en interactieve API-documentatie.
+*   A**Verbindingsgeschiedenis**met een notitie bij elke verbinding (wat er gedaan is), doorzoekbaar en exporteerbaar naar CSV, ingevuld door de RustDesk-clients.
 *   Een optie om niet-geauthenticeerde controle te weigeren (`--logged-in-only`).
 *   A**Opdrachtgever**(`client/`): upstream RustDesk plus een kleine overlay, gebrandmerkt bij het bouwen met je naam, servers en
     sleutel; en een**Webclient**.

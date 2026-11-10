@@ -32,6 +32,7 @@ Die ehemaligen Lagerstätten`sctgdesk-api-server`und`sctgdesk`, die archiviert s
     GitHub, GitLab, Google, Dex...), Sitzungen, die einen Neustart überstehen, persönliche und geteilte Adressbücher (pro Nutzer und
     pro Gruppe, Schreibgeschützt / Lesen-Schreiben / Administrator), Benutzer und Gruppen, Software-Update-Endpunkte.
 *   A**Webkonsole**um all das zu verwalten, und interaktive API-Dokumentation.
+*   A**Verbindungsgeschichte**mit einer Notiz zu jeder Verbindung (was gemacht wurde), durchsuchbar und exportierbar in CSV, ausgefüllt von den RustDesk-Clients.
 *   Eine Option, um nicht authentifizierte Kontrolle abzulehnen (`--logged-in-only`).
 *   A**Auftraggeber**(`client/`): Upstream RustDesk plus ein kleines Overlay, das beim Bau mit deinem Namen, Servern und
     Schlüssel; und ein**Webclient**.
