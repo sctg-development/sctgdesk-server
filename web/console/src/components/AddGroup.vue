@@ -22,16 +22,20 @@ This website use:
           class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
       </div>
     </div>
+    <GroupAccessFields v-model:outgoing="allowedOutgoings" v-model:incoming="allowedIncomings" />
   </Modal>
 </template>
 
 <script setup lang="ts">
 import Modal from '@/components/Modal.vue';
+import GroupAccessFields from '@/components/GroupAccessFields.vue';
 import { ref } from 'vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { GroupApi, AddGoupRequest } from '@/api';
 const name = ref("");
 const note = ref("");
+const allowedOutgoings = ref<string[]>([]);
+const allowedIncomings = ref<string[]>([]);
 
 const emit = defineEmits(['add_group_close', 'group_added'])
 
@@ -54,8 +58,8 @@ function addGroup(): void {
   const request: AddGoupRequest = {
     name: name.value,
     note: note.value,
-    allowed_incomings: [],
-    allowed_outgoings: [],
+    allowed_incomings: allowedIncomings.value,
+    allowed_outgoings: allowedOutgoings.value,
   }
   groupApi.groupAdd(request).then(() => {
     emit('group_added')
