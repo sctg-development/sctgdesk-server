@@ -30,7 +30,7 @@ use oauth2::oauth_provider::OAuthProvider;
 use oauth2::oauth_provider::OAuthProviderFactory;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::form::validate::Len;
-use rocket::http::{ContentType, Header};
+use rocket::http::{ContentType, Header, Status};
 use rocket::response::{Redirect, Responder};
 use rocket::{async_trait, delete, options, put, routes, uri};
 use rocket::{Request, Response};
@@ -263,6 +263,9 @@ async fn login(
     };
 
     log::debug!("login: {:?}", request);
+    state
+        .record_device_login(&request.username, &request.id)
+        .await;
 
     state.check_maintenance().await;
 
@@ -289,6 +292,11 @@ async fn login(
 ///
 /// This function will return an error if the user is not authorized.
 ///
+/// The answer to a request that the user is not allowed to make: 403, not 401, which clients take for an ended session.
+fn forbidden() -> status::Custom<()> {
+    status::Custom(Status::Forbidden, ())
+}
+
 #[openapi(tag = "address book legacy")]
 #[get("/api/ab", format = "application/json")]
 async fn ab_get(
@@ -730,6 +738,13 @@ async fn group_add(
     let _res = state
         .create_group(request.name.as_str(), "Default", request.note.as_str()) // Todo allow to use different team
         .await;
+    let _ = state
+        .set_group_access(
+            request.name.as_str(),
+            &request.allowed_outgoings,
+            &request.allowed_incomings,
+        )
+        .await;
     let response = UsersResponse {
         msg: "success".to_string(),
         total: 1,
@@ -768,6 +783,13 @@ async fn group_update(
             request.name.as_str(),
             "Default", // Todo allow to use different team
             request.note.as_str(),
+        )
+        .await;
+    let _ = state
+        .set_group_access(
+            request.guid.as_str(),
+            &request.allowed_outgoings,
+            &request.allowed_incomings,
         )
         .await;
     let response = UsersResponse {
@@ -829,11 +851,11 @@ async fn group_delete(
 #[get("/api/peers", format = "application/json")]
 async fn peers(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
 ) -> Result<Json<PeersResponse>, status::NotFound<()>> {
     log::debug!("peers");
     state.check_maintenance().await;
-    let peers = state.get_all_peers().await;
+    let peers = state.get_visible_peers(&user.info).await;
 
     if peers.is_none() {
         return Err(status::NotFound::<()>(()));
@@ -862,7 +884,7 @@ async fn peers(
 #[get("/api/peers/count/<platform>", format = "application/json")]
 async fn peers_count(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    _user: AuthenticatedAdmin,
     platform: String,
 ) -> Result<Json<PeersCountResponse>, status::NotFound<()>> {
     let count = match platform.to_lowercase().as_str() {
@@ -910,7 +932,7 @@ async fn peers_count(
 #[get("/api/peers/cpus", format = "application/json")]
 async fn peers_cpus(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    _user: AuthenticatedAdmin,
 ) -> Result<Json<Vec<CpuCount>>, status::NotFound<()>> {
     let cpus = state.get_cpus_count().await;
     return Ok(Json(cpus));
@@ -1158,6 +1180,7 @@ async fn oidc_state(
     }
 
     let (token, username, userinfo) = res.unwrap();
+    state.record_device_login(&username, id).await;
     let auth_response = OidcResponse {
         access_token: token.to_base64(),
         type_field: "access_token".to_string(),
@@ -1248,13 +1271,16 @@ async fn ab_personal(
 #[post("/api/ab/tags/<ab>")]
 async fn ab_tags(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     ab: &str,
-) -> Result<Json<Vec<AbTag>>, status::NotFound<()>> {
+) -> Result<Json<Vec<AbTag>>, status::Custom<()>> {
+    if state.ab_access(&user.info, ab).await < 1 {
+        return Err(forbidden());
+    }
     state.check_maintenance().await;
     let ab_tags = state.get_ab_tags(ab).await;
     if ab_tags.is_none() {
-        return Err(status::NotFound::<()>(()));
+        return Err(status::Custom(Status::NotFound, ()));
     }
     let ab_tags = ab_tags.unwrap();
     Ok(Json(ab_tags))
@@ -1294,10 +1320,13 @@ async fn ab_tags(
 )]
 async fn ab_tag_add(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     ab: &str,
     request: Json<AbTag>,
-) -> Result<ActionResponse, status::Unauthorized<()>> {
+) -> Result<ActionResponse, status::Custom<()>> {
+    if state.ab_access(&user.info, ab).await < 2 {
+        return Err(forbidden());
+    }
     state.check_maintenance().await;
     let ab_tag = request.0;
     log::debug!("ab_tag_add: {:?}", ab_tag);
@@ -1339,10 +1368,13 @@ async fn ab_tag_add(
 )]
 async fn ab_tag_update(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     ab: &str,
     request: Json<AbTag>,
-) -> Result<ActionResponse, status::Unauthorized<()>> {
+) -> Result<ActionResponse, status::Custom<()>> {
+    if state.ab_access(&user.info, ab).await < 2 {
+        return Err(forbidden());
+    }
     state.check_maintenance().await;
     let ab_tag = request.0;
     log::debug!("ab_tag_update: {:?}", ab_tag);
@@ -1384,17 +1416,20 @@ async fn ab_tag_update(
 )]
 async fn ab_tag_rename(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     ab: &str,
     request: Json<AbTagRenameRequest>,
-) -> Result<ActionResponse, status::Unauthorized<()>> {
+) -> Result<ActionResponse, status::Custom<()>> {
+    if state.ab_access(&user.info, ab).await < 2 {
+        return Err(forbidden());
+    }
     state.check_maintenance().await;
     let ab_tag_old_name = request.0.old;
     let ab_tag_new_name = request.0.new;
 
     let ab_tag_old = state.get_ab_tag(ab, ab_tag_old_name.as_str()).await;
     if ab_tag_old.is_none() {
-        return Err(status::Unauthorized::<()>(()));
+        return Err(status::Custom(Status::Unauthorized, ()));
     }
     let mut ab_tag_new = ab_tag_old.unwrap();
     ab_tag_new.name = ab_tag_new_name;
@@ -1434,12 +1469,15 @@ async fn ab_tag_rename(
 #[delete("/api/ab/tag/<ab>", format = "application/json", data = "<request>")]
 async fn ab_tag_delete(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     ab: &str,
     request: Json<Vec<String>>,
-) -> Result<ActionResponse, status::Unauthorized<()>> {
+) -> Result<ActionResponse, status::Custom<()>> {
+    if state.ab_access(&user.info, ab).await < 2 {
+        return Err(forbidden());
+    }
     if request.0.is_empty() {
-        return Err(status::Unauthorized::<()>(()));
+        return Err(status::Custom(Status::Unauthorized, ()));
     }
     let tags_to_delete = request.0;
     state.check_maintenance().await;
@@ -1476,6 +1514,10 @@ async fn ab_shared(
     user: AuthenticatedUser,
 ) -> Result<Json<AbSharedProfilesResponse>, status::Unauthorized<()>> {
     state.check_maintenance().await;
+    let is_admin = state
+        .is_current_user_admin(&user.info)
+        .await
+        .unwrap_or(false);
     let shared_address_books = state.get_shared_address_books(user.info.user_id).await;
     let mut ab_shared_profiles = AbSharedProfilesResponse::default();
     for ab in shared_address_books.expect("shared_address_books is None") {
@@ -1483,7 +1525,7 @@ async fn ab_shared(
             guid: ab.ab,
             name: ab.name.unwrap_or("".to_string()),
             owner: guid_into_uuid(ab.owner.expect("Invalid owner")).expect("Invalid GUID"),
-            rule: 3,
+            rule: if is_admin { 3 } else { ab.rule.unwrap_or(0) },
             ..Default::default()
         };
         ab_shared_profiles.data.push(address_book);
@@ -1536,15 +1578,18 @@ async fn ab_settings(
 #[post("/api/ab/peers?<current>&<pageSize>&<ab>")]
 async fn ab_peers(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     #[allow(unused_variables)] current: u32,
     #[allow(non_snake_case, unused_variables)] pageSize: u32,
     ab: &str,
-) -> Result<Json<AbPeersResponse>, status::Unauthorized<()>> {
+) -> Result<Json<AbPeersResponse>, status::Custom<()>> {
+    if state.ab_access(&user.info, ab).await < 1 {
+        return Err(forbidden());
+    }
     state.check_maintenance().await;
     let ab_peers = state.get_ab_peers(ab).await;
     if ab_peers.is_none() {
-        return Err(status::Unauthorized::<()>(()));
+        return Err(status::Custom(Status::Unauthorized, ()));
     }
     let ab_peers = ab_peers.unwrap();
     let ab_peer_response = AbPeersResponse {
@@ -1576,10 +1621,13 @@ async fn ab_peers(
 )]
 async fn ab_peer_add(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     request: Json<AbPeer>,
     ab: &str,
-) -> Result<ActionResponse, status::Unauthorized<()>> {
+) -> Result<ActionResponse, status::Custom<()>> {
+    if state.ab_access(&user.info, ab).await < 2 {
+        return Err(forbidden());
+    }
     let ab_peer = request.0;
     state.check_maintenance().await;
     state.add_ab_peer(ab, ab_peer).await;
@@ -1607,14 +1655,17 @@ async fn ab_peer_add(
 )]
 async fn ab_peer_update(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     request: Json<AbPeer>,
     ab: &str,
-) -> Result<ActionResponse, status::Unauthorized<()>> {
+) -> Result<ActionResponse, status::Custom<()>> {
+    if state.ab_access(&user.info, ab).await < 2 {
+        return Err(forbidden());
+    }
     let mut ab_peer = request.0;
     let old_ab_peer = state.get_ab_peer(ab, ab_peer.id.as_str()).await;
     if old_ab_peer.is_none() {
-        return Err(status::Unauthorized::<()>(()));
+        return Err(status::Custom(Status::Unauthorized, ()));
     }
     let old_ab_peer = old_ab_peer.unwrap();
     ab_peer.hash = ab_peer.hash.or(old_ab_peer.hash);
@@ -1653,12 +1704,15 @@ async fn ab_peer_update(
 #[delete("/api/ab/peer/<ab>", format = "application/json", data = "<request>")]
 async fn ab_peer_delete(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     ab: &str,
     request: Json<Vec<String>>,
-) -> Result<ActionResponse, status::Unauthorized<()>> {
+) -> Result<ActionResponse, status::Custom<()>> {
+    if state.ab_access(&user.info, ab).await < 2 {
+        return Err(forbidden());
+    }
     if request.0.is_empty() {
-        return Err(status::Unauthorized::<()>(()));
+        return Err(status::Custom(Status::Unauthorized, ()));
     }
     let peers_to_delete = request.0;
     state.check_maintenance().await;
@@ -1851,7 +1905,12 @@ async fn user_update(
         total: 1,
         data: "[{}]".to_string(),
     };
-    let user_update = request.0;
+    let mut user_update = request.0;
+    if !is_admin {
+        // a user changes its own profile and password, not its rights or its status
+        user_update.is_admin = None;
+        user_update.status = None;
+    }
     state.user_update(guid, user_update).await;
     Ok(Json(response))
 }
@@ -1914,7 +1973,7 @@ async fn oidc_get(
 )]
 async fn users_client(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     current: u32,
     #[allow(non_snake_case, unused_variables)] pageSize: u32,
     #[allow(unused_variables)] accessible: Option<bool>,
@@ -1923,7 +1982,23 @@ async fn users_client(
     log::debug!("users");
     state.check_maintenance().await;
 
-    let res = state.get_all_users(None, None, current, pageSize).await;
+    // a user only sees the users of its own group and of the groups its group may connect to
+    let res = match state.accessible_group_names(&user.info).await {
+        None => state.get_all_users(None, None, current, pageSize).await,
+        Some(names) => {
+            let all = state.get_all_users(None, None, 1, u32::MAX / 2).await;
+            let page_size = pageSize.max(1) as usize;
+            let first = (current.max(1) as usize - 1).saturating_mul(page_size);
+            all.map(|users| {
+                users
+                    .into_iter()
+                    .filter(|u| names.contains(&u.group_name))
+                    .skip(first)
+                    .take(page_size)
+                    .collect()
+            })
+        }
+    };
     if res.is_none() {
         return Err(status::NotFound::<()>(()));
     }
@@ -1947,12 +2022,16 @@ async fn users_client(
 )]
 async fn device_group_accessible(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     current: Option<u32>,
     #[allow(non_snake_case)] pageSize: Option<u32>,
 ) -> Json<DeviceGroupsResponse> {
     state.check_maintenance().await;
-    let groups = state.get_groups(0, 10_000).await.unwrap_or_default();
+    let mut groups = state.get_groups(0, 10_000).await.unwrap_or_default();
+    // a user only sees its own group and the ones its group may connect to
+    if let Some(names) = state.accessible_group_names(&user.info).await {
+        groups.retain(|g| names.contains(&g.name));
+    }
     let total = groups.len() as u32;
     let page_size = pageSize.unwrap_or(100).max(1) as usize;
     let first = (current.unwrap_or(1).max(1) as usize - 1).saturating_mul(page_size);
@@ -2190,16 +2269,19 @@ async fn software_download() -> Redirect {
 #[get("/api/ab/rules?<current>&<pageSize>&<ab>", format = "application/json")]
 async fn ab_rules(
     state: &State<ApiState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     current: u32,
     #[allow(unused_variables)] pageSize: u32,
     ab: &str,
-) -> Result<Json<AbRulesResponse>, status::Unauthorized<()>> {
+) -> Result<Json<AbRulesResponse>, status::Custom<()>> {
+    if state.ab_access(&user.info, ab).await < 3 {
+        return Err(forbidden());
+    }
     state.check_maintenance().await;
     let current = if current < 1 { 0 } else { current - 1 };
     let rules = state.get_ab_rules(current, pageSize, ab).await;
     if rules.is_none() {
-        return Err(status::Unauthorized::<()>(()));
+        return Err(status::Custom(Status::Unauthorized, ()));
     }
     let rules = rules.unwrap();
     let response = AbRulesResponse {

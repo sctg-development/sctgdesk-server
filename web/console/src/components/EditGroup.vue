@@ -22,16 +22,20 @@ This website use:
           class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
       </div>
     </div>
+    <GroupAccessFields v-model:outgoing="allowedOutgoings" v-model:incoming="allowedIncomings" :self="uuid" />
   </Modal>
 </template>
 
 <script setup lang="ts">
 import Modal from '@/components/Modal.vue';
+import GroupAccessFields from '@/components/GroupAccessFields.vue';
 import { onMounted, ref } from 'vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { GroupApi, UpdateGoupRequest } from '@/api';
 const name = ref("");
 const note = ref("");
+const allowedOutgoings = ref<string[]>([]);
+const allowedIncomings = ref<string[]>([]);
 
 const props = withDefaults(defineProps<{
     uuid: string;
@@ -47,6 +51,8 @@ onMounted(() => {
   groupApi.groupGet(props.uuid).then((response) => {
     name.value = response.data.name;
     note.value = response.data.note;
+    allowedOutgoings.value = response.data.access_to;
+    allowedIncomings.value = response.data.accessed_from;
   })
 })
 /**
@@ -69,8 +75,8 @@ function updateGroup(): void {
     guid: props.uuid,
     name: name.value,
     note: note.value,
-    allowed_incomings: [],
-    allowed_outgoings: [],
+    allowed_incomings: allowedIncomings.value,
+    allowed_outgoings: allowedOutgoings.value,
   }
   groupApi.groupUpdate(request).then(() => {
     emit('group_updated')
