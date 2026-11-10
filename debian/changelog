@@ -1,3 +1,11 @@
+rustdesk-server (1.1.16-sctg.4) UNRELEASED; urgency=medium
+
+  * fix: users only reach the address books their rights allow, and only see the users, groups and devices of their group and of the groups it may connect to
+  * fix: a user can no longer make itself an administrator
+  * the groups store the groups they may connect to
+  * history of the connections, with a note on each, in the API and the console
+  * releases are published by a pipeline: image, packages, binaries and clients
+
 rustdesk-server (1.1.16-sctg.3) UNRELEASED; urgency=medium
 
   * fix: sessions survive a restart of hbbs (stored in the database), and the group endpoint answers the Flutter client
