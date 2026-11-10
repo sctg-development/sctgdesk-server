@@ -6,6 +6,8 @@
   - [TCP key exchange](key-exchange.md)
   - [REST API](api.md)
 - [Building from source](building.md)
+- [Deploying a server](deployment.md)
+- [Custom builds](custom-builds.md)
 - [Testing](testing.md)
 - [The client](client.md)
 - [Syncing with upstream](upstream-sync.md)
