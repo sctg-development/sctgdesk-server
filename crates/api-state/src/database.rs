@@ -41,7 +41,7 @@ use base64::prelude::{Engine as _, BASE64_STANDARD};
 use uuid::Uuid;
 
 pub struct Database {
-    pool: SqlitePool,
+    pub(crate) pool: SqlitePool,
 }
 
 pub struct DatabaseConnection {

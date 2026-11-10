@@ -33,6 +33,7 @@ the former repositories `sctgdesk-api-server` and `sctgdesk`, which are archived
   GitHub, GitLab, Google, Dex...), sessions that survive a restart, personal and shared address books (per user and
   per group, read-only / read-write / admin), users and groups, software-update endpoints.
 * A **web console** to manage all of that, and interactive API documentation.
+* A **connection history** with a note on each connection (what was done), searchable and exportable to CSV, filled by the RustDesk clients.
 * An option to refuse unauthenticated control (`--logged-in-only`).
 * A **client** (`client/`): upstream RustDesk plus a small overlay, branded at build time with your name, servers and
   key; and a **web client**.

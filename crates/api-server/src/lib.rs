@@ -61,6 +61,7 @@ use utils::{
     AbSharedProfilesResponse, AbTag, BearerAuthToken, OidcAuthRequest, OidcAuthUrl, OidcResponse,
     OidcState, OidcUser, OidcUserInfo, OidcUserStatus,
 };
+use utils::{AuditConnEvent, AuditConnList, AuditNoteRequest};
 use utils::{DeviceGroupPayload, DeviceGroupsResponse};
 
 use base64::prelude::{Engine as _, BASE64_STANDARD};
@@ -125,6 +126,11 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
             openapi_get_routes![
                 options,
                 login,
+                audit_conn,
+                audit_conn_active,
+                audit_note,
+                audit_conn_list,
+
                 login_options,
                 ab_get,
                 ab_post,
@@ -469,6 +475,98 @@ async fn audit(state: &State<ApiState>, request: Json<AuditRequest>) {
 ///
 /// This function will return an error if the system is in maintenance mode, or if the user is not authorized.
 ///
+/// # Connection events, posted by the devices
+///
+/// The RustDesk clients post here, from the device that is controlled, when a connection opens, when its
+/// authentication is known (who controls, and how) and when it closes; the controlling client may also post
+/// the note of the session. The post is not authenticated (the clients do not send a token): events of devices
+/// that did not register with the server are dropped, and a retried post (same `nonce`) is applied once.
+#[openapi(tag = "audit")]
+#[post("/api/audit/conn", format = "application/json", data = "<request>")]
+async fn audit_conn(state: &State<ApiState>, request: Json<AuditConnEvent>) {
+    log::debug!("audit conn: {:?}", request);
+    state.audit_conn_event(&request).await;
+    state.check_maintenance().await;
+}
+
+/// # The guid of the record of a session
+///
+/// The controlling client asks for it to set the note at the end of the connection (`PUT /api/audit`). Answers
+/// `null` until the device has posted the connection. The record becomes the user's: the user then sees it in
+/// its own history and may set its note.
+#[openapi(tag = "audit")]
+#[get("/api/audit/conn/active?<id>&<session_id>&<conn_type>")]
+async fn audit_conn_active(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    id: &str,
+    session_id: &str,
+    #[allow(unused_variables)] conn_type: Option<u32>,
+) -> Json<Option<String>> {
+    Json(
+        state
+            .audit_conn_active_guid(&user.info.user_id, id, session_id)
+            .await,
+    )
+}
+
+/// # Set the note of a connection
+///
+/// Allowed to the user of the connection and to the administrators.
+#[openapi(tag = "audit")]
+#[put("/api/audit", format = "application/json", data = "<request>")]
+async fn audit_note(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    request: Json<AuditNoteRequest>,
+) -> Result<(), status::Custom<()>> {
+    let is_admin = state
+        .is_current_user_admin(&user.info)
+        .await
+        .unwrap_or(false);
+    if state
+        .audit_conn_set_note(&request.guid, &request.note, &user.info.user_id, is_admin)
+        .await
+    {
+        Ok(())
+    } else {
+        Err(status::Custom(rocket::http::Status::Forbidden, ()))
+    }
+}
+
+/// # The history of the connections
+///
+/// Newest first. The administrators get all the connections, the other users their own. `q` is searched in the
+/// device (id and name), the controlling device, the account, the address and the note; `from` and `to` are days
+/// (`YYYY-MM-DD`).
+#[openapi(tag = "audit")]
+#[get("/api/audit/conn?<current>&<pageSize>&<q>&<from>&<to>")]
+async fn audit_conn_list(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    current: Option<u32>,
+    #[allow(non_snake_case)] pageSize: Option<u32>,
+    q: Option<&str>,
+    from: Option<&str>,
+    to: Option<&str>,
+) -> Json<AuditConnList> {
+    let is_admin = state
+        .is_current_user_admin(&user.info)
+        .await
+        .unwrap_or(false);
+    let page_size = pageSize.unwrap_or(50).clamp(1, 1000);
+    let offset = (current.unwrap_or(1).max(1) - 1).saturating_mul(page_size);
+    let only = if is_admin {
+        None
+    } else {
+        Some(&user.info.user_id)
+    };
+    let (total, data) = state
+        .audit_conn_list(only, q, from, to, offset, page_size)
+        .await;
+    Json(AuditConnList { total, data })
+}
+
 #[openapi(tag = "login")]
 #[post("/api/logout", format = "application/json", data = "<request>")]
 async fn logout(
