@@ -221,15 +221,16 @@ impl ApiState {
         let Ok(mut conn) = self.db.pool.acquire().await else {
             return (0, Vec::new());
         };
-        let total: i64 =
-            sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM conn_history a {filter}")))
-                .bind(only_user)
-                .bind(&q)
-                .bind(from)
-                .bind(to)
-                .fetch_one(&mut *conn)
-                .await
-                .unwrap_or(0);
+        let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+            "SELECT COUNT(*) FROM conn_history a {filter}"
+        )))
+        .bind(only_user)
+        .bind(&q)
+        .bind(from)
+        .bind(to)
+        .fetch_one(&mut *conn)
+        .await
+        .unwrap_or(0);
         let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
             r#"SELECT a.guid, a.device_id, a.controller_id, a.controller_name, a.conn_type, a.ip, a.note,
                       a.started_at, a.ended_at,
