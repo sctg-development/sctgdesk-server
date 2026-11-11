@@ -903,7 +903,19 @@ fn a_failed_login_answers_a_json_error() {
 }
 
 #[test]
-fn the_probes_and_the_secret_key() {
+fn the_secret_key_is_generated() {
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let server = Server::start(&[], &[]);
+    // generated at the first start, not a constant of the source
+    let key = std::fs::read_to_string(server.dir.join("secret_key.txt")).unwrap();
+    assert!(key.trim().len() >= 64, "secret_key.txt: {key:?}");
+    assert_ne!(key.trim(), "wJq+s/xvwZjmMX3ev0p4gQTs9Ej5wt0brsk3ZGhoBTg=");
+}
+
+#[test]
+fn the_probes_answer() {
     let _lock = ONE_SERVER_AT_A_TIME
         .lock()
         .unwrap_or_else(|e| e.into_inner());
