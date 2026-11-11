@@ -1,7 +1,7 @@
-From f7b03095e95533047124c2d746c4d9fc8a63250f Mon Sep 17 00:00:00 2001
+From 7bda098cda87ca7a66047cd66bef80a3ded836d3 Mon Sep 17 00:00:00 2001
 From: sctg <sctg@localhost>
-Date: Fri, 30 Oct 2026 18:40:51 +0100
-Subject: [PATCH] feat: the update card opens the download of this platform
+Date: Wed, 11 Nov 2026 14:13:51 +0100
+Subject: [PATCH 2/3] feat: the update card opens the download of this platform
 
 For upstream a branded client is a custom client and hides the update card.
 Show it, and open the download page of our API server for this platform
@@ -14,7 +14,7 @@ The in-app update stays off: upstream restricts it to GitHub releases.
  3 files changed, 35 insertions(+), 7 deletions(-)
 
 diff --git a/flutter/lib/desktop/pages/desktop_home_page.dart b/flutter/lib/desktop/pages/desktop_home_page.dart
-index 6d370cb..6802b2e 100644
+index 12951ca..69daddc 100644
 --- a/flutter/lib/desktop/pages/desktop_home_page.dart
 +++ b/flutter/lib/desktop/pages/desktop_home_page.dart
 @@ -428,14 +428,17 @@ class _DesktopHomePageState extends State<DesktopHomePage>
@@ -63,11 +63,22 @@ index ff5dc82..279c512 100644
                // https://developer.android.com/training/package-visibility/use-cases#open-urls-custom-tabs
                //
 diff --git a/src/common.rs b/src/common.rs
-index 1d9a059..6dbfa63 100644
+index c647dc5..cb566e0 100644
 --- a/src/common.rs
 +++ b/src/common.rs
-@@ -1024,6 +1024,28 @@ pub fn check_software_update() {
-     }
+@@ -1165,7 +1165,9 @@ fn process_software_update_check_response(bytes: Bytes) -> ResultType<()> {
+         {
+             let mut m = HashMap::new();
+             m.insert("name", "check_software_update_finish");
+-            m.insert("url", &response_url);
++            // what the update button opens: our API server sends the user to the download of this platform
++            let download_url = client_download_url(&get_api_server("".to_owned(), "".to_owned()));
++            m.insert("url", &download_url);
+             if let Ok(data) = serde_json::to_string(&m) {
+                 let _ = crate::flutter::push_global_event(crate::flutter::APP_TYPE_MAIN, data);
+             }
+@@ -1177,6 +1179,28 @@ fn process_software_update_check_response(bytes: Bytes) -> ResultType<()> {
+     Ok(())
  }
  
 +/// The page of our API server that redirects to the newest client of this platform (api-server,
@@ -95,17 +106,6 @@ index 1d9a059..6dbfa63 100644
  // The url is the one of our API server, which answers like api.rustdesk.com/version/latest.
  #[tokio::main(flavor = "current_thread")]
  pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
-@@ -1067,7 +1089,9 @@ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
-         {
-             let mut m = HashMap::new();
-             m.insert("name", "check_software_update_finish");
--            m.insert("url", &response_url);
-+            // what the update button opens: our API server sends the user to the download of this platform
-+            let download_url = client_download_url(&api);
-+            m.insert("url", &download_url);
-             if let Ok(data) = serde_json::to_string(&m) {
-                 let _ = crate::flutter::push_global_event(crate::flutter::APP_TYPE_MAIN, data);
-             }
 -- 
 2.50.1 (Apple Git-155)
 

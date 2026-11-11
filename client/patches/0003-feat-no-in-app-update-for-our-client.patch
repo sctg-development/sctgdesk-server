@@ -1,0 +1,31 @@
+From 844b9c576b56e6d94d13e349c541ae89bbd1e3a6 Mon Sep 17 00:00:00 2001
+From: sctg <sctg@localhost>
+Date: Wed, 11 Nov 2026 14:13:52 +0100
+Subject: [PATCH 3/3] feat: no in-app update for our client
+
+The in-app update only accepts the GitHub releases of upstream. The update check of our client answers with
+the release page of our API server, which that code rejects with an error at every check: leave the update to the
+download page of the update card.
+---
+ src/updater.rs | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/updater.rs b/src/updater.rs
+index 5337439..ce646f9 100644
+--- a/src/updater.rs
++++ b/src/updater.rs
+@@ -187,6 +187,11 @@ fn start_auto_update_check_(rx_msg: Receiver<UpdateMsg>) {
+ }
+ 
+ fn check_update(manually: bool) -> ResultType<()> {
++    // The in-app update only downloads the GitHub releases of upstream (verified_update_artifact_from_release_page_url):
++    // our client is updated from the download page of our API server, see check_software_update in common.rs.
++    if crate::is_custom_client() {
++        return Ok(());
++    }
+     // On macOS, auto-update is handled by check_update_as_root() in the service process.
+     // The shared check_update() path is only used for manual update checks from the GUI.
+     #[cfg(target_os = "macos")]
+-- 
+2.50.1 (Apple Git-155)
+

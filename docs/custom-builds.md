@@ -123,7 +123,7 @@ python3 branding.py --check           # what would change, writes nothing
 
 The build needs the upstream toolchain (Flutter, vcpkg, a C++ toolchain, Xcode on macOS, ...): follow RustDesk's own
 build documentation for the tag in `client/UPSTREAM_TAG`. `client/README.md` lists what differs from upstream and what
-is **not verified**: the client was prepared against a clean checkout of upstream 1.5.0, and the iOS,
+is **not verified**: the client was prepared against a clean checkout of upstream 1.5.3, and the iOS,
 Android and Linux clients have no workflow any more. Treat a first build of those as work to do, not as a recipe.
 
 Your icons and logos go in `client/overlay/` (copied over the tree). Windows, Android and iOS icons are still
