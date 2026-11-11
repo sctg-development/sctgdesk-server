@@ -200,7 +200,9 @@ repository is an example only.
 - `hbbr`: set `HEALTH_PORT` to a free port; `GET /livez` and `GET /readyz` (200 when the relay port accepts a TCP
   connection) are then answered there. Off by default.
 
-In Kubernetes: `livenessProbe` on `/livez`, `readinessProbe` on `/readyz`. Keep `HEALTH_PORT` and the API port off the
+In Kubernetes: `livenessProbe` on `/livez`, `readinessProbe` on `/readyz`. The Helm chart sets them with
+`--set probes.enabled=true` (off by default: they exist in the images of this repository, not in the upstream image the
+chart still defaults to). Keep `HEALTH_PORT` and the API port off the
 internet.
 
 ## Backup, upgrade, rollback

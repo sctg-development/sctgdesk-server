@@ -7,6 +7,14 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
+# HTTP probes /livez and /readyz: they exist in the images of this repository
+# (sctg/sctgdesk-server), not in the upstream image the chart still defaults to.
+# hbbs answers on its API port; hbbr on hbbrPort (its HEALTH_PORT).
+probes:
+  enabled: false
+  hbbsPort: 21114
+  hbbrPort: 21120
+
 hbbs:
   encrypted: "1"
   command: hbbs

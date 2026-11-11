@@ -63,6 +63,21 @@ spec:
           protocol: UDP
         - containerPort: 21118
         - containerPort: 21119
+        {{- if .Values.probes.enabled }}
+        - name: api
+          containerPort: {{ .Values.probes.hbbsPort }}
+        livenessProbe:
+          httpGet:
+            path: /livez
+            port: api
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: api
+          periodSeconds: 5
+        {{- end }}
         volumeMounts:
         - name: data
           mountPath: {{ .Values.volume.mountPath }}
@@ -78,6 +93,10 @@ spec:
           value: {{ .Values.loglevel }}
         - name: KEY
           value: "_"
+        {{- if .Values.probes.enabled }}
+        - name: HEALTH_PORT
+          value: {{ .Values.probes.hbbrPort | quote }}
+        {{- end }}
         - name: KEY_PUB
           valueFrom:
             secretKeyRef:
@@ -91,6 +110,23 @@ spec:
         ports:
             - containerPort: 21117
             - containerPort: 21119
+            {{- if .Values.probes.enabled }}
+            - name: health
+              containerPort: {{ .Values.probes.hbbrPort }}
+            {{- end }}
+        {{- if .Values.probes.enabled }}
+        livenessProbe:
+          httpGet:
+            path: /livez
+            port: health
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: health
+          periodSeconds: 5
+        {{- end }}
         volumeMounts:
         - name: data
           mountPath: {{ .Values.volume.mountPath }}
