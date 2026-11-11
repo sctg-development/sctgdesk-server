@@ -881,3 +881,24 @@ async fn a_user_only_gets_what_its_group_gives_access_to() {
     );
     assert_eq!(get("/api/user-list?current=1&pageSize=10", &alice).0, 401);
 }
+
+#[test]
+fn a_failed_login_answers_a_json_error() {
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let server = Server::start(&[], &[]);
+    let (status, body) = server.http(
+        "POST",
+        "/api/login",
+        None,
+        r#"{"username":"admin","password":"wrong","id":"E2E","uuid":"ZTJl"}"#,
+    );
+    assert_eq!(status, 401);
+    // the clients jsonDecode this body: an empty one makes them crash
+    assert!(
+        json(&body)["error"].as_str().is_some_and(|e| !e.is_empty()),
+        "body: {body:?}"
+    );
+}
+
