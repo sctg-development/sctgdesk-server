@@ -45,8 +45,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # the values of flutter-build.yml of upstream 1.5.0, unchanged in 1.5.3 except for Flutter 3.44.9 on macOS arm64 and
-  # Windows arm64 (not followed, see client/README.md)
+  # the values of flutter-build.yml of upstream 1.5.3 for Windows x64 and x86 (Windows arm64, on Flutter 3.44, is not built)
   RUST_VERSION: "1.75"
   LLVM_VERSION: "15.0.6"
   FLUTTER_VERSION: "3.24.5"

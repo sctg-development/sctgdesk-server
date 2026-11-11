@@ -1,6 +1,8 @@
 # The flutter-rust-bridge code of the client, shared by the platform workflows (client-*.yml).
-# From upstream 1.5.0 .github/workflows/bridge.yml: the sources come from client/apply.sh, and only the
-# default bridge (Flutter 3.22.3) is generated, not the Flutter 3.44 one of Windows arm64.
+# From upstream 1.5.3 .github/workflows/bridge.yml: the sources come from client/apply.sh. Two bridges are generated in
+# parallel: the default one (Flutter 3.22.3, for the platforms on Flutter 3.24.5) and the one of the macOS arm64 client
+# (Flutter 3.44, patched by .github/patches/apply_flutter_3.44_source_patches.sh like that client). The Windows arm64
+# client of upstream, which uses the second one too, is not built here.
 name: Build flutter-rust-bridge
 # 2023-11-23 18:00:00+00:00
 
@@ -30,6 +32,15 @@ jobs:
               extra-build-args: "",
               flutter-version: "3.22.3",
               artifact-name: "bridge-artifact",
+            }
+          # Dedicated bridge for the macOS arm64 build (Flutter 3.44): its *.freezed.dart must compile against the
+          # Flutter and freezed that build resolves.
+          - {
+              target: x86_64-unknown-linux-gnu,
+              os: ubuntu-22.04,
+              extra-build-args: "",
+              flutter-version: "3.44.8",
+              artifact-name: "bridge-artifact-flutter-3.44",
             }
     steps:
       # The client sources are upstream's tag with our patches (client/apply.sh), not this repository.
@@ -95,8 +106,13 @@ jobs:
         run: |
           cargo install cargo-expand --version ${{ env.CARGO_EXPAND_VERSION }} --locked
           cargo install flutter_rust_bridge_codegen --version ${{ env.FLUTTER_RUST_BRIDGE_VERSION }} --features "uuid" --locked
-          # Flutter 3.22.3: extended_text 14 needs a newer Dart, so downgrade for resolution.
-          sed -i -e 's/extended_text: 14.0.0/extended_text: 13.0.0/g' flutter/pubspec.yaml
+          if [[ "${{ matrix.job.flutter-version }}" == "3.22.3" ]]; then
+            # Flutter 3.22.3: extended_text 14 needs a newer Dart, so downgrade for resolution.
+            sed -i -e 's/extended_text: 14.0.0/extended_text: 13.0.0/g' flutter/pubspec.yaml
+          else
+            # Flutter 3.44 (macOS arm64): the same source and pubspec state as that build
+            bash .github/patches/apply_flutter_3.44_source_patches.sh
+          fi
           pushd flutter && flutter pub get && popd
 
       - name: Run flutter rust bridge
