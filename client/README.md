@@ -71,6 +71,8 @@ key of upstream, and fails if one is left. The workflow is `.github/workflows/cl
 - The macOS signing and dmg steps of `build-sctg.py`, the flatpak rule and the client workflow come from the former script and are unverified on `1.5.3`.
 - `deploy/helm/` (the Helm chart of the former client repository) deploys the server and was written for a TCP test:
   to be refactored.
-- Upstream 1.5.3 builds the macOS arm64 client with Flutter 3.44.9 (a crash of Flutter 3.24.5 in the text input,
-  rustdesk issue 16817) and patches its sources on the fly; `client-macos.yml` stays on Flutter 3.24.5 for both
-  architectures, so the Apple Silicon client may crash when text is entered. Not followed yet.
+- Like upstream 1.5.3, `client-macos.yml` builds the Apple Silicon client with **Flutter 3.44.9** (Flutter 3.24.5
+  crashes in the text input, rustdesk issue 16817) and the Intel client with 3.24.5. For arm64 the sources are
+  patched on the fly by upstream's `.github/patches/apply_flutter_3.44_source_patches.sh` and `bridge.yml` generates a
+  second bridge (`bridge-artifact-flutter-3.44`). Not built yet: the first run of the workflow is the test. The Windows
+  arm64 client, also on Flutter 3.44 upstream, is not built here.
