@@ -1182,6 +1182,15 @@ impl Database {
         Some(())
     }
 
+    /// Runs `SELECT 1`, bounded to 2 seconds.
+    pub async fn ping(&self) -> bool {
+        let query = sqlx::query("SELECT 1").execute(&self.pool);
+        matches!(
+            tokio::time::timeout(std::time::Duration::from_secs(2), query).await,
+            Ok(Ok(_))
+        )
+    }
+
     pub async fn get_all_users(
         &self,
         name: Option<&str>,

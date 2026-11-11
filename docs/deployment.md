@@ -193,9 +193,19 @@ and the download links. Details and the format are in [REST API](api.md#software
 the credentials of your bucket**: give it a read-only key, never commit the real one, and note that the copy in this
 repository is an example only.
 
+### Health probes
+
+- `hbbs`: `GET /livez` (the process answers) and `GET /readyz` (200 when the database answers, 503 otherwise) on the API
+  port (21114), without authentication.
+- `hbbr`: set `HEALTH_PORT` to a free port; `GET /livez` and `GET /readyz` (200 when the relay port accepts a TCP
+  connection) are then answered there. Off by default.
+
+In Kubernetes: `livenessProbe` on `/livez`, `readinessProbe` on `/readyz`. Keep `HEALTH_PORT` and the API port off the
+internet.
+
 ## Backup, upgrade, rollback
 
-Back up `id_ed25519`, `id_ed25519.pub`, `oauth2.toml`, `s3config.toml` and the database. Use SQLite's own backup, which
+Back up `id_ed25519`, `id_ed25519.pub`, `secret_key.txt`, `oauth2.toml`, `s3config.toml` and the database. Use SQLite's own backup, which
 is safe while `hbbs` runs:
 
 ```sh

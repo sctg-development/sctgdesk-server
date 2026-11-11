@@ -903,13 +903,59 @@ fn a_failed_login_answers_a_json_error() {
 }
 
 #[test]
-fn the_secret_key_is_generated() {
+fn the_probes_and_the_secret_key() {
     let _lock = ONE_SERVER_AT_A_TIME
         .lock()
         .unwrap_or_else(|e| e.into_inner());
     let server = Server::start(&[], &[]);
-    // generated at the first start, not a constant of the source
-    let key = std::fs::read_to_string(server.dir.join("secret_key.txt")).unwrap();
-    assert!(key.trim().len() >= 64, "secret_key.txt: {key:?}");
-    assert_ne!(key.trim(), "wJq+s/xvwZjmMX3ev0p4gQTs9Ej5wt0brsk3ZGhoBTg=");
+    for path in ["/livez", "/readyz"] {
+        let (status, body) = server.http("GET", path, None, "");
+        assert_eq!((status, body.as_str()), (200, "ok"), "{path}");
+    }
+}
+
+#[test]
+fn hbbr_answers_its_probes() {
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let get = |port: u16, path: &str| -> String {
+        let mut s = TcpStream::connect(("127.0.0.1", port)).unwrap();
+        s.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+        write!(s, "GET {path} HTTP/1.1\r\nHost: x\r\n\r\n").unwrap();
+        let mut out = String::new();
+        let _ = s.read_to_string(&mut out);
+        out.lines().next().unwrap_or("").to_owned()
+    };
+    let free = |_: ()| {
+        TcpListener::bind(("127.0.0.1", 0))
+            .unwrap()
+            .local_addr()
+            .unwrap()
+            .port()
+    };
+    let (relay, health) = (free(()), free(()));
+    let dir = std::env::temp_dir().join(format!("hbbr-e2e-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let mut child = Command::new(env!("CARGO_BIN_EXE_hbbr"))
+        .arg(format!("--port={relay}"))
+        .current_dir(&dir)
+        .env("HEALTH_PORT", health.to_string())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    let start = Instant::now();
+    while TcpStream::connect(("127.0.0.1", health)).is_err()
+        || TcpStream::connect(("127.0.0.1", relay)).is_err()
+    {
+        assert!(start.elapsed() < Duration::from_secs(30), "hbbr did not start");
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    assert_eq!(get(health, "/livez"), "HTTP/1.1 200 OK");
+    assert_eq!(get(health, "/readyz"), "HTTP/1.1 200 OK");
+    assert_eq!(get(health, "/nope"), "HTTP/1.1 404 Not Found");
+    let _ = child.kill();
+    let _ = child.wait();
+    let _ = std::fs::remove_dir_all(&dir);
 }

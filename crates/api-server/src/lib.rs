@@ -192,6 +192,8 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
             ],
         )
         .mount("/",routes![
+            livez,
+            readyz,
             favicon,
             webconsole_vue,
             openapi_snippet,
@@ -2686,3 +2688,18 @@ async fn webconsole_vue(path: PathBuf) -> Option<StaticFileResponse> {
     }
 }
 
+/// Liveness probe: the process answers. No authentication, no database.
+#[get("/livez")]
+fn livez() -> &'static str {
+    "ok"
+}
+
+/// Readiness probe: 200 when the database answers, 503 otherwise.
+#[get("/readyz")]
+async fn readyz(state: &State<ApiState>) -> status::Custom<&'static str> {
+    if state.is_ready().await {
+        status::Custom(Status::Ok, "ok")
+    } else {
+        status::Custom(Status::ServiceUnavailable, "database unavailable")
+    }
+}

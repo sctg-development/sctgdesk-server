@@ -4,6 +4,7 @@ mod relay_server;
 use flexi_logger::*;
 use hbb_common::{config::RELAY_PORT, ResultType};
 use relay_server::*;
+mod health;
 mod version;
 
 fn main() -> ResultType<()> {
@@ -33,6 +34,15 @@ fn main() -> ResultType<()> {
         let v: i32 = v.parse().unwrap_or_default();
         if v > 0 {
             port = v + 1;
+        }
+    }
+    if let Ok(health_port) = std::env::var("HEALTH_PORT") {
+        if let Ok(health_port) = health_port.parse::<u16>() {
+            let relay_port = matches
+                .value_of("port")
+                .and_then(|p| p.parse::<u16>().ok())
+                .unwrap_or(port as u16);
+            std::thread::spawn(move || health::serve(health_port, relay_port));
         }
     }
     start(
