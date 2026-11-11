@@ -30,8 +30,8 @@ mac_address = "1.1"
 whoami = "1.5"
 base64 = "0.22"
 axum = { version = "0.5", features = ["headers"] }
-sqlx = { version = "0.8", features = [
-    "runtime-tokio-rustls",
+sqlx = { version = "0.9", features = [
+    "runtime-tokio",
     "sqlite",
     "macros",
     "chrono",
@@ -59,7 +59,7 @@ ping = "0.5"
 sctgdesk-api-server = { path = "crates/api-server" }
 flate2 = "1.0"
 
-rocket = { version = "0.5", features = ["json", "secrets"] }
+rocket = { version = "0.5", default-features = false, features = ["json", "secrets"] }
 num_cpus = "1.16"
 
 
