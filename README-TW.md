@@ -167,8 +167,10 @@ rustdesk-utils validatekeypair <public key> <secret key>
 |OAUTH2\_CONFIG_FILE |hbbs |OAuth2 / OpenID Connect 提供者檔案的路徑（`oauth2.toml`) |
 |OAUTH2\_CREATE_USER |HBBS |若設定為**"1"**首次登入時建立使用者 |
 |埠口 |HBBS/HBBR |聆聽埠（21116 對 HBBS - 21117 對 HBBR）|
+|HEALTH_PORT |HBBR |若設定，HBBR 回答`GET /livez`以及`GET /readyz`（HTTP） 在此埠;預設關閉 |
 |中繼 |HBBS |運行 hbbr 的機器 IP 位址/DNS 名稱（以逗號分隔） |
 |RUST_LOG |全部 |設定除錯層級（錯誤|警告|資訊|除錯|追蹤）|
+|ROCKET_SECRET_KEY |hbbs |用於簽署 API 伺服器 cookie 的鍵（base64,64 位元組）。預設值：在 首次開始時產生`secret_key.txt`資料庫旁邊 |
 |S3CONFIG_FILE |HBBS |軟體更新檔案的路徑（`s3config.toml`) |
 |SINGLE_BANDWIDTH |hbbr |單次連線的最大頻寬（以 Mb/s 計）|
 |TOTAL_BANDWIDTH |hbbr |最大總頻寬（以 Mb/s） |

@@ -167,8 +167,10 @@ Public :**Change-le dès la première connexion**.
 | OAUTH2\_CONFIG_FILE | hbbs | chemin du fichier des fournisseurs OAuth2 / OpenID Connect (`oauth2.toml`) |
 | OAUTH2\_CREATE_USER | hbbs | si réglé sur**"1"**créer un utilisateur dès la première connexion avec un fournisseur |
 | PORT | HBBS/HBBR | port d’écoute (21116 pour HBBS - 21117 pour HBBR) |
+| HEALTH_PORT | hbbr | si c’est, hbbr répond`GET /livez`et`GET /readyz`(HTTP) sur ce port ; désactivé par défaut |
 | RELAIS | HBBS | Adresse IP/nom DNS des machines exécutant hbbr (séparé par virgule) |
 | RUST_LOG | tous | définir le niveau de débogage (erreur|avertissement|info|déboguer|trace) |
+| ROCKET_SECRET_KEY | hbbs | clé qui signe les cookies du serveur API (base64, 64 octets). Par défaut : généré au premier démarrage dans`secret_key.txt`à côté de la base de données |
 | S3CONFIG_FILE | hbbs | chemin du fichier de mise à jour logicielle (`s3config.toml`) |
 | SINGLE_BANDWIDTH | hbbr | bande passante maximale pour une seule connexion (en Mb/s) |
 | TOTAL_BANDWIDTH | hbbr | bande passante totale maximale (en Mb/s) |

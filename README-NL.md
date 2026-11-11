@@ -167,8 +167,10 @@ Publiek:**Verander het bij de eerste login**.
 | OAUTH2\_CONFIG_FILE | hbbs | pad van het OAuth2 / OpenID Connect provider-bestand (`oauth2.toml`) |
 | OAUTH2\_CREATE_USER | hbbs | als ingesteld op**"1"**maak een gebruiker aan bij de eerste inlog met een provider |
 | POORT | HBBS/HBBR | Luisterpoort (21116 voor HBBS - 21117 voor HBBR) |
+| HEALTH_PORT | hbbr | als ingesteld, antwoordt hbbr`GET /livez`en`GET /readyz`(HTTP) op deze poort; standaard uit |
 | RELAY | hbbs | IP-adres/DNS-naam van de machines die hbbr draaien (gescheiden door komma) |
 | RUST_LOG | alle | set debug level (fout|waarschuw|info|debug|trace) |
+| ROCKET_SECRET_KEY | hbbs | sleutel die de cookies van de API-server ondertekent (base64, 64 bytes). Standaard: gegenereerd bij de eerste start in`secret_key.txt`naast de database |
 | S3CONFIG_FILE | hbbs | pad van het software-updatebestand (`s3config.toml`) |
 | SINGLE_BANDWIDTH | hbbr | maximale bandbreedte voor één enkele verbinding (in Mb/s) |
 | TOTAL_BANDWIDTH | HBBB | maximale totale bandbreedte (in Mb/s) |
