@@ -6,7 +6,7 @@ as close to the official one as possible).
 
 | Path | Content |
 |---|---|
-| `UPSTREAM_TAG` | the upstream release the overlay is built on (`1.5.0`) |
+| `UPSTREAM_TAG` | the upstream release the overlay is built on (`1.5.3`) |
 | `patches/` | source changes, as `git format-patch` files applied on the pristine tag |
 | `overlay/` | files copied over the tree: logos and icons (our visual signature) |
 | `branding.py` | name, servers, key, URLs: string replacements, strict (a rule that matches nothing fails the build) |
@@ -29,7 +29,11 @@ The client needs the upstream toolchain (Flutter, vcpkg, ...): see upstream's do
 ## What differs from upstream
 
 - **Update check.** Upstream skips it for custom clients and posts to `api.rustdesk.com`. Patch `0001` posts the
-  same request to our API server (`POST /api/software/version/latest`).
+  same request to our API server (`POST /api/software/version/latest`). Since 1.5.3 upstream only accepts the GitHub
+  release of upstream in the answer (`release_id_from_update_url`): the patch takes the version from the release page of
+  our API server instead. Patch `0002` makes the update card open the download of the platform, and patch `0003`
+  turns the in-app update off for our client (it only downloads the GitHub releases of upstream and would fail at
+  every check).
 - **TCP only.** The former `enable-tcp-mode` option is gone: use upstream's `disable-udp`. Not yet tested against
   our server (upstream's tip says the OSS server does not support it).
 - **Branding** at build time (`branding.py`), including the default servers and key.
@@ -61,8 +65,12 @@ key of upstream, and fails if one is left. The workflow is `.github/workflows/cl
 - The web client was branded on a clean `1.4.0` checkout, not built yet. The upstream README of its sources says
   "v1 is not compatible with current Flutter source code", a line that was already there in 1.2.7.
 - The client was **not compiled** while preparing this layout (it needs Flutter and vcpkg): only the patch
-  application and the branding rules were checked against a clean `1.5.0` checkout.
+  application and the branding rules were checked against a clean `1.5.3` checkout (`git am` of the patches, `branding.py --check`, and `branding.py` with
+  the submodule of `hbb_common`: every rule applies; the flatpak rule is optional and matches nothing).
 - Icons: only `res/` and the macOS icon are overlaid. Windows, Android and iOS icons are upstream's.
-- The macOS signing and dmg steps of `build-sctg.py`, the flatpak rule and the client workflow come from the former script and are unverified on `1.5.0`.
+- The macOS signing and dmg steps of `build-sctg.py`, the flatpak rule and the client workflow come from the former script and are unverified on `1.5.3`.
 - `deploy/helm/` (the Helm chart of the former client repository) deploys the server and was written for a TCP test:
   to be refactored.
+- Upstream 1.5.3 builds the macOS arm64 client with Flutter 3.44.9 (a crash of Flutter 3.24.5 in the text input,
+  rustdesk issue 16817) and patches its sources on the fly; `client-macos.yml` stays on Flutter 3.24.5 for both
+  architectures, so the Apple Silicon client may crash when text is entered. Not followed yet.

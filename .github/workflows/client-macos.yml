@@ -43,7 +43,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # the values of flutter-build.yml of upstream 1.5.0
+  # the values of flutter-build.yml of upstream 1.5.0, unchanged in 1.5.3 except for Flutter 3.44.9 on macOS arm64 and
+  # Windows arm64 (not followed, see client/README.md)
   FLUTTER_VERSION: "3.24.5"
   MAC_RUST_VERSION: "1.81" # cidre requires 1.81 on macOS
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
