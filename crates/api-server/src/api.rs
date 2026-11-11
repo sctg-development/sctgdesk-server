@@ -76,3 +76,45 @@ impl OpenApiResponderInner for ActionResponse {
         })
     }
 }
+
+/// A `401 Unauthorized` response that carries a JSON body `{"error":"<message>"}`.
+///
+/// The RustDesk clients always `jsonDecode` the body of the login reply: with an
+/// empty body they show "Unexpected end of input" instead of the reason.
+#[derive(Debug, JsonSchema)]
+pub struct UnauthorizedError(pub String);
+
+impl<'r> Responder<'r, 'static> for UnauthorizedError {
+    fn respond_to(self, _: &'r Request<'_>) -> rocket::response::Result<'static> {
+        let body = rocket::serde::json::json!({ "error": self.0 }).to_string();
+        Response::build()
+            .header(rocket::http::ContentType::JSON)
+            .sized_body(body.len(), std::io::Cursor::new(body))
+            .status(Status::Unauthorized)
+            .ok()
+    }
+}
+
+impl OpenApiResponderInner for UnauthorizedError {
+    fn responses(_generator: &mut OpenApiGenerator) -> Result<Responses, OpenApiError> {
+        use rocket_okapi::okapi::openapi3::{RefOr, Response as OpenApiReponse};
+
+        let mut responses = Map::new();
+        responses.insert(
+            "401".to_string(),
+            RefOr::Object(OpenApiReponse {
+                description: r#"\
+            # [401 Unauthorized](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401)  
+            This response is given when the credentials are wrong.  
+            The body contains a json object with the error {"error":"Error message"}   
+            "#
+                .to_string(),
+                ..Default::default()
+            }),
+        );
+        Ok(Responses {
+            responses,
+            ..Default::default()
+        })
+    }
+}

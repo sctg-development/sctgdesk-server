@@ -40,10 +40,9 @@ jobs:
           done
       - name: build
         run: cargo build --workspace --locked
-      # oauth2: its unit tests do not compile (tracked in an issue).
       # test_nat64: upstream hbb_common test that needs DNS64 and network access.
       - name: test
-        run: cargo test --workspace --exclude oauth2 --locked --no-fail-fast -- --skip test_nat64
+        run: cargo test --workspace --locked --no-fail-fast -- --skip test_nat64
 
   web:
     name: web console and API docs
@@ -65,11 +64,10 @@ jobs:
           npm run build
 
   audit:
-    name: cargo audit (informational)
+    name: cargo audit
     runs-on: ubuntu-latest
-    # 30+ advisories are known (see the audit); this job reports them without blocking merges
-    # until they are triaged. Remove continue-on-error once the backlog is cleared.
-    continue-on-error: true
+    # The advisories that cannot be fixed from this repository are listed, with the reason, in
+    # .cargo/audit.toml. Any other one fails the job.
     steps:
       - uses: actions/checkout@v4
       - uses: taiki-e/install-action@v2

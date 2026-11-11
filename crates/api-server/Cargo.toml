@@ -9,8 +9,8 @@ log = "0.4"
 include_dir = "0.7"
 tokio = { version = "1", features = ["full"] }
 bcrypt = "0.15"
-rocket = { version = "0.5", features = ["json", "secrets"] }
-sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio-rustls", "macros", "chrono", "json"] }
+rocket = { version = "0.5", default-features = false, features = ["json", "secrets"] }
+sqlx = { version = "0.9", features = ["sqlite", "runtime-tokio", "macros", "chrono", "json"] }
 reqwest = { version = "0.12", default-features = false, features = ["json","rustls-tls"] }
 rocket_okapi = { version = "0.8", features = [ "rapidoc", "swagger" ]}
 serde = { version = "1.0", features = ["derive"] }

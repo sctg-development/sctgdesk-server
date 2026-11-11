@@ -83,9 +83,9 @@ impl ApiState {
                 .await;
                 let key = "device_id = ? AND conn_id = ? AND session_id = ?";
                 if let Some(ip) = ev.ip.as_deref().filter(|ip| !ip.is_empty()) {
-                    let _ = sqlx::query(&format!(
+                    let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
                         "UPDATE conn_history SET ip = ? WHERE {key} AND (ip IS NULL OR ip = '')"
-                    ))
+                    )))
                     .bind(ip)
                     .bind(device_id)
                     .bind(conn_id)
@@ -94,9 +94,9 @@ impl ApiState {
                     .await;
                 }
                 if let Some([id, name, ..]) = ev.peer.as_deref() {
-                    let _ = sqlx::query(&format!(
+                    let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
                         "UPDATE conn_history SET controller_id = ?, controller_name = ?, conn_type = ? WHERE {key}"
-                    ))
+                    )))
                     .bind(id)
                     .bind(name)
                     .bind(ev.conn_type.unwrap_or(0))
@@ -107,9 +107,9 @@ impl ApiState {
                     .await;
                 }
                 if ev.action.as_deref() == Some("close") {
-                    let _ = sqlx::query(&format!(
+                    let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
                         "UPDATE conn_history SET ended_at = current_timestamp WHERE {key} AND ended_at IS NULL"
-                    ))
+                    )))
                     .bind(device_id)
                     .bind(conn_id)
                     .bind(session_id)
@@ -221,23 +221,24 @@ impl ApiState {
         let Ok(mut conn) = self.db.pool.acquire().await else {
             return (0, Vec::new());
         };
-        let total: i64 =
-            sqlx::query_scalar(&format!("SELECT COUNT(*) FROM conn_history a {filter}"))
-                .bind(only_user)
-                .bind(&q)
-                .bind(from)
-                .bind(to)
-                .fetch_one(&mut *conn)
-                .await
-                .unwrap_or(0);
-        let rows = sqlx::query(&format!(
+        let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+            "SELECT COUNT(*) FROM conn_history a {filter}"
+        )))
+        .bind(only_user)
+        .bind(&q)
+        .bind(from)
+        .bind(to)
+        .fetch_one(&mut *conn)
+        .await
+        .unwrap_or(0);
+        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
             r#"SELECT a.guid, a.device_id, a.controller_id, a.controller_name, a.conn_type, a.ip, a.note,
                       a.started_at, a.ended_at,
                       (SELECT name FROM "user" WHERE guid = a."user") AS user_name,
                       (SELECT json_extract(info, '$.hostname') FROM peer WHERE id = a.device_id LIMIT 1) AS device_name
                FROM conn_history a {filter}
                ORDER BY a.started_at DESC, a.guid DESC LIMIT ?5 OFFSET ?6"#
-        ))
+        )))
         .bind(only_user)
         .bind(&q)
         .bind(from)

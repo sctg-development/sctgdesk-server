@@ -46,6 +46,13 @@ pub struct ApiState {
     oauth2_providers: RwLock<Vec<ProviderConfig>>,
 }
 
+impl ApiState {
+    /// True when the database answers a trivial query (readiness probe).
+    pub async fn is_ready(&self) -> bool {
+        self.db.ping().await
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct AccessTokenInfo {
     pub session_id: SessionId,

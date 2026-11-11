@@ -58,7 +58,11 @@ jobs:
           rm -rf _client _mono
 
       - name: Install prerequisites
+        # The Ubuntu mirrors fail now and then and apt then waits for a long time: retry each download,
+        # give up on a stalled one, and do not let the step hang for the 6 hours of a job.
+        timeout-minutes: 20
         run: |
+          printf 'Acquire::Retries "5";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' | sudo tee /etc/apt/apt.conf.d/80-ci-retries
           sudo apt-get install ca-certificates -y
           sudo apt-get update -y
           sudo apt-get install -y \

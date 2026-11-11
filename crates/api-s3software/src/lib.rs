@@ -14,11 +14,13 @@
 // You should have received a copy of the Affero General Public License
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
 use aws_config::{BehaviorVersion, ConfigLoader};
+use aws_sdk_s3::config::SharedHttpClient;
 use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::{
     config::{Credentials, Region},
     Client,
 };
+use aws_smithy_http_client::{tls, Builder as HttpClientBuilder};
 use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -93,6 +95,7 @@ pub async fn get_signed_release_url(
 
     let shared_config = ConfigLoader::default()
         .behavior_version(BehaviorVersion::latest())
+        .http_client(https_client())
         .region(region_provider)
         .endpoint_url(endpoint)
         .load()
@@ -115,6 +118,15 @@ pub async fn parse_config(config: &str) -> Result<Config, Box<dyn Error>> {
 ///
 /// # Returns
 /// The s3config
+/// The HTTPS client of the SDK, on rustls with the ring provider (see Cargo.toml).
+fn https_client() -> SharedHttpClient {
+    HttpClientBuilder::new()
+        .tls_provider(tls::Provider::Rustls(
+            tls::rustls_provider::CryptoMode::Ring,
+        ))
+        .build_https()
+}
+
 pub async fn get_s3_config_file() -> Result<Config, Box<dyn Error>> {
     let config_filename =
         std::env::var("S3CONFIG_FILE").unwrap_or_else(|_| "s3config.toml".to_string());
@@ -149,6 +161,25 @@ pub async fn get_signed_release_url_with_config(
 mod tests {
     use super::*;
     use reqwest::StatusCode;
+
+    /// The HTTPS client must work with the one rustls provider of the build (ring): a second
+    /// provider makes rustls panic when it is first used. A closed local port is enough to get there.
+    #[tokio::test]
+    async fn the_https_client_reaches_the_tls_layer() {
+        let shared_config = ConfigLoader::default()
+            .behavior_version(BehaviorVersion::latest())
+            .http_client(https_client())
+            .region(Region::new("us-east-1"))
+            .endpoint_url("https://127.0.0.1:1")
+            .credentials_provider(aws_sdk_s3::config::Credentials::new(
+                "k", "s", None, None, "test",
+            ))
+            .load()
+            .await;
+        let client = Client::new(&shared_config);
+        let result = client.head_bucket().bucket("b").send().await;
+        assert!(result.is_err(), "nothing listens on this port");
+    }
 
     #[tokio::test]
     #[ignore = "calls the live S3 bucket described by s3config.toml; run explicitly with --ignored"]
@@ -290,6 +321,7 @@ async fn list_keys(config: &S3Config, prefix: &str) -> Result<Vec<String>, BoxEr
     );
     let shared_config = ConfigLoader::default()
         .behavior_version(BehaviorVersion::latest())
+        .http_client(https_client())
         .region(Region::new(config.region.clone()))
         .endpoint_url(&target.endpoint)
         .credentials_provider(credentials)

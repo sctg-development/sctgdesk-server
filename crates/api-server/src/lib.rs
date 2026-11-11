@@ -23,7 +23,7 @@ use std::io::Cursor;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use api::ActionResponse;
+use api::{ActionResponse, UnauthorizedError};
 use extended_json::ExtendedJson;
 use extended_request::ExtendedRequest;
 use oauth2::oauth_provider::OAuthProvider;
@@ -192,6 +192,8 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
             ],
         )
         .mount("/",routes![
+            livez,
+            readyz,
             favicon,
             webconsole_vue,
             openapi_snippet,
@@ -253,8 +255,8 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
 async fn login(
     state: &State<ApiState>,
     request: Json<LoginRequest>,
-) -> Result<Json<LoginReply>, status::Unauthorized<()>> {
-    let status_forbidden = || status::Unauthorized::<()>(());
+) -> Result<Json<LoginReply>, UnauthorizedError> {
+    let status_forbidden = || UnauthorizedError("Wrong username or password".to_string());
 
     let user_password_info = UserPasswordInfo::from_password(request.password.as_str());
     let (user, access_token) = state
@@ -2683,5 +2685,21 @@ async fn webconsole_vue(path: PathBuf) -> Option<StaticFileResponse> {
             StaticFileResponse(file.contents().to_vec(), content_type)
         });
         return file;
+    }
+}
+
+/// Liveness probe: the process answers. No authentication, no database.
+#[get("/livez")]
+fn livez() -> &'static str {
+    "ok"
+}
+
+/// Readiness probe: 200 when the database answers, 503 otherwise.
+#[get("/readyz")]
+async fn readyz(state: &State<ApiState>) -> status::Custom<&'static str> {
+    if state.is_ready().await {
+        status::Custom(Status::Ok, "ok")
+    } else {
+        status::Custom(Status::ServiceUnavailable, "database unavailable")
     }
 }

@@ -1,0 +1,18 @@
+# cargo audit configuration. Every entry is an advisory that cannot be fixed from this repository today:
+# say why, and remove the entry when the cause goes away.
+[advisories]
+ignore = [
+    # crypto-bigint 0.5.5: timing variability. Pulled by webrtc-dtls (p256/p384) from the hbb_common submodule,
+    # which is upstream RustDesk's and is kept as it is. The patched crypto-bigint (>= 0.7.6) is a different
+    # major version that the elliptic-curve 0.13 stack does not accept.
+    "RUSTSEC-2026-0387",
+    # libsqlite3-sys 0.37: the bundled SQLite can return uninitialised memory when a crafted database is opened
+    # next to a crafted -wal file (local attack; the database is created by hbbs itself). Fixed in 0.39, but
+    # sqlx-sqlite 0.9.0 requires libsqlite3-sys < 0.38. Revisit with the next sqlx 0.9.x.
+    "RUSTSEC-2026-0459",
+    # users 0.11.0: `root` appended to group listings, no fixed version. Used by hbb_common (submodule).
+    "RUSTSEC-2025-0040",
+    # webpki-roots 0.26.5: bundled roots trust a distrusted emSign intermediate. Pulled by tokio-tungstenite
+    # of hbb_common (submodule); the fix is the 1.x series that its pinned fork does not use.
+    "RUSTSEC-2026-0381",
+]

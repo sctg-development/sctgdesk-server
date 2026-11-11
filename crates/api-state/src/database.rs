@@ -162,10 +162,10 @@ impl Database {
     }
 
     pub async fn purge_old_sessions(&self) {
-        let res = sqlx::query(&format!(
+        let res = sqlx::query(sqlx::AssertSqlSafe(format!(
             "DELETE FROM api_session WHERE created_at < datetime('now', '-{} days')",
             Self::SESSION_LIFETIME_DAYS
-        ))
+        )))
         .execute(&self.pool)
         .await;
         if let Err(e) = res {
@@ -1182,6 +1182,15 @@ impl Database {
         Some(())
     }
 
+    /// Runs `SELECT 1`, bounded to 2 seconds.
+    pub async fn ping(&self) -> bool {
+        let query = sqlx::query("SELECT 1").execute(&self.pool);
+        matches!(
+            tokio::time::timeout(std::time::Duration::from_secs(2), query).await,
+            Ok(Ok(_))
+        )
+    }
+
     pub async fn get_all_users(
         &self,
         name: Option<&str>,
@@ -1310,7 +1319,7 @@ impl Database {
         query.push_str(" WHERE guid = ?");
 
         log::debug!("query: {:?}", query);
-        let mut res = sqlx::query(&query);
+        let mut res = sqlx::query(sqlx::AssertSqlSafe(query));
         for param in query_params {
             res = res.bind(param);
         }
@@ -1517,11 +1526,10 @@ impl Database {
         let mut ab_rules = Vec::new();
         for row in res {
             let uuid = guid_into_uuid(row.guid).unwrap_or("".to_string());
-            let user = row.username;
-            let group = row.groupname;
             let ab_rule = AbRule {
-                user: Some(user),
-                group: Some(group),
+                // LEFT JOINs: a rule of a user has no group, and the other way round
+                user: row.username,
+                group: row.groupname,
                 rule: row.rule as u32,
                 guid: uuid,
             };
@@ -2023,7 +2031,7 @@ impl Database {
                 marks.as_str()
             }
         );
-        let mut query = sqlx::query(&sql).bind(user_id);
+        let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(user_id);
         for group in groups {
             query = query.bind(group);
         }
@@ -2081,7 +2089,7 @@ impl Database {
         )
     }
 
-    async fn read_group_links(&self, sql: &str, guid: &[u8]) -> Vec<String> {
+    async fn read_group_links(&self, sql: &'static str, guid: &[u8]) -> Vec<String> {
         use sqlx::Row;
         let mut conn = self.pool.acquire().await.unwrap();
         match sqlx::query(sql).bind(guid).fetch_all(&mut *conn).await {
