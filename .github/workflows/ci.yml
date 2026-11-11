@@ -65,11 +65,10 @@ jobs:
           npm run build
 
   audit:
-    name: cargo audit (informational)
+    name: cargo audit
     runs-on: ubuntu-latest
-    # 30+ advisories are known (see the audit); this job reports them without blocking merges
-    # until they are triaged. Remove continue-on-error once the backlog is cleared.
-    continue-on-error: true
+    # The advisories that cannot be fixed from this repository are listed, with the reason, in
+    # .cargo/audit.toml. Any other one fails the job.
     steps:
       - uses: actions/checkout@v4
       - uses: taiki-e/install-action@v2
