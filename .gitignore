@@ -16,3 +16,4 @@ data
 /crates/api-s3software/s3config.toml
 /crates/api-oauth2/oauth2.toml
 /client/work/
+secret_key.txt

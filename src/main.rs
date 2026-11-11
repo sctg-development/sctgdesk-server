@@ -15,6 +15,40 @@ use sctgdesk_api_server::build_rocket;
 const RMEM: usize = 0;
 const API_PORT: i32 = 21114;
 
+/// The Rocket `secret_key` (signs the private cookies): `ROCKET_SECRET_KEY` when set,
+/// else `secret_key.txt` next to the database, created with a random key on first start.
+/// It used to be one constant in the source, the same on every deployment.
+fn get_or_create_secret_key() -> String {
+    use base64::prelude::{Engine as _, BASE64_STANDARD};
+    use hbb_common::rand::RngCore;
+    if let Ok(key) = std::env::var("ROCKET_SECRET_KEY") {
+        if !key.is_empty() {
+            return key;
+        }
+    }
+    let path = "secret_key.txt";
+    if let Ok(key) = std::fs::read_to_string(path) {
+        let key = key.trim().to_string();
+        if !key.is_empty() {
+            return key;
+        }
+    }
+    let mut bytes = [0u8; 64];
+    hbb_common::rand::thread_rng().fill_bytes(&mut bytes);
+    let key = BASE64_STANDARD.encode(bytes);
+    match std::fs::write(path, &key) {
+        Ok(()) => {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600));
+            }
+        }
+        Err(e) => hbb_common::log::error!("cannot persist {path}: {e}; the key changes at every start"),
+    }
+    key
+}
+
 fn get_rocket_log_level() -> LogLevel {
     let log_level_env = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
     match log_level_env.as_str() {
@@ -40,7 +74,7 @@ async fn start_rocket() -> ResultType<()> {
         .merge(("address", "0.0.0.0"))
         .merge(("port", port))
         .merge(("log_level", get_rocket_log_level()))
-        .merge(("secret_key", "wJq+s/xvwZjmMX3ev0p4gQTs9Ej5wt0brsk3ZGhoBTg="))
+        .merge(("secret_key", get_or_create_secret_key()))
         .merge(("ident",  format!("SCTGDeskServer/{}", env!("CARGO_PKG_VERSION"))))
         .merge(("limits", Limits::new().limit("json", 2.mebibytes())));
     let _rocket = build_rocket(figment).await.ignite().await?.launch().await;
