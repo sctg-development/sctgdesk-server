@@ -1,3 +1,11 @@
+rustdesk-server (1.1.16-sctg.5) UNRELEASED; urgency=medium
+
+  * fix: a failed login answers a JSON error body, which the clients can read
+  * the Rocket secret key is generated at the first start (secret_key.txt or ROCKET_SECRET_KEY) instead of being one constant of the source
+  * /livez and /readyz probes on hbbs, and on hbbr with HEALTH_PORT; optional probes in the Helm chart
+  * dependencies updated: 30 security advisories down to 4, listed with their reason; cargo audit is blocking in the CI
+  * the client is built on upstream RustDesk 1.5.3, and its Apple Silicon build on Flutter 3.44.9
+
 rustdesk-server (1.1.16-sctg.4) UNRELEASED; urgency=medium
 
   * fix: users only reach the address books their rights allow, and only see the users, groups and devices of their group and of the groups it may connect to
