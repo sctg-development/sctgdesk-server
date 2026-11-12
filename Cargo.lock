@@ -2293,7 +2293,7 @@ dependencies = [
 
 [[package]]
 name = "hbbs"
-version = "1.1.16-sctg.4"
+version = "1.1.16-sctg.5"
 dependencies = [
  "async-speed-limit",
  "async-trait",
@@ -4575,7 +4575,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "sctgdesk-api-server"
-version = "1.1.16-sctg.4"
+version = "1.1.16-sctg.5"
 dependencies = [
  "base64 0.22.1",
  "bcrypt",
