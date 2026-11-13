@@ -69,6 +69,15 @@ impl ApiState {
                     .execute(&mut *conn)
                     .await;
         }
+        log::info!(
+            "audit conn: device {device_id:?}, conn_id {:?}, session_id {:?}, action {:?}, type {:?}, ip {:?}, peer {:?}",
+            ev.conn_id,
+            ev.session_id,
+            ev.action,
+            ev.conn_type,
+            ev.ip,
+            ev.peer
+        );
         let session_id = ev.session_id.map(|s| s.to_string());
         match (ev.conn_id, session_id.as_deref()) {
             (Some(conn_id), Some(session_id)) => {

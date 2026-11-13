@@ -61,7 +61,7 @@ impl Server {
             .current_dir(&dir)
             .env_remove("API_SERVER")
             .env_remove("DB_URL")
-            .stdout(Stdio::null())
+            .stdout(std::fs::File::create(dir.join("hbbs.log")).unwrap())
             .stderr(Stdio::null());
         for (k, v) in envs {
             cmd.env(k, v);
@@ -92,6 +92,23 @@ impl Server {
                 "hbbs did not start in time"
             );
             std::thread::sleep(Duration::from_millis(200));
+        }
+    }
+
+    /// The lines hbbs logged with the message `what`, waiting up to 5 s for `n` of them (the logger is asynchronous).
+    fn log_lines(&self, what: &str, n: usize) -> Vec<String> {
+        let start = Instant::now();
+        loop {
+            let lines: Vec<String> = std::fs::read_to_string(self.dir.join("hbbs.log"))
+                .unwrap_or_default()
+                .lines()
+                .filter(|l| l.contains(what))
+                .map(str::to_owned)
+                .collect();
+            if lines.len() >= n || start.elapsed() > Duration::from_secs(5) {
+                return lines;
+            }
+            std::thread::sleep(Duration::from_millis(100));
         }
     }
 
@@ -414,6 +431,19 @@ async fn a_connection_is_recorded_with_its_note() {
         200
     );
     assert_eq!(post("{}").0, 200);
+    // what is recorded is logged at info, once: not the retry, not the unknown device
+    let logged = server.log_lines("audit conn: device", 2);
+    assert_eq!(logged.len(), 2, "{logged:?}");
+    assert!(
+        logged[0].contains(r#"device "DEV1""#)
+            && logged[0].contains(r#"action Some("new")"#)
+            && logged[0].contains(r#"ip Some("10.0.0.5")"#),
+        "{logged:?}"
+    );
+    assert!(
+        logged[1].contains(r#"peer Some(["CTRL", "Alice PC"])"#),
+        "{logged:?}"
+    );
     let all = history(&admin, "");
     assert_eq!(all["total"], 1, "{all}");
     let record = &all["data"][0];
