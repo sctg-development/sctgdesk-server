@@ -15,10 +15,10 @@ env:
 jobs:
   rust:
     name: fmt, clippy, build, test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       # libs/hbb_common is a submodule
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
@@ -43,15 +43,24 @@ jobs:
       # test_nat64: upstream hbb_common test that needs DNS64 and network access.
       - name: test
         run: cargo test --workspace --locked --no-fail-fast -- --skip test_nat64
+      # If tests pass, upload the build artifacts for manual testing
+      - uses: actions/upload-artifact@v7
+        with:
+          name: test-build-artifacts
+          path: |
+            target/debug/hbbs
+            target/debug/hbbr
+            target/debug/rustdesk-utils
+            target/debug/sctgdesk-api-server
 
   web:
     name: web console and API docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
       - name: web/console
         working-directory: web/console
         run: |
@@ -69,7 +78,7 @@ jobs:
     # The advisories that cannot be fixed from this repository are listed, with the reason, in
     # .cargo/audit.toml. Any other one fails the job.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-audit
