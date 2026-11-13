@@ -25,27 +25,43 @@ sudo apt install ./sctgdesk-server-hbbs_*.deb ./sctgdesk-server-hbbr_*.deb ./sct
 
 The packages contain static musl binaries (`/usr/bin/hbbs`, `hbbr`, `rustdesk-utils`) and the systemd units
 `rustdesk-hbbs.service` and `rustdesk-hbbr.service`. They replace the former `rustdesk-server-*` packages, and use the
-same directories: `/var/lib/rustdesk-server` (data) and `/var/log/rustdesk-server` (logs). A first install **starts
-nothing**; an upgrade restarts the services that run; a removal stops and disables them (data is kept).
+same directories: `/var/lib/rustdesk-server` (data, mode 700) and `/var/log/rustdesk-server` (logs).
 
-Configure before the first start. Edit a copy of the unit (it survives upgrades):
+- **A first install on an empty data directory works at once**: the services are enabled and started with the
+  defaults, and `hbbs` creates a random key pair (`id_ed25519`, see [the key pair](#the-key-pair)). `hbbr` is started
+  with `-k _`, which makes it use the same key.
+- **An install that finds data starts nothing** (a migration from `rustdesk-server-*`, or a reinstall): the options of
+  the old unit are not carried over, and a default `hbbs` takes the API port 21114, which a reverse proxy may hold.
+  Set the options, then `systemctl enable --now rustdesk-hbbs rustdesk-hbbr`.
+- An upgrade restarts the services that run; a removal stops and disables them and keeps the data.
+- **Before every install, upgrade or migration the packages copy the data directory** to
+  `/var/backups/sctgdesk-server/<date>/` (mode 700, the 3 latest are kept; the database with SQLite's backup).
+
+#### Migrating from the former `rustdesk-server-*` packages
+
+Installing `sctgdesk-server-*` removes the former packages. **Do not purge them** (`dpkg -P`, `apt purge`): their
+`postrm` deletes the whole `/var/lib/rustdesk-server`, the database and the key pair included. If you do, restore from
+`/var/backups/sctgdesk-server/`. A removal without purge leaves the data and the old units' drop-ins in place, and
+`apt` keeps a `rc` entry for them, which is harmless.
+
+### Options
+
+The units read `/etc/default/sctgdesk-hbbs` and `/etc/default/sctgdesk-hbbr` (mode 600, kept by the package when you
+edit them). `HBBS_ARGS` and `HBBR_ARGS` replace the arguments of the program; the other lines are environment
+variables:
 
 ```sh
-sudo systemctl edit --full rustdesk-hbbs
+# /etc/default/sctgdesk-hbbs
+HBBS_ARGS=-r relay.example.com -k <your-key> --logged-in-only --api-port=21113
+OAUTH2_CREATE_USER=1
 ```
 
-For example:
-
-```ini
-ExecStart=/usr/bin/hbbs -r relay.example.com -k <your-key> --logged-in-only
-Environment="OAUTH2_CREATE_USER=1"
-Environment="OAUTH2_CONFIG_FILE=oauth2.toml"
-Environment="S3CONFIG_FILE=s3config.toml"
-```
-
-then `sudo systemctl enable --now rustdesk-hbbs rustdesk-hbbr`. The units run as root, like the former packages; to run
-as a dedicated user, create it, give it the two directories and set `User=` and `Group=` in the units. The
-configuration files named in `Environment=` are relative to `WorkingDirectory=/var/lib/rustdesk-server/`.
+then `sudo systemctl restart rustdesk-hbbs`. The key is in this file, not in the unit, so keep it at mode 600: the
+units and their drop-ins in `/etc/systemd/system` are readable by every user of the machine. For more than options
+(a dedicated user, other limits) use `sudo systemctl edit rustdesk-hbbs`, which survives upgrades. The units run as
+root, like the former packages; to run as a dedicated user, create it, give it the two directories and set `User=`
+and `Group=`. The configuration files named in `Environment=` (`oauth2.toml`, `s3config.toml`) are relative to
+`WorkingDirectory=/var/lib/rustdesk-server/`.
 
 ### Archives (Windows, macOS, Linux)
 
@@ -207,7 +223,7 @@ internet.
 
 ## Backup, upgrade, rollback
 
-Back up `id_ed25519`, `id_ed25519.pub`, `secret_key.txt`, `oauth2.toml`, `s3config.toml` and the database. Use SQLite's own backup, which
+Back up `id_ed25519`, `id_ed25519.pub`, `secret_key.txt`, `oauth2.toml`, `s3config.toml` and the database (the packages also copy them to `/var/backups/sctgdesk-server/` at each install, but that is on the same disk). Use SQLite's own backup, which
 is safe while `hbbs` runs:
 
 ```sh

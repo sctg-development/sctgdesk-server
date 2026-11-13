@@ -66,8 +66,10 @@ that the binaries are static and installs the packages in a Debian and a Fedora 
 - The tag input (`sctg-v<version>`) must match the version of `Cargo.toml`, or the workflow stops.
 - Without `publish` nothing is published. With it, the packages and their SHA-256 sums go to the release of the
   tag, created as a **pre-release** when it does not exist.
-- The packages replace the former `rustdesk-server-*` ones. A first install starts nothing: configure the options of
-  the unit, then `systemctl enable --now rustdesk-hbbs rustdesk-hbbr`. An upgrade restarts the services that run.
+- The packages replace the former `rustdesk-server-*` ones. A first install on an empty data directory starts
+  the services with a random key pair; one that finds data (a migration) starts nothing. Options are in
+  `/etc/default/sctgdesk-hbbs` and `-hbbr`. Data is copied to `/var/backups/sctgdesk-server/` before each install. An
+  upgrade restarts the services that run.
 - The units run as root, like the former packages; the data is in `/var/lib/rustdesk-server`, the logs in
   `/var/log/rustdesk-server`.
 

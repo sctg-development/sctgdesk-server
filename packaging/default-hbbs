@@ -1,0 +1,7 @@
+# Options of rustdesk-hbbs.service, read before the unit starts it. Kept by the package when you edit it.
+# Keep this file readable by root only (mode 600): it can hold the key. Then: systemctl restart rustdesk-hbbs
+# HBBS_ARGS replaces the default arguments of the unit; the other lines are environment variables of the program.
+# HBBS_ARGS=-r relay.example.com -k <your-key> --logged-in-only --api-port=21113
+# OAUTH2_CREATE_USER=1
+# RUST_LOG=info
+# LOG_FORMAT=json
