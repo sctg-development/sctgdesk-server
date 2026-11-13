@@ -177,6 +177,7 @@ file.
 | PORT | hbbs/hbbr | listening port (21116 for hbbs - 21117 for hbbr) |
 | HEALTH_PORT | hbbr | if set, hbbr answers `GET /livez` and `GET /readyz` (HTTP) on this port; off by default |
 | RELAY | hbbs | IP address/DNS name of the machines running hbbr (separated by comma) |
+| LOG_FORMAT | hbbs, hbbr | **"json"**: one JSON object per log line (`time`, `level`, `target`, `file`, `line`, `msg`); default: text |
 | RUST_LOG | all | set debug level (error\|warn\|info\|debug\|trace) |
 | ROCKET_SECRET_KEY | hbbs | key that signs the cookies of the API server (base64, 64 bytes). Default: generated at the first start in `secret_key.txt` next to the database |
 | S3CONFIG_FILE | hbbs | path of the software-update file (`s3config.toml`) |

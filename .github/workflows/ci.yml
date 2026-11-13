@@ -40,6 +40,8 @@ jobs:
           done
       - name: build
         run: cargo build --workspace --locked
+      - name: build release
+        run: cargo build --workspace --locked --release
       # test_nat64: upstream hbb_common test that needs DNS64 and network access.
       - name: test
         run: cargo test --workspace --locked --no-fail-fast -- --skip test_nat64
@@ -52,6 +54,10 @@ jobs:
             target/debug/hbbr
             target/debug/rustdesk-utils
             target/debug/sctgdesk-api-server
+            target/release/hbbs
+            target/release/hbbr
+            target/release/rustdesk-utils
+            target/release/sctgdesk-api-server
 
   web:
     name: web console and API docs
