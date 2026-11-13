@@ -169,6 +169,7 @@ Publiek:**Verander het bij de eerste login**.
 | POORT | HBBS/HBBR | Luisterpoort (21116 voor HBBS - 21117 voor HBBR) |
 | HEALTH_PORT | hbbr | als ingesteld, antwoordt hbbr`GET /livez`en`GET /readyz`(HTTP) op deze poort; standaard uit |
 | RELAY | hbbs | IP-adres/DNS-naam van de machines die hbbr draaien (gescheiden door komma) |
+| LOG_FORMAT | HBBS, HBBR |**"JSON"**: één JSON-object per loglijn (`time`,`level`,`target`,`file`,`line`,`msg`); standaard: tekst |
 | RUST_LOG | alle | set debug level (fout|waarschuw|info|debug|trace) |
 | ROCKET_SECRET_KEY | hbbs | sleutel die de cookies van de API-server ondertekent (base64, 64 bytes). Standaard: gegenereerd bij de eerste start in`secret_key.txt`naast de database |
 | S3CONFIG_FILE | hbbs | pad van het software-updatebestand (`s3config.toml`) |

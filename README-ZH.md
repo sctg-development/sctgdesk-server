@@ -13,15 +13,19 @@
 ![Docker Pulls](https://img.shields.io/docker/pulls/sctg/sctgdesk-server)
 [![CI](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml/badge.svg)](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml)
 
-开发者手册[·](https://github.com/rustdesk/rustdesk)CONTRIBUTING.md**·**CODE_OF_CONDUCT.md
+SCTGDesk is a self-hosted remote-desktop server, with its own clients, derived from
+[RustDesk](https://github.com/rustdesk/rustdesk). It is free software under the **AGPL-3.0**.
 
-> **·**SECURITY.md
+> **SCTGDesk is an independent project. It is not affiliated with, endorsed by or sponsored by the RustDesk project
+> or Purslane Ltd.** "RustDesk" is the name of that project; it is used here only to say what this software is
+> derived from and compatible with.
 
-.关于一般的自主机问题，请使用`sctgdesk-api-server`RustDesk 文档`sctgdesk`同样适用。
+This repository is the whole project: the server, the API server, the web console and the client overlay. It replaces
+the former repositories `sctgdesk-api-server` and `sctgdesk`, which are archived.
 
-## 如果你喜欢这部作品，请考虑给它一颗星，或者
+## What you get
 
-*   赞助`hbbs`.`hbbr` (relay), plus `rustdesk-utils` (key pairs,
+*   The RustDesk server: `hbbs` (ID and rendezvous server) and `hbbr` (relay), plus `rustdesk-utils` (key pairs,
     connectivity check). Compatible with the official RustDesk clients.
 *   The server side of the **encrypted TCP and WebSocket connection** (key exchange versions 0 and 1), which the
     open-source upstream server does not implement. This is what makes the **web client** work.
@@ -173,6 +177,7 @@ file.
 | PORT | hbbs/hbbr | listening port (21116 for hbbs - 21117 for hbbr) |
 | HEALTH_PORT | hbbr | if set, hbbr answers `GET /livez` and `GET /readyz` (HTTP) on this port; off by default |
 | RELAY | hbbs | IP address/DNS name of the machines running hbbr (separated by comma) |
+| LOG_FORMAT | hbbs, hbbr | **"json"**: one JSON object per log line (`time`, `level`, `target`, `file`, `line`, `msg`); default: text |
 | RUST_LOG | all | set debug level (error|warn|info|debug|trace) |
 | ROCKET_SECRET_KEY | hbbs | key that signs the cookies of the API server (base64, 64 bytes). Default: generated at the first start in `secret_key.txt` next to the database |
 | S3CONFIG_FILE | hbbs | path of the software-update file (`s3config.toml`) |

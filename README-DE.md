@@ -169,6 +169,7 @@ Der Server antwortet auf allen seinen Ports mit`rustdesk-utils doctor <server>`.
 | PORT | hbbs/hbbr | Hörport (21116 für HBBS - 21117 für HBBR) |
 | HEALTH_PORT | hbbr | wenn gesetzt, antwortet hbbr`GET /livez`und`GET /readyz`(HTTP) an diesem Port; standardmäßig ausgeschaltet |
 | RELAY | hbbs | IP-Adresse/DNS-Name der Maschinen, die HBBR ausführen (durch Komma getrennt) |
+| LOG_FORMAT | hbbs, hbbr |**"json"**: ein JSON-Objekt pro Log-Line (`time`,`level`,`target`,`file`,`line`,`msg`); Standard: Text |
 | RUST_LOG | alle | Set Debug Level (fehler|warn|info|debug|trace) |
 | ROCKET_SECRET_KEY | hbbs | Schlüssel, der die Cookies des API-Servers signiert (base64, 64 Bytes). Standard: beim ersten Start in`secret_key.txt`neben der Datenbank |
 | S3CONFIG_FILE | hbbs | Pfad der Software-Update-Datei (`s3config.toml`) |
