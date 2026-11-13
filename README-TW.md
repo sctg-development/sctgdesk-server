@@ -53,8 +53,9 @@ sudo apt install ./sctgdesk-server-hbbs_*_amd64.deb ./sctgdesk-server-hbbr_*_amd
 # or: sudo dnf install ./sctgdesk-server-*.rpm
 ```
 
-第一次安裝不會啟動任何東西：編輯單位 （`systemctl edit --full rustdesk-hbbs`，請見[部署指南](docs/deployment.md)），則`sudo systemctl enable --now rustdesk-hbbs rustdesk-hbbr`.一個
-升級會重新啟動正在執行的服務。資料已經進入`/var/lib/rustdesk-server`，日誌`/var/log/rustdesk-server`;這些單元以 root 方式執行。
+首次安裝於空資料目錄時，會以隨機的金鑰對啟動兩個服務;選項會被放入`/etc/default/sctgdesk-hbbs`以及`-hbbr`（參見[部署指南](docs/deployment.md)，這也解釋了
+從前者遷移`rustdesk-server-*`套裝：**不要清除它們**).升級後服務會重新啟動
+正在運行。資料已輸入`/var/lib/rustdesk-server`，日誌`/var/log/rustdesk-server`;這些單元以 root 方式執行。
 
 ### 二進位（Linux、Windows、macOS）
 

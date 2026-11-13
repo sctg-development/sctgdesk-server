@@ -53,8 +53,9 @@ sudo apt install ./sctgdesk-server-hbbs_*_amd64.deb ./sctgdesk-server-hbbr_*_amd
 # or: sudo dnf install ./sctgdesk-server-*.rpm
 ```
 
-Eine erste Installation startet nichts: Bearbeite die Geräte (`systemctl edit --full rustdesk-hbbs`, siehe[Der Einsatzleitfaden](docs/deployment.md)), dann`sudo systemctl enable --now rustdesk-hbbs rustdesk-hbbr`. Ein
-Das Upgrade startet die laufenden Dienste neu. Die Daten sind drin`/var/lib/rustdesk-server`, loggt sich ein`/var/log/rustdesk-server`; Die Einheiten laufen als Root.
+Eine erste Installation in einem leeren Datenverzeichnis startet beide Dienste mit einem zufälligen Schlüsselpaar; Optionen gehen in`/etc/default/sctgdesk-hbbs`und`-hbbr`(siehe[Der Einsatzleitfaden](docs/deployment.md), was auch das erklärt
+Migration aus der ersteren`rustdesk-server-*`Pakete:**Reinigen Sie sie nicht**). Ein Upgrade startet den Betrieb wieder
+die liefen. Die Daten sind drin`/var/lib/rustdesk-server`, loggt sich ein`/var/log/rustdesk-server`; Die Einheiten laufen als Root.
 
 ### Binärdateien (Linux, Windows, macOS)
 
