@@ -1182,6 +1182,16 @@ impl Database {
         Some(())
     }
 
+    /// Writes a consistent copy of the database to `path`, which must not exist (`VACUUM INTO`): safe while
+    /// the server runs, and the copy has no `-wal` file.
+    pub async fn backup_to(&self, path: &Path) -> Result<(), sqlx::Error> {
+        sqlx::query("VACUUM INTO ?")
+            .bind(path.to_string_lossy().into_owned())
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
+    }
+
     /// Runs `SELECT 1`, bounded to 2 seconds.
     pub async fn ping(&self) -> bool {
         let query = sqlx::query("SELECT 1").execute(&self.pool);

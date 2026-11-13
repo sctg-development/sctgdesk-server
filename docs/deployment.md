@@ -231,6 +231,30 @@ sqlite3 /var/lib/rustdesk-server/db_v2.sqlite3 ".backup '/root/backup/db_v2.sqli
 cp -p /usr/bin/hbbs /usr/bin/hbbr /root/backup/
 ```
 
+### Download a backup
+
+With `--allow-remote-backup` (or `ALLOW_REMOTE_BACKUP=Y`, in `/etc/default/sctgdesk-hbbs` for the packages) `hbbs`
+lets an **administrator** download a backup, from the console (page **Backup**) or with the API:
+
+```sh
+TOKEN=$(curl -s https://api.example.com/api/login -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"...","id":"","uuid":""}' | jq -r .access_token)
+curl -fo backup.tar.gz -H "Authorization: Bearer $TOKEN" https://api.example.com/api/backup
+```
+
+The archive holds a consistent copy of the database (taken while `hbbs` runs, no `-wal` file to add), `oauth2.toml`,
+`s3config.toml`, `id_ed25519`, `id_ed25519.pub`, `secret_key.txt` (the files that exist) and a `MANIFEST.txt`. To
+restore, stop `hbbs` and `hbbr`, unpack the files in the data directory (mode 600, and no old `db_v2.sqlite3-wal`
+or `-shm` next to the database) and start them.
+
+- It is **off by default**: without the flag the endpoint answers 404, even to an administrator. A plain user, or
+  no token, gets 401.
+- **The archive holds the private key and the secrets of the server**: an administrator who downloads it can
+  impersonate the server. Only enable it if you trust every administrator, serve the API over TLS (a reverse proxy),
+  and keep the archives encrypted. Each download is logged at warning level with the name of the administrator.
+- The files are those of the working directory of `hbbs` (`OAUTH2_CONFIG_FILE` and `S3CONFIG_FILE` are followed).
+  With `ROCKET_SECRET_KEY` set there is no `secret_key.txt`. It does not include `hbbr`'s own files.
+
 Upgrade with the packages, or replace the binaries and restart:
 
 ```sh

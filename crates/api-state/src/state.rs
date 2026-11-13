@@ -51,6 +51,11 @@ impl ApiState {
     pub async fn is_ready(&self) -> bool {
         self.db.ping().await
     }
+
+    /// Writes a consistent copy of the database to `path` (which must not exist).
+    pub async fn backup_database_to(&self, path: &std::path::Path) -> Result<(), sqlx::Error> {
+        self.db.backup_to(path).await
+    }
 }
 
 #[derive(Debug, Clone)]

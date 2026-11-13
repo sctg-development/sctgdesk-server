@@ -1864,6 +1864,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "filetime"
+version = "0.2.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c287a33c7f0a620c38e641e7f60827713987b3c0f26e8ddc9462cc69cf75759"
+dependencies = [
+ "cfg-if",
+ "libc",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2327,6 +2337,7 @@ dependencies = [
  "serde_json",
  "sodiumoxide",
  "sqlx",
+ "tar",
  "tokio-tungstenite 0.24.0",
  "tungstenite 0.24.0",
  "uuid",
@@ -4580,6 +4591,7 @@ dependencies = [
  "base64 0.22.1",
  "bcrypt",
  "clap 4.6.7",
+ "flate2",
  "include_dir",
  "log",
  "oauth2",
@@ -4591,6 +4603,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "state 0.1.0",
+ "tar",
  "tokio",
  "url",
  "urlencoding",
@@ -5306,6 +5319,17 @@ dependencies = [
  "once_cell",
  "rayon",
  "windows 0.51.1",
+]
+
+[[package]]
+name = "tar"
+version = "0.4.46"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f6221d9a6003c78398e3b239969f352578258df48c8eb051caadae0015bc840"
+dependencies = [
+ "filetime",
+ "libc",
+ "xattr",
 ]
 
 [[package]]
@@ -6803,6 +6827,17 @@ dependencies = [
  "rusticata-macros",
  "thiserror 1.0.59",
  "time",
+]
+
+[[package]]
+name = "xattr"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e105d177a3871454f754b33bb0ee637ecaaac997446375fd3e5d43a2ed00c909"
+dependencies = [
+ "libc",
+ "linux-raw-sys",
+ "rustix",
 ]
 
 [[package]]

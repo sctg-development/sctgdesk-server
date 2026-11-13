@@ -14,6 +14,7 @@
 // You should have received a copy of the Affero General Public License
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
 mod api;
+mod backup;
 mod extended_json;
 mod extended_request;
 
@@ -192,6 +193,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
             ],
         )
         .mount("/",routes![
+            backup_download,
             livez,
             readyz,
             favicon,
@@ -2685,6 +2687,54 @@ async fn webconsole_vue(path: PathBuf) -> Option<StaticFileResponse> {
             StaticFileResponse(file.contents().to_vec(), content_type)
         });
         return file;
+    }
+}
+
+/// The answer of `GET /api/backup`: the archive, never cached.
+#[derive(Responder)]
+#[response(content_type = "application/gzip")]
+struct BackupDownload {
+    body: Vec<u8>,
+    disposition: Header<'static>,
+    cache: Header<'static>,
+}
+
+/// # Download a backup
+///
+/// Only for an administrator, and only when `hbbs` runs with `--allow-remote-backup` (or `ALLOW_REMOTE_BACKUP=Y`);
+/// otherwise the answer is 404. Returns a `.tar.gz` with a consistent copy of the database, `oauth2.toml`,
+/// `s3config.toml`, the key pair and `secret_key.txt`. The archive holds the private key of the server. Each
+/// download is logged with the name of the administrator.
+#[get("/api/backup")]
+async fn backup_download(
+    state: &State<ApiState>,
+    admin: AuthenticatedAdmin,
+) -> Result<BackupDownload, Status> {
+    if !backup::is_enabled() {
+        log::info!("backup refused for {}: --allow-remote-backup is not set", admin.username);
+        return Err(Status::NotFound);
+    }
+    match backup::build(state, env!("CARGO_PKG_VERSION")).await {
+        Ok(b) => {
+            log::warn!(
+                "backup {} ({} bytes) downloaded by administrator {}",
+                b.filename,
+                b.bytes.len(),
+                admin.username
+            );
+            Ok(BackupDownload {
+                disposition: Header::new(
+                    "Content-Disposition",
+                    format!("attachment; filename=\"{}\"", b.filename),
+                ),
+                cache: Header::new("Cache-Control", "no-store"),
+                body: b.bytes,
+            })
+        }
+        Err(e) => {
+            log::error!("backup failed for {}: {}", admin.username, e);
+            Err(Status::InternalServerError)
+        }
     }
 }
 
