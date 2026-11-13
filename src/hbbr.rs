@@ -5,12 +5,13 @@ use flexi_logger::*;
 use hbb_common::{config::RELAY_PORT, ResultType};
 use relay_server::*;
 mod health;
+mod json_log;
 mod version;
 
 fn main() -> ResultType<()> {
     let _logger = Logger::try_with_env_or_str("info")?
         .log_to_stdout()
-        .format(opt_format)
+        .format(json_log::format_or(opt_format))
         .write_mode(WriteMode::Async)
         .start()?;
     let args = format!(

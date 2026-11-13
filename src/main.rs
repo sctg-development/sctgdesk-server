@@ -10,6 +10,7 @@ use rocket::{
 };
 
 use std::thread;
+mod json_log;
 use sctgdesk_api_server::build_rocket;
 
 const RMEM: usize = 0;
@@ -104,7 +105,7 @@ fn log_format(
 fn main() -> ResultType<()> {
     let _logger = Logger::try_with_env_or_str("info")?
         .log_to_stdout()
-        .format(log_format)
+        .format(json_log::format_or(log_format))
         .write_mode(WriteMode::Async)
         .start()?;
     let args = format!(
