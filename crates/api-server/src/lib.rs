@@ -131,6 +131,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 audit_conn_active,
                 audit_note,
                 audit_conn_list,
+                backup_download,
 
                 login_options,
                 ab_get,
@@ -193,7 +194,6 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
             ],
         )
         .mount("/",routes![
-            backup_download,
             livez,
             readyz,
             favicon,
@@ -2699,19 +2699,64 @@ struct BackupDownload {
     cache: Header<'static>,
 }
 
+impl rocket_okapi::response::OpenApiResponderInner for BackupDownload {
+    fn responses(
+        _generator: &mut rocket_okapi::gen::OpenApiGenerator,
+    ) -> rocket_okapi::Result<rocket_okapi::okapi::openapi3::Responses> {
+        use rocket_okapi::okapi::{
+            map,
+            openapi3::{MediaType, RefOr, Response, Responses, SchemaObject},
+            schemars::schema::{InstanceType, SingleOrVec},
+        };
+        let binary = SchemaObject {
+            instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::String))),
+            format: Some("binary".to_owned()),
+            ..Default::default()
+        };
+        let plain = |description: &str| {
+            RefOr::Object(Response {
+                description: description.to_owned(),
+                ..Default::default()
+            })
+        };
+        Ok(Responses {
+            responses: map! {
+                "200".to_owned() => RefOr::Object(Response {
+                    description: "The archive (`.tar.gz`): database, `oauth2.toml`, `s3config.toml`, key pair, `secret_key.txt` and `MANIFEST.txt`. It holds the private key of the server. Not cached; the file name is in `Content-Disposition`.".to_owned(),
+                    content: map! {
+                        "application/gzip".to_owned() => MediaType {
+                            schema: Some(binary),
+                            ..Default::default()
+                        }
+                    },
+                    ..Default::default()
+                }),
+                "401".to_owned() => plain("No token, an invalid token, or a user who is not an administrator."),
+                "404".to_owned() => plain("The server was not started with `--allow-remote-backup` (or `ALLOW_REMOTE_BACKUP=Y`)."),
+                "500".to_owned() => plain("The backup could not be made; see the log of the server.")
+            },
+            ..Default::default()
+        })
+    }
+}
+
 /// # Download a backup
 ///
 /// Only for an administrator, and only when `hbbs` runs with `--allow-remote-backup` (or `ALLOW_REMOTE_BACKUP=Y`);
 /// otherwise the answer is 404. Returns a `.tar.gz` with a consistent copy of the database, `oauth2.toml`,
 /// `s3config.toml`, the key pair and `secret_key.txt`. The archive holds the private key of the server. Each
 /// download is logged with the name of the administrator.
+#[openapi(tag = "backup")]
 #[get("/api/backup")]
 async fn backup_download(
     state: &State<ApiState>,
     admin: AuthenticatedAdmin,
 ) -> Result<BackupDownload, Status> {
     if !backup::is_enabled() {
-        log::info!("backup refused for {}: --allow-remote-backup is not set", admin.username);
+        log::info!(
+            "backup refused for {}: --allow-remote-backup is not set",
+            admin.username
+        );
         return Err(Status::NotFound);
     }
     match backup::build(state, env!("CARGO_PKG_VERSION")).await {

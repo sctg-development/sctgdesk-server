@@ -1043,6 +1043,14 @@ async fn the_backup_is_refused_without_the_flag() {
     let admin = audit_login(&server, "admin", "Hello,world!");
     // an administrator, but the flag is not set: the endpoint does not exist
     assert_eq!(server.get_bytes("/api/backup", Some(&admin)).0, 404);
+    // documented in the OpenAPI description whatever the flag is, with the 404 explained
+    let (status, spec) = server.get_bytes("/openapi.json", None);
+    assert_eq!(status, 200);
+    let spec: serde_json::Value = serde_json::from_slice(&spec).unwrap();
+    let op = &spec["paths"]["/api/backup"]["get"];
+    assert_eq!(op["tags"][0], "backup", "{op}");
+    assert!(op["responses"]["200"]["content"]["application/gzip"].is_object());
+    assert!(op["responses"]["404"].is_object());
 }
 
 #[hbb_common::tokio::test(crate = "hbb_common::tokio")]
