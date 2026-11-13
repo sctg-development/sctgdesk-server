@@ -160,6 +160,7 @@ Der Server antwortet auf allen seinen Ports mit`rustdesk-utils doctor <server>`.
 | ALWAYS_USE_RELAY | hbbs | wenn gesetzt auf**"Y"**Erlaubt keine direkte Peer-Verbindung |
 | DB_URL | hbbs | Pfad der SQLite-Datenbank (Standard`./db_v2.sqlite3`) |
 | LOGGED_IN_ONLY | hbbs | wenn gesetzt auf**"Y"**Nur eingeloggte Nutzer können einen Peer steuern (wie auch`--logged-in-only`) |
+| ALLOW_REMOTE_BACKUP | hbbs | wenn gesetzt auf**"Y"**, kann ein Administrator ein Backup (Datenbank, Schlüsselpaar, Konfiguration) herunterladen mit`GET /api/backup`oder von der Konsole (gleich wie`--allow-remote-backup`); standardmäßig ausgeschaltet, siehe[Der Einsatzleitfaden](docs/deployment.md#download-a-backup)|
 | REQUIRE_KX_V1 | hbbs | wenn gesetzt auf**"Y"**lehnt Clients ab, die den alten (Version 0) TCP-Schlüsselaustausch verwenden (gleich wie`--require-kx-v1`) |
 | DOWNGRADE_START_CHECK | hbbr | Verzögerung (in Sekunden) vor Downgrade-Check |
 | DOWNGRADE_THRESHOLD | HBBR | Schwelle der Downgrade-Prüfung (bit/ms) |

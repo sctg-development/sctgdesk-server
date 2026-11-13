@@ -122,14 +122,14 @@ mkdir -p data && docker compose up -d
 |21116 |TCP +**UDP**|`hbbs`|身分證 / 約會地點 |
 |21117 |TCP |`hbbr`|接力 |
 |21118 |TCP |`hbbs`|WebSocket（網頁客戶端） |
-|21119 |TCP |`hbbr`|WebSocket（網頁客戶端） |
+|21119 |TCP |`hbbr` | WebSocket (web client) |
 
-在防火牆上開啟它們。API 和 WebSocket 埠應該放在網際網路上的 TLS 反向代理後面：詳見
-該[部署指南](docs/deployment.md).
+API 文件[在客戶端](docs/deployment.md)安全性
 
-## 首次運行
+## 嵌入式 API 伺服器沒有防止濫用：在前面放置一個 TLS 反向代理（HAProxy、NGINX、Caddy 等）&#xA;以及 WebSocket 埠口。HAProxy 的一個範例是
 
-`hbbs`以及`hbbr`將他們的資料（金鑰對、SQLite 資料庫）保存在**現行名錄**.
+`hbbs`部署指南`hbbr`.**更改預設的管理員密碼，保持不變**秘密並備份：改變它會讓每個客戶都拒絕
+你的伺服器。
 
 ```bash
 mkdir -p /var/lib/sctgdesk && cd /var/lib/sctgdesk
@@ -137,74 +137,77 @@ hbbr &
 hbbs -r relay.example.com &
 ```
 
-首次起跑`hbbs`創造`id_ed25519`（秘密） 以及`id_ed25519.pub`（**公鑰**，你給
-你的客戶）。自己製作金鑰對，或檢查其中一組：
+如描述的漏洞報告`hbbs`SECURITY.md`id_ed25519`.`id_ed25519.pub`授權與原始碼**SCTGDesk 以**GNU Affero 通用公共授權條款 v3
 
 ```bash
 rustdesk-utils genkeypair
 rustdesk-utils validatekeypair <public key> <secret key>
 ```
 
-要拒絕沒有金鑰的客戶端，請啟動兩台伺服器`-k <key>`（或`KEY=<key>`).檢查一下
-伺服器在所有埠上回應為`rustdesk-utils doctor <server>`.
+.每個版本的原始碼
+就在這個倉庫裡，該版本的標籤中。如果你修改了這個軟體，並讓其他人使用它，而不是
+Network，授權條款第 13 條要求你提供修改版本的對應原始碼。`-k <key>`在執行下載的二進位檔前，請檢查每次發行時公布的 SHA-256 總和。`KEY=<key>`貢獻`rustdesk-utils doctor <server>`開發者手冊
 
-**預設管理員。**網頁主控台位於`http://<server>:21114/`以及 API 文件`http://<server>:21114/api/doc/`.一個新的資料庫會擁有使用者`admin`用密碼`Hello,world!`，即
-公開：**第一次登入時更改**.
+**·**CONTRIBUTING.md`http://<server>:21114/`·`http://<server>:21114/api/doc/`CODE_OF_CONDUCT.md`admin`·`Hello,world!`SECURITY.md**.關於一般自家主機的問題，請參考**RustDesk 文件
 
-## 配置
+## 同樣適用。
 
-`hbbs`以及`hbbr`在命令列上取得選項（`hbbs --help`）以及來自環境變數，或`.env`檔案。
+`hbbs`如果你喜歡這部作品，請考慮給它一顆星，或`hbbr`贊助`hbbs --help`.`.env`
+file.
 
-|變數 |二元值 |描述 |
-|--- |--- |--- |
-|ALWAYS_USE_RELAY |HBBS |若設為**「Y」**禁止直接對等連接 |
-|DB_URL |hbbs |SQLite 資料庫路徑（預設值）`./db_v2.sqlite3`) |
-|LOGGED_IN_ONLY |HBBS |若設為**「Y」**只有登入的使用者才能控制對等端（同理`--logged-in-only`) |
-|REQUIRE_KX_V1 |HBBS |若設定為**「Y」**拒絕使用舊有（版本 0）TCP 金鑰交換的用戶端（與`--require-kx-v1`) |
-|DOWNGRADE_START_CHECK |HBBR |延遲（以秒計）在降級檢查前 |
-|DOWNGRADE_THRESHOLD |HBBBR |降級檢查門檻（bit/ms） |
-|KEY |HBBS/HBBR |若設定為 ，強制使用特定鍵，則若設為**"\_"**強制使用任意鍵 |
-|LIMIT_SPEED |hbbr |速限（以 Mb/s） |
-|OAUTH2\_CONFIG_FILE |hbbs |OAuth2 / OpenID Connect 提供者檔案的路徑（`oauth2.toml`) |
-|OAUTH2\_CREATE_USER |HBBS |若設定為**"1"**首次登入時建立使用者 |
-|埠口 |HBBS/HBBR |聆聽埠（21116 對 HBBS - 21117 對 HBBR）|
-|HEALTH_PORT |HBBR |若設定，HBBR 回答`GET /livez`以及`GET /readyz`（HTTP） 在此埠;預設關閉 |
-|中繼 |HBBS |運行 hbbr 的機器 IP 位址/DNS 名稱（以逗號分隔） |
-|LOG_FORMAT |HBBS，HBBR |**「json」**：每log line一個JSON物件 （`time`,`level`,`target`,`file`,`line`,`msg`);預設：文字 |
-|RUST_LOG |全部 |設定除錯層級（錯誤|警告|資訊|除錯|追蹤）|
-|ROCKET_SECRET_KEY |hbbs |用於簽署 API 伺服器 cookie 的鍵（base64,64 位元組）。預設值：在 首次開始時產生`secret_key.txt`資料庫旁邊 |
-|S3CONFIG_FILE |HBBS |軟體更新檔案的路徑（`s3config.toml`) |
-|SINGLE_BANDWIDTH |hbbr |單次連線的最大頻寬（以 Mb/s 計）|
-|TOTAL_BANDWIDTH |hbbr |最大總頻寬（以 Mb/s） |
+| variable | binary | description |
+| --- | --- | --- |
+| ALWAYS_USE_RELAY | hbbs | if set to **"Y"** disallows direct peer connection |
+| DB_URL | hbbs | path of the SQLite database (default `./db_v2.sqlite3`) |
+| LOGGED_IN_ONLY | hbbs | if set to **"Y"** only logged-in users can control a peer (same as `--logged-in-only`) |
+| ALLOW_REMOTE_BACKUP | hbbs | if set to **"Y"**, an administrator can download a backup (database, key pair, configuration) with `GET /api/backup` or from the console (same as `--allow-remote-backup`); off by default, see [the deployment guide](docs/deployment.md#download-a-backup) |
+| REQUIRE_KX_V1 | hbbs | if set to **"Y"** refuses clients that use the legacy (version 0) TCP key exchange (same as `--require-kx-v1`) |
+| DOWNGRADE_START_CHECK | hbbr | delay (in seconds) before downgrade check |
+| DOWNGRADE_THRESHOLD | hbbr | threshold of downgrade check (bit/ms) |
+| KEY | hbbs/hbbr | if set force the use of a specific key, if set to **"\_"** force the use of any key |
+| LIMIT_SPEED | hbbr | speed limit (in Mb/s) |
+| OAUTH2\_CONFIG_FILE | hbbs | path of the OAuth2 / OpenID Connect providers file (`oauth2.toml`) |
+| OAUTH2\_CREATE_USER | hbbs | if set to **"1"** create a user at the first login with a provider |
+| PORT | hbbs/hbbr | listening port (21116 for hbbs - 21117 for hbbr) |
+| HEALTH_PORT | hbbr | if set, hbbr answers `GET /livez` and `GET /readyz` (HTTP) on this port; off by default |
+| RELAY | hbbs | IP address/DNS name of the machines running hbbr (separated by comma) |
+| LOG_FORMAT | hbbs, hbbr | **"json"**: one JSON object per log line (`time`, `level`, `target`, `file`, `line`, `msg`); default: text |
+| RUST_LOG | all | set debug level (error|warn|info|debug|trace) |
+| ROCKET_SECRET_KEY | hbbs | key that signs the cookies of the API server (base64, 64 bytes). Default: generated at the first start in `secret_key.txt` next to the database |
+| S3CONFIG_FILE | hbbs | path of the software-update file (`s3config.toml`) |
+| SINGLE_BANDWIDTH | hbbr | max bandwidth for a single connection (in Mb/s) |
+| TOTAL_BANDWIDTH | hbbr | max total bandwidth (in Mb/s) |
 
-### 只有登入用戶才能控制
+### Only logged-in users can control
 
-`--logged-in-only`（或`LOGGED_IN_ONLY=Y`）`hbbs`詢問 API 伺服器客戶端的權杖是否為活體
-在連接兩個節點之前，會話。任何人仍然可以註冊自己的裝置，但沒有人能控制裝置
-未登入。未登入的客戶端會看到「連線不被允許。您尚未登入。」;一
-其會話結束時顯示「你的會話已過期」。
+`--logged-in-only` (or `LOGGED_IN_ONLY=Y`) makes `hbbs` ask the API server whether the token of the client is a live
+session before it connects two peers. Anyone can still register their device, but nobody can control a device
+without logging in. A client that is not logged in sees "The connection is not allowed. You have not logged in."; one
+whose session ended sees "Your session expired."
 
-### 使用 GitHub、GitLab、Google、Dex 登入......
+### Login with GitHub, GitLab, Google, Dex...
 
-收到`oauth2.toml`並填寫你使用的服務提供者（每個提供者都需註冊一個應用程式，該服務提供者的應用程式
-回調是你的 API 伺服器），然後設定`OAUTH2_CONFIG_FILE=oauth2.toml`， 以及`OAUTH2_CREATE_USER=1`以創造
-使用者首次登入。請參閱[部署指南](docs/deployment.md#login-with-openid-connect-and-oauth2).
+Copy `oauth2.toml` and fill in the providers you use (each needs an application registered with the provider, whose
+callback is your API server), then set `OAUTH2_CONFIG_FILE=oauth2.toml`, and `OAUTH2_CREATE_USER=1` to create the
+user at the first login. See the [deployment guide](docs/deployment.md#login-with-openid-connect-and-oauth2).
 
-### 客戶端更新
+### Updates of the client
 
-客戶端可以在你的 API 伺服器上尋找新版本，而不是在 GitHub 上：它回答了`POST /api/software/version/latest`（目前 RustDesk 用戶端的檢查）以及`GET /api/software/releases/latest`.
-最新版本及下載連結皆可閱讀`s3config.toml`（S3相容儲存），參見[REST API](docs/api.md#software-update-endpoints).
+The clients can look for new versions on your API server instead of GitHub: it answers
+`POST /api/software/version/latest` (the check of current RustDesk clients) and `GET /api/software/releases/latest`.
+The latest version and the download links are read from `s3config.toml` (S3-compatible storage), see
+[the REST API](docs/api.md#software-update-endpoints).
 
-## 客戶
+## Clients
 
-*   **官方 RustDesk 客戶端**與這台伺服器合作：提供你的伺服器和公鑰給他們。
-*   **SCTGDesk 用戶端**是上游的 RustDesk 加上我們的覆蓋層（名稱、圖示、預設伺服器和金鑰）。你自己建置它
-    關於你自己的伺服器，請參見[客製化組裝](docs/custom-builds.md#the-client).該**網頁用戶端**由
-    同樣的疊加層。
+*   **Official RustDesk clients** work with this server: give them your server and your public key.
+*   **The SCTGDesk client** is upstream RustDesk plus our overlay (name, icons, default servers and key). You build it
+    for your own servers, see [custom builds](docs/custom-builds.md#the-client). The **web client** is built from
+    the same overlay.
 
-## 自己動手做
+## Build it yourself
 
-你需要一個 Rust 工具鏈，網頁控制台則需要 Node.js 20。
+You need a Rust toolchain and, for the web console, Node.js 20.
 
 ```bash
 git clone --recurse-submodules https://github.com/sctg-development/sctgdesk-server
@@ -213,12 +216,13 @@ export DATABASE_URL=sqlite://$(pwd)/db_v2.sqlite3     # the sqlx macros check qu
 cargo build --release --locked                         # hbbs, hbbr, rustdesk-utils in target/release
 ```
 
-場景`SCTGDESK_SKIP_WEB_BUILD=1`沒有Node.js來建造（控制台則是佔位符）。這個[開發者手冊](https://sctg-development.github.io/sctgdesk-server/)涵蓋建置、測試、自訂伺服器及
-客戶端建置、打包、發布以及與上游同步。
+Set `SCTGDESK_SKIP_WEB_BUILD=1` to build without Node.js (the console is then a placeholder). The
+[developer manual](https://sctg-development.github.io/sctgdesk-server/) covers building, testing, custom server and
+client builds, packaging, releases and syncing with upstream.
 
-## 截圖
+## Screenshots
 
-### 網頁控制台
+### Webconsole
 
 <img width="1085" alt="login" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/fe72a374-8a98-4606-8632-3d919f9317c9">
 
@@ -236,11 +240,11 @@ cargo build --release --locked                         # hbbs, hbbr, rustdesk-ut
 
 <img width="621" alt="add rules" src="https://github.com/sctg-development/sctgdesk-api-server/assets/165936401/355f3903-2b54-4b08-abd0-e33c84a260ed">
 
-### API 文件
+### Api documentation
 
 <img width="1502" alt="apidoc" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/88fe7910-fe62-43e5-a16c-70dc1201e040">
 
-### 在客戶端
+### In the client
 
 <img width="913" alt="Capture d’écran 2024-05-24 à 12 14 34" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/1b253577-dce2-4163-9a49-ba4b3da37812">
 
@@ -248,24 +252,27 @@ cargo build --release --locked                         # hbbs, hbbr, rustdesk-ut
 
 <img width="927" alt="Capture d’écran 2024-05-24 à 12 07 32" src="https://github.com/sctg-development/sctgdesk-server/assets/165936401/f447f5fa-bc77-4bc6-858a-c6cadf9b7f6c">
 
-## 安全性
+## Security
 
-*   嵌入式 API 伺服器沒有防止濫用：在前面放置一個 TLS 反向代理（HAProxy、NGINX、Caddy 等）
-    以及 WebSocket 埠口。HAProxy 的一個範例是[部署指南](docs/deployment.md#tls-reverse-proxy).
-*   更改預設的管理員密碼，保持不變`id_ed25519`秘密並備份：改變它會讓每個客戶都拒絕
-    你的伺服器。
-*   如描述的漏洞報告[SECURITY.md](SECURITY.md).
+*   The embedded API server is not protected against abuse: put a TLS reverse proxy (HAProxy, NGINX, Caddy...) in front
+    of it, and of the WebSocket ports. A HAProxy example is in the [deployment guide](docs/deployment.md#tls-reverse-proxy).
+*   Change the default admin password, keep `id_ed25519` secret and back it up: changing it makes every client reject
+    your server.
+*   Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
-## 授權與原始碼
+## License and source code
 
-SCTGDesk 以[GNU Affero 通用公共授權條款 v3](LICENSE).每個版本的原始碼
-就在這個倉庫裡，該版本的標籤中。如果你修改了這個軟體，並讓其他人使用它，而不是
-Network，授權條款第 13 條要求你提供修改版本的對應原始碼。
+SCTGDesk is distributed under the [GNU Affero General Public License v3](LICENSE). The source code of every release
+is in this repository, at the tag of that release. If you modify this software and let other people use it over a
+network, section 13 of the license requires you to offer them the corresponding source code of your modified version.
 
-在執行下載的二進位檔前，請檢查每次發行時公布的 SHA-256 總和。
+Check the SHA-256 sums published with each release before running a downloaded binary.
 
-## 貢獻
+## Contributing
 
-[開發者手冊](https://sctg-development.github.io/sctgdesk-server/)·[CONTRIBUTING.md](CONTRIBUTING.md)·[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)·[SECURITY.md](SECURITY.md).關於一般自家主機的問題，請參考[RustDesk 文件](https://rustdesk.com/docs/en/self-host/)同樣適用。
+[Developer manual](https://sctg-development.github.io/sctgdesk-server/) · [CONTRIBUTING.md](CONTRIBUTING.md) ·
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) · [SECURITY.md](SECURITY.md). For general self-hosting questions, the
+[RustDesk documentation](https://rustdesk.com/docs/en/self-host/) also applies.
 
-如果你喜歡這部作品，請考慮給它一顆星，或[贊助](https://github.com/sponsors/sctg-development).
+If you like this work, consider giving it a star, or
+[sponsoring it](https://github.com/sponsors/sctg-development).

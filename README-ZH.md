@@ -168,6 +168,7 @@ file.
 | ALWAYS_USE_RELAY | hbbs | if set to **"Y"** disallows direct peer connection |
 | DB_URL | hbbs | path of the SQLite database (default `./db_v2.sqlite3`) |
 | LOGGED_IN_ONLY | hbbs | if set to **"Y"** only logged-in users can control a peer (same as `--logged-in-only`) |
+| ALLOW_REMOTE_BACKUP | hbbs | if set to **"Y"**, an administrator can download a backup (database, key pair, configuration) with `GET /api/backup` or from the console (same as `--allow-remote-backup`); off by default, see [the deployment guide](docs/deployment.md#download-a-backup) |
 | REQUIRE_KX_V1 | hbbs | if set to **"Y"** refuses clients that use the legacy (version 0) TCP key exchange (same as `--require-kx-v1`) |
 | DOWNGRADE_START_CHECK | hbbr | delay (in seconds) before downgrade check |
 | DOWNGRADE_THRESHOLD | hbbr | threshold of downgrade check (bit/ms) |

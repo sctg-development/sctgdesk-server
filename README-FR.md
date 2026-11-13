@@ -160,6 +160,7 @@ Public :**Change-le dès la première connexion**.
 | ALWAYS_USE_RELAY | hbbs | si on est réglé sur**« Y »**interdit la connexion directe entre les pairs |
 | DB_URL | hbbs | chemin de la base de données SQLite (par défaut`./db_v2.sqlite3`) |
 | LOGGED_IN_ONLY | hbbs | si on est réglé à**« Y »**seuls les utilisateurs connectés peuvent contrôler un pair (comme`--logged-in-only`) |
+| ALLOW_REMOTE_BACKUP | hbbs | si on est réglé sur**« Y »**, un administrateur peut télécharger une sauvegarde (base de données, paire de clés, configuration) avec`GET /api/backup`ou depuis la console (comme`--allow-remote-backup`); Désactivé par défaut, voir[Le Guide de déploiement](docs/deployment.md#download-a-backup)|
 | REQUIRE_KX_V1 | hbbs | si réglé sur**« Y »**refuse les clients qui utilisent l’ancien échange de clés TCP (version 0) (identique à`--require-kx-v1`) |
 | DOWNGRADE_START_CHECK | hbbr | délai (en secondes) avant la rétrogradation |
 | DOWNGRADE_THRESHOLD | hbbr | seuil de contrôle de rétrogradation (bit/ms) |

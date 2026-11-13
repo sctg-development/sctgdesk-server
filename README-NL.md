@@ -160,6 +160,7 @@ Publiek:**Verander het bij de eerste login**.
 | ALWAYS_USE_RELAY | hbbs | als ingesteld op**"J"**Staat directe peerverbinding niet toe |
 | DB_URL | hbbs | pad van de SQLite-database (standaard`./db_v2.sqlite3`) |
 | LOGGED_IN_ONLY | hbbs | als ingesteld op**"J"**Alleen ingelogde gebruikers kunnen een peer bedienen (hetzelfde als`--logged-in-only`) |
+| ALLOW_REMOTE_BACKUP | hbbs | als ingesteld op**"J"**, kan een beheerder een back-up downloaden (database, sleutelpaar, configuratie) met`GET /api/backup`of vanaf de console (hetzelfde als`--allow-remote-backup`); standaard uit, zie[De Implementatiegids](docs/deployment.md#download-a-backup)|
 | REQUIRE_KX_V1 | hbbs | als ingesteld op**"J"**weigert clients die de legacy (versie 0) TCP-sleuteluitwisseling gebruiken (hetzelfde als`--require-kx-v1`) |
 | DOWNGRADE_START_CHECK | hbbr | vertraging (in seconden) voor downgrade check |
 | DOWNGRADE_THRESHOLD | hbbr | drempel van downgrade check (bit/ms) |
