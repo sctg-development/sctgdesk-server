@@ -139,6 +139,10 @@ jobs:
             test -f /usr/lib/systemd/system/rustdesk-hbbs.service && test -f /usr/lib/systemd/system/rustdesk-hbbr.service &&
             apt-get remove -y -qq sctgdesk-server-hbbs sctgdesk-server-hbbr sctgdesk-server-utils >/dev/null &&
             test ! -e /usr/bin/hbbs'
+      # The former rustdesk-server-* packages mask the unit and (purged) delete /var/lib/rustdesk-server
+      - name: Migrate from the former packages on Debian
+        run: |
+          docker run --rm -v "$PWD/dist:/p:ro" -v "$PWD/packaging:/t:ro" debian:12 sh /t/test-migration.sh /p
       - name: Install the rpm on Fedora
         run: |
           docker run --rm -v "$PWD/dist:/p:ro" fedora:latest sh -c '
