@@ -9,6 +9,7 @@ export default {
     all: 'All', none: 'None', show: 'Show', hide: 'Hide',
   },
   nav: {
+    backup: 'Backup',
     dashboard: 'Dashboard', devices: 'Devices', users: 'Users', groups: 'Groups', addressBooks: 'Address books',
     connections: 'Connections', settings: 'Settings',
     openMenu: 'Open main menu', openUserMenu: 'Open user menu', notifications: 'View notifications',

@@ -10,6 +10,7 @@ use rocket::{
 };
 
 use std::thread;
+mod json_log;
 use sctgdesk_api_server::build_rocket;
 
 const RMEM: usize = 0;
@@ -104,7 +105,7 @@ fn log_format(
 fn main() -> ResultType<()> {
     let _logger = Logger::try_with_env_or_str("info")?
         .log_to_stdout()
-        .format(log_format)
+        .format(json_log::format_or(log_format))
         .write_mode(WriteMode::Async)
         .start()?;
     let args = format!(
@@ -119,6 +120,7 @@ fn main() -> ResultType<()> {
         , --mask=[MASK] 'Determine if the connection comes from LAN, e.g. 192.168.0.0/16'
         -k, --key=[KEY] 'Only allow the client with the same key'
         , --logged-in-only 'Only allow logged in user to control'
+        , --allow-remote-backup 'Lets an administrator download a backup (database, key pair and configuration) with GET /api/backup; can also be set with ALLOW_REMOTE_BACKUP=Y'
         , --require-kx-v1 'Refuse TCP key exchange version 0 (clients older than the signed key exchange); can also be set with REQUIRE_KX_V1=Y'",
     );
     init_args(&args, "hbbs", "RustDesk ID/Rendezvous Server");

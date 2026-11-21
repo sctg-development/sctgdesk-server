@@ -27,6 +27,11 @@ contents:
     dst: /usr/lib/systemd/system/rustdesk-hbbs.service
     file_info:
       mode: 0644
+  - src: packaging/default-hbbs
+    dst: /etc/default/sctgdesk-hbbs
+    type: config|noreplace
+    file_info:
+      mode: 0600
   - dst: /var/lib/rustdesk-server
     type: dir
     file_info:
@@ -36,5 +41,6 @@ contents:
     file_info:
       mode: 0755
 scripts:
+  preinstall: packaging/preinstall.sh
   postinstall: packaging/hbbs.postinstall.sh
   preremove: packaging/hbbs.preremove.sh

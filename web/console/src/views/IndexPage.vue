@@ -128,6 +128,9 @@ This website use:
       <div v-if="isCurrentPage('connections')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <ConnectionsCard />
       </div>
+      <div v-if="isCurrentPage('backup') && isAdmin" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+        <BackupCard />
+      </div>
       <div v-if="isCurrentPage('settings') && isAdmin" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <SettingsCard />
       </div>
@@ -159,6 +162,7 @@ import UserSettings from '@/components/UserSettings.vue';
 import GroupsCard from '@/components/GroupsCard.vue';
 import AccessibleAddressBooks from '@/components/AccessibleAddressBooks.vue';
 import ConnectionsCard from '@/components/ConnectionsCard.vue';
+import BackupCard from '@/components/BackupCard.vue';
 const userStore = useUserStore();
 const router = useRouter();
 const profileStore = useProfileStore();
@@ -183,6 +187,7 @@ const navigation = ref([
   { key: 'groups', href: '#', current: false, adminOnly: false },
   { key: 'addressBooks', href: '#', current: false, adminOnly: false },
   { key: 'connections', href: '#', current: false, adminOnly: false },
+  { key: 'backup', href: '#', current: false, adminOnly: true },
   { key: 'settings', href: '#', current: false, adminOnly: true },
 ].filter((item) => !item.adminOnly || userStore.user?.admin))
 

@@ -27,6 +27,11 @@ contents:
     dst: /usr/lib/systemd/system/rustdesk-hbbr.service
     file_info:
       mode: 0644
+  - src: packaging/default-hbbr
+    dst: /etc/default/sctgdesk-hbbr
+    type: config|noreplace
+    file_info:
+      mode: 0600
   - dst: /var/lib/rustdesk-server
     type: dir
     file_info:
@@ -36,5 +41,6 @@ contents:
     file_info:
       mode: 0755
 scripts:
+  preinstall: packaging/preinstall.sh
   postinstall: packaging/hbbr.postinstall.sh
   preremove: packaging/hbbr.preremove.sh

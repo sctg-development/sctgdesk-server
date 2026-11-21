@@ -5,10 +5,13 @@ Description=Rustdesk Signal Server
 [Service]
 Type=simple
 LimitNOFILE=1000000
-ExecStart=/usr/bin/hbbs
+# Arguments and variables: HBBS_ARGS and the lines of /etc/default/sctgdesk-hbbs (see there). Without -k, hbbs creates
+# a random key pair, id_ed25519, in the working directory at its first start.
+ExecStart=/usr/bin/hbbs $HBBS_ARGS
 Environment="OAUTH2_CREATE_USER=1"
 Environment="S3CONFIG_FILE=s3config.toml"
 Environment="OAUTH2_CONFIG_FILE=oauth2.toml"
+EnvironmentFile=-/etc/default/sctgdesk-hbbs
 WorkingDirectory=/var/lib/rustdesk-server/
 User=
 Group=

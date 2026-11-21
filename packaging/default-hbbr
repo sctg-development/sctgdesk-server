@@ -1,0 +1,7 @@
+# Options of rustdesk-hbbr.service, read before the unit starts it. Kept by the package when you edit it.
+# Keep this file readable by root only (mode 600): it can hold the key. Then: systemctl restart rustdesk-hbbr
+# HBBR_ARGS replaces the default arguments of the unit; the other lines are environment variables of the program.
+# HBBR_ARGS=-k _
+# HEALTH_PORT=21110
+# RUST_LOG=info
+# LOG_FORMAT=json

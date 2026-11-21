@@ -53,8 +53,9 @@ sudo apt install ./sctgdesk-server-hbbs_*_amd64.deb ./sctgdesk-server-hbbr_*_amd
 # or: sudo dnf install ./sctgdesk-server-*.rpm
 ```
 
-Een eerste installatie start niets: bewerk de units (`systemctl edit --full rustdesk-hbbs`, zie[De Implementatiegids](docs/deployment.md)), dan`sudo systemctl enable --now rustdesk-hbbs rustdesk-hbbr`. Een
-De upgrade start de diensten die draaiden opnieuw op. Data is erin`/var/lib/rustdesk-server`, logt in`/var/log/rustdesk-server`; De units draaien als root.
+Een eerste installatie op een lege datamap start beide diensten met een willekeurig sleutelpaar; opties gaan erin`/etc/default/sctgdesk-hbbs`en`-hbbr`(zie[De Implementatiegids](docs/deployment.md), wat ook de
+Migratie uit de eerste`rustdesk-server-*`Pakketten:**Ruim ze niet uit**). Een upgrade start de diensten opnieuw op
+die draaien. Data is erin`/var/lib/rustdesk-server`, logt in`/var/log/rustdesk-server`; De units draaien als root.
 
 ### Binaire bestanden (Linux, Windows, macOS)
 
@@ -159,6 +160,7 @@ Publiek:**Verander het bij de eerste login**.
 | ALWAYS_USE_RELAY | hbbs | als ingesteld op**"J"**Staat directe peerverbinding niet toe |
 | DB_URL | hbbs | pad van de SQLite-database (standaard`./db_v2.sqlite3`) |
 | LOGGED_IN_ONLY | hbbs | als ingesteld op**"J"**Alleen ingelogde gebruikers kunnen een peer bedienen (hetzelfde als`--logged-in-only`) |
+| ALLOW_REMOTE_BACKUP | hbbs | als ingesteld op**"J"**, kan een beheerder een back-up downloaden (database, sleutelpaar, configuratie) met`GET /api/backup`of vanaf de console (hetzelfde als`--allow-remote-backup`); standaard uit, zie[De Implementatiegids](docs/deployment.md#download-a-backup)|
 | REQUIRE_KX_V1 | hbbs | als ingesteld op**"J"**weigert clients die de legacy (versie 0) TCP-sleuteluitwisseling gebruiken (hetzelfde als`--require-kx-v1`) |
 | DOWNGRADE_START_CHECK | hbbr | vertraging (in seconden) voor downgrade check |
 | DOWNGRADE_THRESHOLD | hbbr | drempel van downgrade check (bit/ms) |
@@ -169,6 +171,7 @@ Publiek:**Verander het bij de eerste login**.
 | POORT | HBBS/HBBR | Luisterpoort (21116 voor HBBS - 21117 voor HBBR) |
 | HEALTH_PORT | hbbr | als ingesteld, antwoordt hbbr`GET /livez`en`GET /readyz`(HTTP) op deze poort; standaard uit |
 | RELAY | hbbs | IP-adres/DNS-naam van de machines die hbbr draaien (gescheiden door komma) |
+| LOG_FORMAT | HBBS, HBBR |**"JSON"**: één JSON-object per loglijn (`time`,`level`,`target`,`file`,`line`,`msg`); standaard: tekst |
 | RUST_LOG | alle | set debug level (fout|waarschuw|info|debug|trace) |
 | ROCKET_SECRET_KEY | hbbs | sleutel die de cookies van de API-server ondertekent (base64, 64 bytes). Standaard: gegenereerd bij de eerste start in`secret_key.txt`naast de database |
 | S3CONFIG_FILE | hbbs | pad van het software-updatebestand (`s3config.toml`) |

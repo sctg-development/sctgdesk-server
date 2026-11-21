@@ -56,9 +56,10 @@ sudo apt install ./sctgdesk-server-hbbs_*_amd64.deb ./sctgdesk-server-hbbr_*_amd
 # or: sudo dnf install ./sctgdesk-server-*.rpm
 ```
 
-A first install starts nothing: edit the units (`systemctl edit --full rustdesk-hbbs`, see
-[the deployment guide](docs/deployment.md)), then `sudo systemctl enable --now rustdesk-hbbs rustdesk-hbbr`. An
-upgrade restarts the services that were running. Data is in `/var/lib/rustdesk-server`, logs in
+A first install on an empty data directory starts both services with a random key pair; options go in
+`/etc/default/sctgdesk-hbbs` and `-hbbr` (see [the deployment guide](docs/deployment.md), which also explains the
+migration from the former `rustdesk-server-*` packages: **do not purge them**). An upgrade restarts the services
+that were running. Data is in `/var/lib/rustdesk-server`, logs in
 `/var/log/rustdesk-server`; the units run as root.
 
 ### Binaries (Linux, Windows, macOS)
@@ -167,6 +168,7 @@ file.
 | ALWAYS_USE_RELAY | hbbs | if set to **"Y"** disallows direct peer connection |
 | DB_URL | hbbs | path of the SQLite database (default `./db_v2.sqlite3`) |
 | LOGGED_IN_ONLY | hbbs | if set to **"Y"** only logged-in users can control a peer (same as `--logged-in-only`) |
+| ALLOW_REMOTE_BACKUP | hbbs | if set to **"Y"**, an administrator can download a backup (database, key pair, configuration) with `GET /api/backup` or from the console (same as `--allow-remote-backup`); off by default, see [the deployment guide](docs/deployment.md#download-a-backup) |
 | REQUIRE_KX_V1 | hbbs | if set to **"Y"** refuses clients that use the legacy (version 0) TCP key exchange (same as `--require-kx-v1`) |
 | DOWNGRADE_START_CHECK | hbbr | delay (in seconds) before downgrade check |
 | DOWNGRADE_THRESHOLD | hbbr | threshold of downgrade check (bit/ms) |
@@ -177,6 +179,7 @@ file.
 | PORT | hbbs/hbbr | listening port (21116 for hbbs - 21117 for hbbr) |
 | HEALTH_PORT | hbbr | if set, hbbr answers `GET /livez` and `GET /readyz` (HTTP) on this port; off by default |
 | RELAY | hbbs | IP address/DNS name of the machines running hbbr (separated by comma) |
+| LOG_FORMAT | hbbs, hbbr | **"json"**: one JSON object per log line (`time`, `level`, `target`, `file`, `line`, `msg`); default: text |
 | RUST_LOG | all | set debug level (error\|warn\|info\|debug\|trace) |
 | ROCKET_SECRET_KEY | hbbs | key that signs the cookies of the API server (base64, 64 bytes). Default: generated at the first start in `secret_key.txt` next to the database |
 | S3CONFIG_FILE | hbbs | path of the software-update file (`s3config.toml`) |

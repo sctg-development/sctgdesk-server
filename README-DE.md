@@ -53,8 +53,9 @@ sudo apt install ./sctgdesk-server-hbbs_*_amd64.deb ./sctgdesk-server-hbbr_*_amd
 # or: sudo dnf install ./sctgdesk-server-*.rpm
 ```
 
-Eine erste Installation startet nichts: Bearbeite die Geräte (`systemctl edit --full rustdesk-hbbs`, siehe[Der Einsatzleitfaden](docs/deployment.md)), dann`sudo systemctl enable --now rustdesk-hbbs rustdesk-hbbr`. Ein
-Das Upgrade startet die laufenden Dienste neu. Die Daten sind drin`/var/lib/rustdesk-server`, loggt sich ein`/var/log/rustdesk-server`; Die Einheiten laufen als Root.
+Eine erste Installation in einem leeren Datenverzeichnis startet beide Dienste mit einem zufälligen Schlüsselpaar; Optionen gehen in`/etc/default/sctgdesk-hbbs`und`-hbbr`(siehe[Der Einsatzleitfaden](docs/deployment.md), was auch das erklärt
+Migration aus der ersteren`rustdesk-server-*`Pakete:**Reinigen Sie sie nicht**). Ein Upgrade startet den Betrieb wieder
+die liefen. Die Daten sind drin`/var/lib/rustdesk-server`, loggt sich ein`/var/log/rustdesk-server`; Die Einheiten laufen als Root.
 
 ### Binärdateien (Linux, Windows, macOS)
 
@@ -159,6 +160,7 @@ Der Server antwortet auf allen seinen Ports mit`rustdesk-utils doctor <server>`.
 | ALWAYS_USE_RELAY | hbbs | wenn gesetzt auf**"Y"**Erlaubt keine direkte Peer-Verbindung |
 | DB_URL | hbbs | Pfad der SQLite-Datenbank (Standard`./db_v2.sqlite3`) |
 | LOGGED_IN_ONLY | hbbs | wenn gesetzt auf**"Y"**Nur eingeloggte Nutzer können einen Peer steuern (wie auch`--logged-in-only`) |
+| ALLOW_REMOTE_BACKUP | hbbs | wenn gesetzt auf**"Y"**, kann ein Administrator ein Backup (Datenbank, Schlüsselpaar, Konfiguration) herunterladen mit`GET /api/backup`oder von der Konsole (gleich wie`--allow-remote-backup`); standardmäßig ausgeschaltet, siehe[Der Einsatzleitfaden](docs/deployment.md#download-a-backup)|
 | REQUIRE_KX_V1 | hbbs | wenn gesetzt auf**"Y"**lehnt Clients ab, die den alten (Version 0) TCP-Schlüsselaustausch verwenden (gleich wie`--require-kx-v1`) |
 | DOWNGRADE_START_CHECK | hbbr | Verzögerung (in Sekunden) vor Downgrade-Check |
 | DOWNGRADE_THRESHOLD | HBBR | Schwelle der Downgrade-Prüfung (bit/ms) |
@@ -169,6 +171,7 @@ Der Server antwortet auf allen seinen Ports mit`rustdesk-utils doctor <server>`.
 | PORT | hbbs/hbbr | Hörport (21116 für HBBS - 21117 für HBBR) |
 | HEALTH_PORT | hbbr | wenn gesetzt, antwortet hbbr`GET /livez`und`GET /readyz`(HTTP) an diesem Port; standardmäßig ausgeschaltet |
 | RELAY | hbbs | IP-Adresse/DNS-Name der Maschinen, die HBBR ausführen (durch Komma getrennt) |
+| LOG_FORMAT | hbbs, hbbr |**"json"**: ein JSON-Objekt pro Log-Line (`time`,`level`,`target`,`file`,`line`,`msg`); Standard: Text |
 | RUST_LOG | alle | Set Debug Level (fehler|warn|info|debug|trace) |
 | ROCKET_SECRET_KEY | hbbs | Schlüssel, der die Cookies des API-Servers signiert (base64, 64 Bytes). Standard: beim ersten Start in`secret_key.txt`neben der Datenbank |
 | S3CONFIG_FILE | hbbs | Pfad der Software-Update-Datei (`s3config.toml`) |

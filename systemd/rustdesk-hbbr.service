@@ -5,7 +5,11 @@ Description=Rustdesk Relay Server
 [Service]
 Type=simple
 LimitNOFILE=1000000
-ExecStart=/usr/bin/hbbr
+# "-k _": the relay only serves the clients that hold the key of hbbs, read from id_ed25519 in the working
+# directory (hbbs creates this random key pair at its first start). HBBR_ARGS in /etc/default/sctgdesk-hbbr replaces it.
+Environment="HBBR_ARGS=-k _"
+EnvironmentFile=-/etc/default/sctgdesk-hbbr
+ExecStart=/usr/bin/hbbr $HBBR_ARGS
 WorkingDirectory=/var/lib/rustdesk-server/
 User=
 Group=

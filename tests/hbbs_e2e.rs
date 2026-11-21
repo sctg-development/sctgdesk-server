@@ -61,7 +61,7 @@ impl Server {
             .current_dir(&dir)
             .env_remove("API_SERVER")
             .env_remove("DB_URL")
-            .stdout(Stdio::null())
+            .stdout(std::fs::File::create(dir.join("hbbs.log")).unwrap())
             .stderr(Stdio::null());
         for (k, v) in envs {
             cmd.env(k, v);
@@ -92,6 +92,23 @@ impl Server {
                 "hbbs did not start in time"
             );
             std::thread::sleep(Duration::from_millis(200));
+        }
+    }
+
+    /// The lines hbbs logged with the message `what`, waiting up to 5 s for `n` of them (the logger is asynchronous).
+    fn log_lines(&self, what: &str, n: usize) -> Vec<String> {
+        let start = Instant::now();
+        loop {
+            let lines: Vec<String> = std::fs::read_to_string(self.dir.join("hbbs.log"))
+                .unwrap_or_default()
+                .lines()
+                .filter(|l| l.contains(what))
+                .map(str::to_owned)
+                .collect();
+            if lines.len() >= n || start.elapsed() > Duration::from_secs(5) {
+                return lines;
+            }
+            std::thread::sleep(Duration::from_millis(100));
         }
     }
 
@@ -133,6 +150,35 @@ impl Server {
             .unwrap_or_else(|| panic!("no HTTP answer for {method} {path}"));
         let body = text.split("\r\n\r\n").nth(1).unwrap_or_default().to_owned();
         (status, body)
+    }
+
+    /// GET with the given bearer token, returns the HTTP status and the raw body (binary).
+    fn get_bytes(&self, path: &str, bearer: Option<&str>) -> (u16, Vec<u8>) {
+        let mut stream = TcpStream::connect(("127.0.0.1", self.api_port)).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(20)))
+            .unwrap();
+        let auth = bearer
+            .map(|b| format!("Authorization: Bearer {b}\r\n"))
+            .unwrap_or_default();
+        write!(
+            stream,
+            "GET {path} HTTP/1.1\r\nHost: localhost\r\n{auth}Connection: close\r\n\r\n"
+        )
+        .unwrap();
+        let mut answer = Vec::new();
+        let _ = stream.read_to_end(&mut answer);
+        let split = answer
+            .windows(4)
+            .position(|w| w == b"\r\n\r\n")
+            .unwrap_or_else(|| panic!("no HTTP answer for GET {path}"));
+        let head = String::from_utf8_lossy(&answer[..split]).into_owned();
+        let status = head
+            .split_whitespace()
+            .nth(1)
+            .and_then(|code| code.parse().ok())
+            .unwrap();
+        (status, answer[split + 4..].to_vec())
     }
 
     /// POST to the API with the given bearer token, returns the HTTP status.
@@ -414,6 +460,19 @@ async fn a_connection_is_recorded_with_its_note() {
         200
     );
     assert_eq!(post("{}").0, 200);
+    // what is recorded is logged at info, once: not the retry, not the unknown device
+    let logged = server.log_lines("audit conn: device", 2);
+    assert_eq!(logged.len(), 2, "{logged:?}");
+    assert!(
+        logged[0].contains(r#"device "DEV1""#)
+            && logged[0].contains(r#"action Some("new")"#)
+            && logged[0].contains(r#"ip Some("10.0.0.5")"#),
+        "{logged:?}"
+    );
+    assert!(
+        logged[1].contains(r#"peer Some(["CTRL", "Alice PC"])"#),
+        "{logged:?}"
+    );
     let all = history(&admin, "");
     assert_eq!(all["total"], 1, "{all}");
     let record = &all["data"][0];
@@ -970,4 +1029,64 @@ fn hbbr_answers_its_probes() {
     let _ = child.kill();
     let _ = child.wait();
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+
+// ---- the backup downloaded by an administrator (--allow-remote-backup) ----
+
+#[hbb_common::tokio::test(crate = "hbb_common::tokio")]
+async fn the_backup_is_refused_without_the_flag() {
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let server = Server::start(&[], &[]);
+    let admin = audit_login(&server, "admin", "Hello,world!");
+    // an administrator, but the flag is not set: the endpoint does not exist
+    assert_eq!(server.get_bytes("/api/backup", Some(&admin)).0, 404);
+    // documented in the OpenAPI description whatever the flag is, with the 404 explained
+    let (status, spec) = server.get_bytes("/openapi.json", None);
+    assert_eq!(status, 200);
+    let spec: serde_json::Value = serde_json::from_slice(&spec).unwrap();
+    let op = &spec["paths"]["/api/backup"]["get"];
+    assert_eq!(op["tags"][0], "backup", "{op}");
+    assert!(op["responses"]["200"]["content"]["application/gzip"].is_object());
+    assert!(op["responses"]["404"].is_object());
+}
+
+#[hbb_common::tokio::test(crate = "hbb_common::tokio")]
+async fn an_administrator_downloads_a_backup() {
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let server = Server::start(&["--allow-remote-backup"], &[]);
+    let admin = audit_login(&server, "admin", "Hello,world!");
+    let body = r#"{"name":"alice","password":"pw-alice-123","confirm-password":"pw-alice-123","email":"alice@x.org","is_admin":false,"group_name":"Default"}"#;
+    assert_eq!(server.http("POST", "/api/user", Some(&admin), body).0, 200);
+    let alice = audit_login(&server, "alice", "pw-alice-123");
+
+    // neither anonymous nor a plain user
+    assert_eq!(server.get_bytes("/api/backup", None).0, 401);
+    assert_eq!(server.get_bytes("/api/backup", Some(&alice)).0, 401);
+
+    let (status, bytes) = server.get_bytes("/api/backup", Some(&admin));
+    assert_eq!(status, 200);
+    let mut archive = tar::Archive::new(flate2::read::GzDecoder::new(&bytes[..]));
+    let mut files = std::collections::HashMap::new();
+    for entry in archive.entries().unwrap() {
+        let mut entry = entry.unwrap();
+        let name = entry.path().unwrap().to_string_lossy().into_owned();
+        let mut data = Vec::new();
+        entry.read_to_end(&mut data).unwrap();
+        files.insert(name, data);
+    }
+    let db = &files["sctgdesk-backup/db_v2.sqlite3"];
+    assert!(db.starts_with(b"SQLite format 3\0"), "not a SQLite file");
+    // the copy is consistent: it holds the user created above, without the -wal file of the server
+    assert!(
+        db.windows(5).any(|w| w == b"alice"),
+        "the user created before the backup is not in the copy"
+    );
+    assert!(files.contains_key("sctgdesk-backup/id_ed25519"));
+    assert!(files.contains_key("sctgdesk-backup/id_ed25519.pub"));
+    assert!(files.contains_key("sctgdesk-backup/MANIFEST.txt"));
 }

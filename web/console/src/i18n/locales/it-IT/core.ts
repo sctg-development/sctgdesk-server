@@ -9,6 +9,7 @@ export default {
     all: 'Tutti', none: 'Nessuno', show: 'Mostra', hide: 'Nascondi',
   },
   nav: {
+    backup: 'Backup',
     dashboard: 'Pannello', devices: 'Dispositivi', users: 'Utenti', groups: 'Gruppi', addressBooks: 'Rubriche',
     connections: 'Connessioni', settings: 'Impostazioni',
     openMenu: 'Apri il menu principale', openUserMenu: 'Apri il menu utente', notifications: 'Visualizza le notifiche',
