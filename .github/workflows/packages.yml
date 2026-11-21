@@ -236,9 +236,131 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
+  # OpenWrt routers with a MIPS CPU (32-bit, soft float, musl): ath79 is big endian (mips), ramips little endian
+  # (mipsel). Only apk packages: the build is a tier 3 target, see packaging/openwrt/build-mips.sh. The binaries are run
+  # under QEMU (user mode), including a real start of hbbs and hbbr.
+  mips:
+    name: ${{ matrix.arch }} (OpenWrt)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: mips
+            qemu: qemu-mips
+            openwrt_archs: "mips_24kc mips_4kec"
+          - arch: mipsel
+            qemu: qemu-mipsel
+            openwrt_archs: "mipsel_24kc mipsel_74kc"
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: The tag matches the version of Cargo.toml
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          case "$TAG" in sctg-v*) ;; *) echo "::error::the tag must start with sctg-v"; exit 1;; esac
+          version="${TAG#sctg-v}"
+          cargo_version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)
+          if [ "$version" != "$cargo_version" ]; then
+            echo "::error::the tag says $version but Cargo.toml says $cargo_version: the binaries would report the wrong version"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y perl make qemu-user curl
+          python3 -m venv "$RUNNER_TEMP/zig"
+          "$RUNNER_TEMP/zig/bin/pip" install --quiet ziglang==0.17.1
+          echo "$RUNNER_TEMP/zig/bin" >> "$GITHUB_PATH"
+
+      # tier 3 target: the standard library is built from source (-Zbuild-std)
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: packages-${{ matrix.arch }}-openwrt
+
+      # The web console and the API documentation are embedded in the binaries
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build
+        run: packaging/openwrt/build-mips.sh ${{ matrix.arch }}
+
+      - name: The binaries are static and run (QEMU)
+        run: |
+          bin="target/${{ matrix.arch }}-unknown-linux-musl/release"
+          for b in hbbs hbbr rustdesk-utils; do
+            file "$bin/$b"
+            file "$bin/$b" | grep -q "statically linked" || { echo "::error::$b is not static"; exit 1; }
+          done
+          ${{ matrix.qemu }} "$bin/rustdesk-utils" genkeypair > /dev/null
+          ${{ matrix.qemu }} "$bin/hbbs" --version
+          ${{ matrix.qemu }} "$bin/hbbr" --version
+          # a real start: the API server answers, the console is served, the relay accepts a connection
+          mkdir run && cd run
+          ${{ matrix.qemu }} "../$bin/hbbr" -p 21117 > hbbr.log 2>&1 &
+          ${{ matrix.qemu }} "../$bin/hbbs" --api-port 21114 > hbbs.log 2>&1 &
+          for i in $(seq 1 60); do curl -fsS -m 3 localhost:21114/api/software/version/server && break; sleep 3; done
+          echo
+          curl -fsS -o /dev/null -w "console %{http_code}\n" localhost:21114/ui/
+          (exec 3<>/dev/tcp/127.0.0.1/21117) && echo "hbbr accepts connections"
+          tail -n 5 hbbs.log
+
+      - name: Install nfpm
+        run: |
+          base="https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VERSION}"
+          archive="nfpm_${NFPM_VERSION}_Linux_x86_64.tar.gz"
+          curl -fsSL -o "$archive" "$base/$archive"
+          curl -fsSL -o checksums.txt "$base/checksums.txt"
+          grep " $archive\$" checksums.txt | sha256sum -c -
+          sudo tar -xzf "$archive" -C /usr/local/bin nfpm
+
+      - name: Pack
+        env:
+          BIN_DIR: target/${{ matrix.arch }}-unknown-linux-musl/release
+        run: |
+          mkdir dist
+          # same version rule as for the other apk: 1.1.16-sctg.8 becomes 1.1.16.8
+          export VERSION="$(echo "$VERSION" | sed 's/-sctg\././')"
+          for openwrt in ${{ matrix.openwrt_archs }}; do
+            for p in hbbs hbbr utils; do
+              NFPM_ARCH="$openwrt" nfpm package --config "packaging/openwrt/nfpm-$p.yaml" --packager apk --target dist/
+            done
+          done
+          cd dist && sha256sum * | tee "SHA256SUMS-${{ matrix.arch }}"
+
+      # The binaries cannot run on the x86 runner: only the layout and the registration of the packages are checked
+      - name: Install the OpenWrt apk on Alpine
+        run: |
+          for openwrt in ${{ matrix.openwrt_archs }}; do
+            echo "== $openwrt"
+            docker run --rm -e OPENWRT_ARCH="$openwrt" -v "$PWD/dist:/p:ro" alpine:3.22 sh -c '
+              echo "$OPENWRT_ARCH" > /etc/apk/arch &&
+              printf "#!/bin/sh\nexit 0\n" > /etc/rc.common && chmod +x /etc/rc.common &&
+              apk add --allow-untrusted /p/*_"$OPENWRT_ARCH".apk >/dev/null &&
+              apk info -v | grep sctgdesk-server &&
+              test -x /etc/init.d/sctgdesk-hbbs && test -f /etc/config/sctgdesk-hbbr && test -x /usr/bin/hbbs'
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.publish }}
+        with:
+          name: packages-${{ matrix.arch }}
+          path: dist/*
+          retention-days: 1
+          if-no-files-found: error
+
   publish:
     name: Upload to the pre-release
-    needs: packages
+    needs: [packages, mips]
     if: ${{ inputs.publish }}
     runs-on: ubuntu-latest
     permissions:
@@ -257,6 +379,6 @@ jobs:
           ls -l dist
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "$TAG" \
-              --notes "Pre-release. deb and rpm packages (amd64, arm64 and armv7) and OpenWrt apk packages of hbbs, hbbr and rustdesk-utils, built from static musl binaries. SHA-256 sums in SHA256SUMS-*."
+              --notes "Pre-release. deb and rpm packages (amd64, arm64 and armv7) and OpenWrt apk packages (including MIPS) of hbbs, hbbr and rustdesk-utils, built from static musl binaries. SHA-256 sums in SHA256SUMS-*."
           fi
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber dist/*
