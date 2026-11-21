@@ -21,6 +21,7 @@ export default {
     failed: "El servidor no pudo crear la copia de seguridad (HTTP {status}).",
   },
   nav: {
+    apiDocs: "Documentación de la API",
     backup: 'Copia de seguridad',
     dashboard: 'Panel', devices: 'Dispositivos', users: 'Usuarios', groups: 'Grupos', addressBooks: 'Libretas de direcciones',
     connections: 'Conexiones', settings: 'Ajustes',

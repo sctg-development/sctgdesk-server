@@ -32,6 +32,15 @@ This website use:
                 <BellIcon class="h-6 w-6" aria-hidden="true" />
               </button>
 
+              <!-- API documentation (RapiDoc): administrators only, in a new tab so the console stays open -->
+              <a v-if="isAdmin" href="/api/doc/" target="_blank" rel="noopener" data-test="api-doc-link"
+                :title="t('nav.apiDocs')"
+                class="relative ml-3 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                <span class="absolute -inset-1.5" />
+                <span class="sr-only">{{ t('nav.apiDocs') }}</span>
+                <BookOpenIcon class="h-6 w-6" aria-hidden="true" />
+              </a>
+
               <!-- Profile dropdown -->
               <Menu as="div" class="relative ml-3">
                 <div>
@@ -92,6 +101,12 @@ This website use:
               <span class="sr-only">{{ t('nav.notifications') }}</span>
               <BellIcon class="h-6 w-6" aria-hidden="true" />
             </button>
+            <a v-if="isAdmin" href="/api/doc/" target="_blank" rel="noopener" :title="t('nav.apiDocs')"
+              class="relative ml-3 flex-shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+              <span class="absolute -inset-1.5" />
+              <span class="sr-only">{{ t('nav.apiDocs') }}</span>
+              <BookOpenIcon class="h-6 w-6" aria-hidden="true" />
+            </a>
           </div>
           <div class="mt-3 space-y-1 px-2">
             <DisclosureButton v-for="item in userNavigation" :key="item.key" as="a" :href="item.href"
@@ -145,7 +160,7 @@ This website use:
 <script setup lang="ts">
 import { $require } from '@/utilities/viteHelper.js'
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { Bars3Icon, BellIcon, BookOpenIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { LoginApi } from '@/api';

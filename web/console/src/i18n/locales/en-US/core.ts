@@ -21,6 +21,7 @@ export default {
     failed: "The server could not make the backup (HTTP {status}).",
   },
   nav: {
+    apiDocs: "API documentation",
     backup: 'Backup',
     dashboard: 'Dashboard', devices: 'Devices', users: 'Users', groups: 'Groups', addressBooks: 'Address books',
     connections: 'Connections', settings: 'Settings',

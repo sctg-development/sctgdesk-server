@@ -21,6 +21,7 @@ export default {
     failed: "Le serveur n’a pas pu créer la sauvegarde (HTTP {status}).",
   },
   nav: {
+    apiDocs: "Documentation de l’API",
     backup: 'Sauvegarde',
     dashboard: 'Tableau de bord', devices: 'Appareils', users: 'Utilisateurs', groups: 'Groupes', addressBooks: 'Carnets d’adresses',
     connections: 'Connexions', settings: 'Paramètres',

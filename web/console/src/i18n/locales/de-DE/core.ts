@@ -21,6 +21,7 @@ export default {
     failed: "Der Server konnte die Sicherung nicht erstellen (HTTP {status}).",
   },
   nav: {
+    apiDocs: "API-Dokumentation",
     backup: 'Backup',
     dashboard: 'Übersicht', devices: 'Geräte', users: 'Benutzer', groups: 'Gruppen', addressBooks: 'Adressbücher',
     connections: 'Verbindungen', settings: 'Einstellungen',
