@@ -152,6 +152,31 @@ impl Server {
         (status, body)
     }
 
+    /// A DELETE without body and without Content-Type, which is what a browser sends (the console does it with
+    /// axios). Rocket checks the Content-Type of a DELETE against the `format` of a route, so this is what
+    /// catches a route that wrongly declares one.
+    fn delete_like_a_browser(&self, path: &str, bearer: Option<&str>) -> u16 {
+        let mut stream = TcpStream::connect(("127.0.0.1", self.api_port)).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(10)))
+            .unwrap();
+        let auth = bearer
+            .map(|b| format!("Authorization: Bearer {b}\r\n"))
+            .unwrap_or_default();
+        write!(
+            stream,
+            "DELETE {path} HTTP/1.1\r\nHost: localhost\r\n{auth}Accept: application/json\r\nConnection: close\r\n\r\n"
+        )
+        .unwrap();
+        let mut answer = Vec::new();
+        let _ = stream.read_to_end(&mut answer);
+        String::from_utf8_lossy(&answer)
+            .split_whitespace()
+            .nth(1)
+            .and_then(|code| code.parse().ok())
+            .expect("no HTTP answer")
+    }
+
     /// GET with the given bearer token, returns the HTTP status and the raw body (binary).
     fn get_bytes(&self, path: &str, bearer: Option<&str>) -> (u16, Vec<u8>) {
         let mut stream = TcpStream::connect(("127.0.0.1", self.api_port)).unwrap();
@@ -1020,7 +1045,10 @@ fn hbbr_answers_its_probes() {
     while TcpStream::connect(("127.0.0.1", health)).is_err()
         || TcpStream::connect(("127.0.0.1", relay)).is_err()
     {
-        assert!(start.elapsed() < Duration::from_secs(30), "hbbr did not start");
+        assert!(
+            start.elapsed() < Duration::from_secs(30),
+            "hbbr did not start"
+        );
         std::thread::sleep(Duration::from_millis(100));
     }
     assert_eq!(get(health, "/livez"), "HTTP/1.1 200 OK");
@@ -1030,7 +1058,6 @@ fn hbbr_answers_its_probes() {
     let _ = child.wait();
     let _ = std::fs::remove_dir_all(&dir);
 }
-
 
 // ---- the backup downloaded by an administrator (--allow-remote-backup) ----
 
@@ -1115,7 +1142,10 @@ async fn only_an_administrator_deletes_a_device() {
     .await
     .unwrap();
     // a plain user is refused and the device stays; so is an anonymous caller
-    assert_eq!(server.http("DELETE", "/api/peers/DEL1", Some(&alice), "").0, 403);
+    assert_eq!(
+        server.http("DELETE", "/api/peers/DEL1", Some(&alice), "").0,
+        403
+    );
     assert_eq!(server.http("DELETE", "/api/peers/DEL1", None, "").0, 401);
     let count = || async {
         sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM peer WHERE id = 'DEL1'")
@@ -1124,8 +1154,14 @@ async fn only_an_administrator_deletes_a_device() {
             .unwrap()
     };
     assert_eq!(count().await, 1);
-    assert_eq!(server.http("DELETE", "/api/peers/DEL1", Some(&admin), "").0, 200);
+    assert_eq!(
+        server.delete_like_a_browser("/api/peers/DEL1", Some(&admin)),
+        200
+    );
     assert_eq!(count().await, 0);
     // a second deletion finds nothing
-    assert_eq!(server.http("DELETE", "/api/peers/DEL1", Some(&admin), "").0, 404);
+    assert_eq!(
+        server.delete_like_a_browser("/api/peers/DEL1", Some(&admin)),
+        404
+    );
 }

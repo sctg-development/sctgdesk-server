@@ -563,7 +563,8 @@ async fn audit_conn_delete(
 /// of connections are left alone, and a device that is still running registers itself again at its next
 /// heartbeat. Answers 404 when no device has this id.
 #[openapi(tag = "peer")]
-#[delete("/api/peers/<id>", format = "application/json")]
+// no `format`: Rocket checks the Content-Type of a DELETE, and a browser sends none when there is no body
+#[delete("/api/peers/<id>")]
 async fn peer_delete(
     state: &State<ApiState>,
     user: AuthenticatedUser,
