@@ -57,6 +57,7 @@ export default {
     colDevice: 'Dispositivo', colUser: 'Utente', colLastSeen: 'Ultima attività', colStatus: 'Stato',
   },
   devices: {
+    deleteTitle: "Elimina il dispositivo", confirmDelete: "Rimuovere {device} ({id}) dall’elenco dei dispositivi? Le rubriche e la cronologia delle connessioni vengono conservate e il dispositivo riappare se è ancora in esecuzione.", deleted: "Dispositivo {id} eliminato.", deleteFailed: "Impossibile eliminare il dispositivo.",
     id: 'Id', status: 'Stato', username: 'Utente', os: 'Sistema', ip: 'Ip', cpu: 'Processore',
     delete: 'Elimina',
     openWebClient: 'Apri il client web', noWebClient: 'Su questo server non è configurato alcun client web.',

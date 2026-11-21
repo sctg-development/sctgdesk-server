@@ -73,11 +73,14 @@ This website use:
                         </td>
                         <td
                           class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          <ConnectButtons :device-id="peer.id" :device-name="peer.info.hostname" class="mr-2" />
-                          <a href="javascript:alert('todo')"
-                            class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
-                            {{ t('devices.delete') }}
-                          </a>
+                          <!-- gap-2 keeps the connect and delete buttons from touching -->
+                          <div class="inline-flex flex-wrap items-center justify-center gap-2">
+                            <ConnectButtons :device-id="peer.id" :device-name="peer.info.hostname" />
+                            <button v-if="isAdmin" type="button" @click="toDelete = peer"
+                              class="inline-block px-4 py-1.5 border rounded-md border-red-600 text-red-600 hover:bg-red-600 hover:text-white font-medium">
+                              {{ t('devices.delete') }}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     </tbody>
@@ -88,14 +91,21 @@ This website use:
           </div>
         </section>
         <!-- ====== Table Section End -->
+        <Modal v-if="toDelete" :title="t('devices.deleteTitle')" :okLabel="t('devices.delete')"
+          @modalOk="deletePeer()" @modalCancel="toDelete = null">
+          <p class="text-sm text-gray-700">{{ t('devices.confirmDelete', { device: toDelete.info?.hostname || toDelete.id, id: toDelete.id }) }}</p>
+        </Modal>
+        <p v-if="deleteMessage" role="status" class="mt-3 text-sm" :class="deleteFailed ? 'text-red-700' : 'text-green-700'">{{ deleteMessage }}</p>
 </template>
 <script setup lang="ts">
 import { Peer, PeerApi } from '@/api';
 import { useUserStore } from '@/stores/sctgDeskStore';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import ClipboardButton from './ClipboardButton.vue';
 import { t } from '@/i18n';
+import Modal from '@/components/Modal.vue';
+import { apiRequest } from '@/utilities/http';
 import ConnectButtons from '@/components/ConnectButtons.vue';
 import { openWebClient, webClientAvailable } from '@/utilities/webclient';
 
@@ -103,6 +113,34 @@ const userStore = useUserStore();
 const router = useRouter();
 
 const peers = ref([] as Peer[]);
+/** Deleting a device is for the administrators (the server refuses the others anyway). */
+const isAdmin = computed(() => !!userStore.user?.admin);
+/** The device waiting for the confirmation of its deletion. */
+const toDelete = ref<Peer | null>(null);
+const deleteMessage = ref('');
+const deleteFailed = ref(false);
+
+/**
+ * Deletes the confirmed device on the server and removes it from the table. The device registers itself
+ * again if it is still running, which the confirmation text says.
+ */
+async function deletePeer(): Promise<void> {
+  const peer = toDelete.value;
+  toDelete.value = null;
+  if (!peer) {
+    return;
+  }
+  try {
+    await apiRequest('delete', `/api/peers/${encodeURIComponent(peer.id)}`);
+    peers.value = peers.value.filter((p) => p.id !== peer.id);
+    deleteFailed.value = false;
+    deleteMessage.value = t('devices.deleted', { id: peer.id });
+  } catch (error) {
+    console.error(error);
+    deleteFailed.value = true;
+    deleteMessage.value = t('devices.deleteFailed');
+  }
+}
 
 onMounted(() => {
   getPeers().then((data) => {

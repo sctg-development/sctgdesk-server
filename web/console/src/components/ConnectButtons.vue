@@ -10,7 +10,7 @@ they all behave the same way:
 Icons only, with a tooltip and an accessible name: the buttons sit in table cells where a text would be too long.
 -->
 <template>
-  <span class="inline-flex items-center gap-1.5 align-middle">
+  <span class="inline-flex items-center gap-1.5 align-middle m-0.5">
     <a :href="nativeClientUrl(deviceId)" :title="nativeTitle" :aria-label="nativeTitle" data-test="connect-native"
       class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white hover:bg-gray-50">
       <img :src="logo" alt="" class="h-5 w-5" />

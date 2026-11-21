@@ -57,6 +57,7 @@ export default {
     colDevice: 'Appareil', colUser: 'Utilisateur', colLastSeen: 'Dernière activité', colStatus: 'État',
   },
   devices: {
+    deleteTitle: "Supprimer l’appareil", confirmDelete: "Retirer {device} ({id}) de la liste des appareils ? Les carnets d’adresses et l’historique des connexions sont conservés, et l’appareil réapparaît s’il fonctionne encore.", deleted: "Appareil {id} supprimé.", deleteFailed: "L’appareil n’a pas pu être supprimé.",
     id: 'Id', status: 'État', username: 'Utilisateur', os: 'Système', ip: 'Ip', cpu: 'Processeur',
     delete: 'Supprimer',
     openWebClient: 'Ouvrir le client web', noWebClient: 'Aucun client web n’est configuré sur ce serveur.',

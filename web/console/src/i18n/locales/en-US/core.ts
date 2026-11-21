@@ -57,6 +57,7 @@ export default {
     colDevice: 'Device', colUser: 'Username', colLastSeen: 'Last seen', colStatus: 'Status',
   },
   devices: {
+    deleteTitle: "Delete the device", confirmDelete: "Remove {device} ({id}) from the list of devices? The address books and the history of connections are kept, and the device appears again if it is still running.", deleted: "Device {id} deleted.", deleteFailed: "The device could not be deleted.",
     id: 'Id', status: 'Status', username: 'Username', os: 'Os', ip: 'Ip', cpu: 'Cpu',
     delete: 'Delete',
     openWebClient: 'Open the web client', noWebClient: 'No web client is configured on this server.',

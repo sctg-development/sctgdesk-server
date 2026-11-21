@@ -104,6 +104,25 @@ impl ApiState {
         deleted
     }
 
+    /// Removes a device from the list of the devices (table `peer`). The caller checks the user is an
+    /// administrator.
+    ///
+    /// Only the registration is dropped: the address books and the history of connections keep their
+    /// references to the id, and a device that is still running registers itself again at its next heartbeat.
+    ///
+    /// # Returns
+    /// `Some(n)` rows removed (0 when no device has this id), `None` on a database error.
+    pub async fn delete_peer(&self, id: &str) -> Option<u64> {
+        let mut conn = self.db.pool.acquire().await.ok()?;
+        sqlx::query("DELETE FROM peer WHERE id = ?")
+            .bind(id)
+            .execute(&mut *conn)
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| log::error!("cannot delete the device {}: {}", id, e))
+            .ok()
+    }
+
     /// The profile of a user, `None` if the user does not exist.
     pub async fn user_profile(&self, user_id: &UserId) -> Option<UserProfile> {
         let mut conn = self.db.pool.acquire().await.ok()?;

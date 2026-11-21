@@ -137,6 +137,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 audit_note,
                 audit_conn_list,
                 audit_conn_delete,
+                peer_delete,
                 config_file_get,
                 config_file_validate,
                 config_file_check,
@@ -554,6 +555,32 @@ async fn audit_conn_delete(
     }
     let deleted = state.audit_conn_delete(&request.guids, request.all).await;
     Ok(Json(AuditConnDeleteResponse { deleted }))
+}
+
+/// # Delete a device
+///
+/// Administrators only. Removes the device `id` from the list of devices. The address books and the history
+/// of connections are left alone, and a device that is still running registers itself again at its next
+/// heartbeat. Answers 404 when no device has this id.
+#[openapi(tag = "peer")]
+#[delete("/api/peers/<id>", format = "application/json")]
+async fn peer_delete(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    id: &str,
+) -> Result<Json<serde_json::Value>, status::Custom<()>> {
+    if !state
+        .is_current_user_admin(&user.info)
+        .await
+        .unwrap_or(false)
+    {
+        return Err(forbidden());
+    }
+    match state.delete_peer(id).await {
+        Some(0) => Err(status::Custom(Status::NotFound, ())),
+        Some(_) => Ok(Json(serde_json::json!({ "ok": true }))),
+        None => Err(status::Custom(Status::InternalServerError, ())),
+    }
 }
 
 /// Where the editable configuration file `name` lives, and the text to show when it does not exist yet.

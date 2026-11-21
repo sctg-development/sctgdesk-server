@@ -1090,3 +1090,42 @@ async fn an_administrator_downloads_a_backup() {
     assert!(files.contains_key("sctgdesk-backup/id_ed25519.pub"));
     assert!(files.contains_key("sctgdesk-backup/MANIFEST.txt"));
 }
+
+// ---- the deletion of a device by an administrator ----
+
+#[hbb_common::tokio::test(crate = "hbb_common::tokio")]
+async fn only_an_administrator_deletes_a_device() {
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let server = Server::start(&[], &[]);
+    let admin = audit_login(&server, "admin", "Hello,world!");
+    let body = r#"{"name":"alice","password":"pw-alice-123","confirm-password":"pw-alice-123","email":"alice@x.org","is_admin":false,"group_name":"Default"}"#;
+    assert_eq!(server.http("POST", "/api/user", Some(&admin), body).0, 200);
+    let alice = audit_login(&server, "alice", "pw-alice-123");
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect(&format!("sqlite://{}/db_v2.sqlite3", server.dir.display()))
+        .await
+        .expect("the database of hbbs");
+    sqlx::query(
+        "INSERT INTO peer (guid, id, uuid, pk, info) VALUES (randomblob(16), 'DEL1', randomblob(16), randomblob(32), '{}')",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    // a plain user is refused and the device stays; so is an anonymous caller
+    assert_eq!(server.http("DELETE", "/api/peers/DEL1", Some(&alice), "").0, 403);
+    assert_eq!(server.http("DELETE", "/api/peers/DEL1", None, "").0, 401);
+    let count = || async {
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM peer WHERE id = 'DEL1'")
+            .fetch_one(&pool)
+            .await
+            .unwrap()
+    };
+    assert_eq!(count().await, 1);
+    assert_eq!(server.http("DELETE", "/api/peers/DEL1", Some(&admin), "").0, 200);
+    assert_eq!(count().await, 0);
+    // a second deletion finds nothing
+    assert_eq!(server.http("DELETE", "/api/peers/DEL1", Some(&admin), "").0, 404);
+}

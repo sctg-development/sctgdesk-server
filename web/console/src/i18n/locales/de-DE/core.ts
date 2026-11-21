@@ -57,6 +57,7 @@ export default {
     colDevice: 'Gerät', colUser: 'Benutzer', colLastSeen: 'Zuletzt gesehen', colStatus: 'Status',
   },
   devices: {
+    deleteTitle: "Gerät löschen", confirmDelete: "{device} ({id}) aus der Geräteliste entfernen? Adressbücher und Verbindungsverlauf bleiben erhalten; das Gerät erscheint wieder, wenn es noch läuft.", deleted: "Gerät {id} gelöscht.", deleteFailed: "Das Gerät konnte nicht gelöscht werden.",
     id: 'Id', status: 'Status', username: 'Benutzer', os: 'Betriebssystem', ip: 'Ip', cpu: 'Prozessor',
     delete: 'Löschen',
     openWebClient: 'Web-Client öffnen', noWebClient: 'Auf diesem Server ist kein Web-Client konfiguriert.',
