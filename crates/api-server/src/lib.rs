@@ -61,11 +61,12 @@ use utils::{
     AbSharedProfilesResponse, AbTag, BearerAuthToken, OidcAuthRequest, OidcAuthUrl, OidcResponse,
     OidcState, OidcUser, OidcUserInfo, OidcUserStatus,
 };
-use utils::{AuditConnEvent, AuditConnList, AuditNoteRequest};
 use utils::{
     AuditConnDeleteRequest, AuditConnDeleteResponse, ChangePasswordRequest, ConfigFileRequest,
-    ConfigFileResponse, ConfigValidation, ErrorBody, UserProfile, UserProfileUpdate, WebClientResponse,
+    ConfigFileResponse, ConfigValidation, ErrorBody, UserProfile, UserProfileUpdate,
+    WebClientResponse,
 };
+use utils::{AuditConnEvent, AuditConnList, AuditNoteRequest};
 use utils::{DeviceGroupPayload, DeviceGroupsResponse};
 
 use base64::prelude::{Engine as _, BASE64_STANDARD};
@@ -548,9 +549,7 @@ async fn audit_conn_delete(
     {
         return Err(forbidden());
     }
-    let deleted = state
-        .audit_conn_delete(&request.guids, request.all)
-        .await;
+    let deleted = state.audit_conn_delete(&request.guids, request.all).await;
     Ok(Json(AuditConnDeleteResponse { deleted }))
 }
 
@@ -559,7 +558,9 @@ async fn audit_conn_delete(
 fn config_file_target(name: &str) -> Option<(PathBuf, &'static str)> {
     match name {
         "s3" => Some((
-            PathBuf::from(env::var("S3CONFIG_FILE").unwrap_or_else(|_| "s3config.toml".to_string())),
+            PathBuf::from(
+                env::var("S3CONFIG_FILE").unwrap_or_else(|_| "s3config.toml".to_string()),
+            ),
             s3software::CONFIG_TEMPLATE,
         )),
         "oauth2" => Some((
@@ -609,7 +610,8 @@ async fn config_file_guard(
     {
         return Err(config_refusal(Status::Forbidden, "Administrators only."));
     }
-    config_file_target(name).ok_or_else(|| config_refusal(Status::NotFound, "Unknown configuration file."))
+    config_file_target(name)
+        .ok_or_else(|| config_refusal(Status::NotFound, "Unknown configuration file."))
 }
 
 /// # Read a configuration file
@@ -640,7 +642,11 @@ async fn config_file_get(
 ///
 /// Administrators only. Parses the text and checks the values (no network access).
 #[openapi(tag = "settings")]
-#[post("/api/settings/config/<name>/validate", format = "application/json", data = "<request>")]
+#[post(
+    "/api/settings/config/<name>/validate",
+    format = "application/json",
+    data = "<request>"
+)]
 async fn config_file_validate(
     state: &State<ApiState>,
     user: AuthenticatedUser,
@@ -657,7 +663,11 @@ async fn config_file_validate(
 /// then written atomically (temporary file, then rename), the previous file is kept as `<file>.bak`, and the
 /// cached OAuth2 providers are dropped so the change applies without a restart.
 #[openapi(tag = "settings")]
-#[put("/api/settings/config/<name>", format = "application/json", data = "<request>")]
+#[put(
+    "/api/settings/config/<name>",
+    format = "application/json",
+    data = "<request>"
+)]
 async fn config_file_save(
     state: &State<ApiState>,
     user: AuthenticatedUser,
@@ -667,11 +677,17 @@ async fn config_file_save(
     let (path, _) = config_file_guard(state, &user, name).await?;
     let validation = validate_config_content(name, &request.content);
     if !validation.valid {
-        return Err(status::Custom(Status::UnprocessableEntity, Json(validation)));
+        return Err(status::Custom(
+            Status::UnprocessableEntity,
+            Json(validation),
+        ));
     }
     write_config_atomically(&path, &request.content).map_err(|e| {
         log::error!("cannot write {}: {}", path.display(), e);
-        config_refusal(Status::InternalServerError, "The file could not be written.")
+        config_refusal(
+            Status::InternalServerError,
+            "The file could not be written.",
+        )
     })?;
     if name == "oauth2" {
         state.invalidate_oauth2_config().await;
@@ -704,8 +720,14 @@ fn profile_error(e: state::ProfileError) -> status::Custom<Json<ErrorBody>> {
     use state::ProfileError::*;
     let (status, error) = match e {
         Invalid(m) => (Status::BadRequest, m),
-        TooLarge => (Status::PayloadTooLarge, "The avatar is too large.".to_string()),
-        WrongPassword => (Status::Forbidden, "The current password is wrong.".to_string()),
+        TooLarge => (
+            Status::PayloadTooLarge,
+            "The avatar is too large.".to_string(),
+        ),
+        WrongPassword => (
+            Status::Forbidden,
+            "The current password is wrong.".to_string(),
+        ),
         Internal => (Status::InternalServerError, "Internal error.".to_string()),
     };
     status::Custom(status, Json(ErrorBody { error }))
@@ -1513,7 +1535,9 @@ async fn oidc_callback(
 
 /// Keeps only the characters of a UUID, so the session code can be put in a URL without any escaping.
 fn urlencoding_code(code: &str) -> String {
-    code.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '-').collect()
+    code.chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '-')
+        .collect()
 }
 
 /// # OIDC State
@@ -2994,10 +3018,16 @@ mod settings_tests {
         let path = dir.join("oauth2.toml");
         let _ = std::fs::remove_file(&path);
         write_config_atomically(&path, "first").unwrap();
-        assert!(!dir.join("oauth2.toml.bak").exists(), "nothing to back up the first time");
+        assert!(
+            !dir.join("oauth2.toml.bak").exists(),
+            "nothing to back up the first time"
+        );
         write_config_atomically(&path, "second").unwrap();
         assert_eq!(std::fs::read_to_string(&path).unwrap(), "second");
-        assert_eq!(std::fs::read_to_string(dir.join("oauth2.toml.bak")).unwrap(), "first");
+        assert_eq!(
+            std::fs::read_to_string(dir.join("oauth2.toml.bak")).unwrap(),
+            "first"
+        );
         assert!(!dir.join("oauth2.toml.tmp").exists());
     }
 

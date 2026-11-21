@@ -107,13 +107,12 @@ impl ApiState {
     /// The profile of a user, `None` if the user does not exist.
     pub async fn user_profile(&self, user_id: &UserId) -> Option<UserProfile> {
         let mut conn = self.db.pool.acquire().await.ok()?;
-        let row = sqlx::query(
-            r#"SELECT name, email, role, avatar, language FROM "user" WHERE guid = ?"#,
-        )
-        .bind(user_id)
-        .fetch_optional(&mut *conn)
-        .await
-        .ok()??;
+        let row =
+            sqlx::query(r#"SELECT name, email, role, avatar, language FROM "user" WHERE guid = ?"#)
+                .bind(user_id)
+                .fetch_optional(&mut *conn)
+                .await
+                .ok()??;
         Some(UserProfile {
             name: row.get("name"),
             email: row.get::<Option<String>, _>("email").unwrap_or_default(),
@@ -144,7 +143,12 @@ impl ApiState {
                 Some(Some(v.clone()))
             }
         };
-        let mut conn = self.db.pool.acquire().await.map_err(|_| ProfileError::Internal)?;
+        let mut conn = self
+            .db
+            .pool
+            .acquire()
+            .await
+            .map_err(|_| ProfileError::Internal)?;
         if let Some(avatar) = avatar {
             sqlx::query(r#"UPDATE "user" SET avatar = ? WHERE guid = ?"#)
                 .bind(avatar)
@@ -162,7 +166,9 @@ impl ApiState {
                 .map_err(|_| ProfileError::Internal)?;
         }
         drop(conn);
-        self.user_profile(user_id).await.ok_or(ProfileError::Internal)
+        self.user_profile(user_id)
+            .await
+            .ok_or(ProfileError::Internal)
     }
 
     /// Changes the password of a user after checking the current one. An account whose stored hash is
@@ -178,12 +184,18 @@ impl ApiState {
                 "The password must have at least {MIN_PASSWORD_LEN} characters."
             )));
         }
-        let mut conn = self.db.pool.acquire().await.map_err(|_| ProfileError::Internal)?;
-        let stored: Option<String> = sqlx::query_scalar(r#"SELECT password FROM "user" WHERE guid = ?"#)
-            .bind(user_id)
-            .fetch_optional(&mut *conn)
+        let mut conn = self
+            .db
+            .pool
+            .acquire()
             .await
             .map_err(|_| ProfileError::Internal)?;
+        let stored: Option<String> =
+            sqlx::query_scalar(r#"SELECT password FROM "user" WHERE guid = ?"#)
+                .bind(user_id)
+                .fetch_optional(&mut *conn)
+                .await
+                .map_err(|_| ProfileError::Internal)?;
         let stored = stored.ok_or(ProfileError::Internal)?;
         if !stored.is_empty() {
             // `verify` errors on a malformed hash: treat it as a mismatch, never as a success
@@ -219,18 +231,25 @@ mod tests {
     #[test]
     fn avatar_validation() {
         assert_eq!(validate_avatar(PNG), Ok(()));
-        assert!(matches!(validate_avatar("http://x/a.png"), Err(ProfileError::Invalid(_))));
+        assert!(matches!(
+            validate_avatar("http://x/a.png"),
+            Err(ProfileError::Invalid(_))
+        ));
         assert!(matches!(
             validate_avatar("data:image/svg+xml;base64,AAAA"),
             Err(ProfileError::Invalid(_))
         ));
-        assert!(matches!(validate_avatar("data:image/png;base64,@@@"), Err(ProfileError::Invalid(_))));
+        assert!(matches!(
+            validate_avatar("data:image/png;base64,@@@"),
+            Err(ProfileError::Invalid(_))
+        ));
         let big = format!("data:image/png;base64,{}", "A".repeat(MAX_AVATAR_BYTES * 2));
         assert_eq!(validate_avatar(&big), Err(ProfileError::TooLarge));
     }
 
     async fn state(name: &str) -> (ApiState, UserId) {
-        let p = std::env::temp_dir().join(format!("profile-{}-{}.sqlite3", name, std::process::id()));
+        let p =
+            std::env::temp_dir().join(format!("profile-{}-{}.sqlite3", name, std::process::id()));
         for ext in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{}{}", p.display(), ext));
         }
@@ -256,36 +275,91 @@ mod tests {
     async fn profile_roundtrip_and_validation() {
         let (state, id) = state("profile").await;
         let p = state.user_profile(&id).await.unwrap();
-        assert_eq!((p.name.as_str(), p.avatar.as_deref(), p.language.as_deref()), ("alice", None, None));
+        assert_eq!(
+            (p.name.as_str(), p.avatar.as_deref(), p.language.as_deref()),
+            ("alice", None, None)
+        );
         let p = state
-            .user_profile_update(&id, UserProfileUpdate { avatar: Some(Some(PNG.into())), language: Some("fr-FR".into()) })
+            .user_profile_update(
+                &id,
+                UserProfileUpdate {
+                    avatar: Some(Some(PNG.into())),
+                    language: Some("fr-FR".into()),
+                },
+            )
             .await
             .unwrap();
         assert_eq!(p.avatar.as_deref(), Some(PNG));
         assert_eq!(p.language.as_deref(), Some("fr-FR"));
         // an absent field is kept
-        let p = state.user_profile_update(&id, UserProfileUpdate { avatar: None, language: Some("de-DE".into()) }).await.unwrap();
+        let p = state
+            .user_profile_update(
+                &id,
+                UserProfileUpdate {
+                    avatar: None,
+                    language: Some("de-DE".into()),
+                },
+            )
+            .await
+            .unwrap();
         assert_eq!(p.avatar.as_deref(), Some(PNG));
         // an unknown language is refused and changes nothing
         assert!(state
-            .user_profile_update(&id, UserProfileUpdate { avatar: Some(None), language: Some("xx".into()) })
+            .user_profile_update(
+                &id,
+                UserProfileUpdate {
+                    avatar: Some(None),
+                    language: Some("xx".into())
+                }
+            )
             .await
             .is_err());
         assert!(state.user_profile(&id).await.unwrap().avatar.is_some());
         // null removes
-        let p = state.user_profile_update(&id, UserProfileUpdate { avatar: Some(None), language: None }).await.unwrap();
+        let p = state
+            .user_profile_update(
+                &id,
+                UserProfileUpdate {
+                    avatar: Some(None),
+                    language: None,
+                },
+            )
+            .await
+            .unwrap();
         assert!(p.avatar.is_none());
     }
 
     #[tokio::test]
     async fn password_change() {
         let (state, id) = state("password").await;
-        assert_eq!(state.user_change_password(&id, Some("nope"), "newpassword1").await, Err(ProfileError::WrongPassword));
-        assert_eq!(state.user_change_password(&id, None, "newpassword1").await, Err(ProfileError::WrongPassword));
-        assert!(matches!(state.user_change_password(&id, Some("pw-alice-1"), "short").await, Err(ProfileError::Invalid(_))));
-        assert_eq!(state.user_change_password(&id, Some("pw-alice-1"), "newpassword1").await, Ok(()));
+        assert_eq!(
+            state
+                .user_change_password(&id, Some("nope"), "newpassword1")
+                .await,
+            Err(ProfileError::WrongPassword)
+        );
+        assert_eq!(
+            state.user_change_password(&id, None, "newpassword1").await,
+            Err(ProfileError::WrongPassword)
+        );
+        assert!(matches!(
+            state
+                .user_change_password(&id, Some("pw-alice-1"), "short")
+                .await,
+            Err(ProfileError::Invalid(_))
+        ));
+        assert_eq!(
+            state
+                .user_change_password(&id, Some("pw-alice-1"), "newpassword1")
+                .await,
+            Ok(())
+        );
         assert!(state
-            .user_login(&"alice".to_string(), UserPasswordInfo::from_password("newpassword1"), false)
+            .user_login(
+                &"alice".to_string(),
+                UserPasswordInfo::from_password("newpassword1"),
+                false
+            )
             .await
             .is_some());
     }
@@ -296,10 +370,12 @@ mod tests {
         let mut conn = state.db.pool.acquire().await.unwrap();
         // a fresh database only gets db.sql, not the migrations (see Database::init_db): create the table
         // from its migration so the test does not depend on that
-        sqlx::raw_sql(include_str!("../../api-server/db_v2/migrations/20261110100000_conn_history.sql"))
-            .execute(&mut *conn)
-            .await
-            .unwrap();
+        sqlx::raw_sql(include_str!(
+            "../../api-server/db_v2/migrations/20261110100000_conn_history.sql"
+        ))
+        .execute(&mut *conn)
+        .await
+        .unwrap();
         for i in 0..3u8 {
             sqlx::query("INSERT INTO conn_history (guid, device_id, conn_id, session_id, conn_type) VALUES (?, 'd', ?, ?, 0)")
                 .bind(vec![i; 16])
@@ -311,7 +387,12 @@ mod tests {
         }
         drop(conn);
         let guid = utils::guid_into_uuid(vec![0u8; 16]).unwrap();
-        assert_eq!(state.audit_conn_delete(&[guid, "garbage".into()], false).await, 1);
+        assert_eq!(
+            state
+                .audit_conn_delete(&[guid, "garbage".into()], false)
+                .await,
+            1
+        );
         assert_eq!(state.audit_conn_delete(&[], false).await, 0);
         assert_eq!(state.audit_conn_delete(&[], true).await, 2);
     }

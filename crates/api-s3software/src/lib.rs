@@ -150,7 +150,9 @@ pub fn validate_config_toml(content: &str) -> (Vec<String>, Vec<String>) {
     }
     for (name, value) in [("AccessKey", &s.access_key), ("SecretKey", &s.secret_key)] {
         if value.trim().is_empty() {
-            warnings.push(format!("`{name}` is empty: the download links cannot be signed."));
+            warnings.push(format!(
+                "`{name}` is empty: the download links cannot be signed."
+            ));
         } else if value.starts_with("your_") {
             warnings.push(format!("`{name}` still looks like a placeholder."));
         }
@@ -221,10 +223,16 @@ mod tests {
         assert!(e.is_empty(), "{e:?}");
         let (e, _) = validate_config_toml("[s3config]\nPage = \"x\"");
         assert!(e[0].starts_with("Syntax error"));
-        let bad = CONFIG_TEMPLATE.replace("https://compat.objectstorage", "nope://compat.objectstorage");
+        let bad = CONFIG_TEMPLATE.replace(
+            "https://compat.objectstorage",
+            "nope://compat.objectstorage",
+        );
         let (e, _) = validate_config_toml(&bad);
         assert_eq!(e.len(), 1, "{e:?}");
-        let empty_key = CONFIG_TEMPLATE.replace("AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"", "AccessKey = \"\"");
+        let empty_key = CONFIG_TEMPLATE.replace(
+            "AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"",
+            "AccessKey = \"\"",
+        );
         let (e, w) = validate_config_toml(&empty_key);
         assert!(e.is_empty());
         assert_eq!(w.len(), 1);

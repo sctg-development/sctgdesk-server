@@ -167,8 +167,13 @@ pub fn validate_config_toml(content: &str) -> (Vec<String>, Vec<String>) {
         Ok(c) => c,
         Err(e) => {
             // an empty or fully commented file is a valid TOML document that lacks the `provider` array
-            if content.lines().all(|l| l.trim().is_empty() || l.trim_start().starts_with('#')) {
-                warnings.push("No provider is configured: only the password login is available.".into());
+            if content
+                .lines()
+                .all(|l| l.trim().is_empty() || l.trim_start().starts_with('#'))
+            {
+                warnings.push(
+                    "No provider is configured: only the password login is available.".into(),
+                );
             } else {
                 errors.push(format!("Syntax error: {e}"));
             }
@@ -197,7 +202,9 @@ pub fn validate_config_toml(content: &str) -> (Vec<String>, Vec<String>) {
             ("token_exchange_url", &p.token_exchange_url),
         ] {
             if !is_http_url(value) {
-                errors.push(format!("{label}: `{field}` must be an absolute http(s) URL."));
+                errors.push(format!(
+                    "{label}: `{field}` must be an absolute http(s) URL."
+                ));
             }
         }
         if !p.op.trim().is_empty() && !seen_ops.insert(p.op.clone()) {
@@ -205,10 +212,15 @@ pub fn validate_config_toml(content: &str) -> (Vec<String>, Vec<String>) {
         }
         // the clients send `op` and the server looks the provider up by `oidc/<op>`
         if !p.op.is_empty() && p.op_auth_string != format!("oidc/{}", p.op) {
-            errors.push(format!("{label}: `op_auth_string` must be \"oidc/{}\".", p.op));
+            errors.push(format!(
+                "{label}: `op_auth_string` must be \"oidc/{}\".",
+                p.op
+            ));
         }
         if p.app_id.starts_with("your_") || p.app_secret.starts_with("your_") {
-            warnings.push(format!("{label}: `app_id` or `app_secret` still looks like a placeholder."));
+            warnings.push(format!(
+                "{label}: `app_id` or `app_secret` still looks like a placeholder."
+            ));
         }
     }
     (errors, warnings)
@@ -251,7 +263,10 @@ mod tests {
         let (e, _) = validate_config_toml("[[provider]\nx");
         assert!(e[0].starts_with("Syntax error"));
         let (e, _) = validate_config_toml(&GOOD.replace("Github", "Nope"));
-        assert!(e[0].starts_with("Syntax error"), "unknown provider enum: {e:?}");
+        assert!(
+            e[0].starts_with("Syntax error"),
+            "unknown provider enum: {e:?}"
+        );
         let bad = GOOD
             .replace("https://github.com/login/oauth/authorize", "ftp://x")
             .replace("scope = \"read:user\"", "scope = \"\"")
