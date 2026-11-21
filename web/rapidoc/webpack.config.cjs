@@ -27,6 +27,12 @@ const commonConfig = {
   module: {
     rules: [
       {
+        // repairs the prebuilt bundle of @sctg/rapidoc 9.3.8-b, see prism-jsdoc-fix.cjs
+        test: /rapidoc-min\.js$/,
+        enforce: "pre",
+        use: path.resolve(__dirname, "prism-jsdoc-fix.cjs"),
+      },
+      {
         test: /\.js$/,
         exclude: /node_modules/,
         use: {
