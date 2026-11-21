@@ -29,16 +29,18 @@ export default {
     oauthFailed: 'Ha fallado el inicio de sesión con {provider}.',
     oauthCancelled: 'Se ha cerrado la ventana de inicio de sesión.',
   },
+  connect: {
+    webTitle: 'Conectar con {device} mediante el cliente web', nativeTitle: 'Conectar con {device} mediante el cliente SCTGDesk', webLabel: 'Cliente web', nativeLabel: 'Cliente SCTGDesk',
+  },
   dashboard: {
     os: 'Sistemas', cpus: 'Procesadores', others: 'Otros',
     recentTitle: 'Últimos dispositivos conectados',
     recentEmpty: 'Ningún dispositivo se ha conectado todavía.',
     colDevice: 'Dispositivo', colUser: 'Usuario', colLastSeen: 'Última actividad', colStatus: 'Estado',
-    connect: 'Conectar', connectTitle: 'Conectar con {device} mediante el cliente web',
   },
   devices: {
     id: 'Id', status: 'Estado', username: 'Usuario', os: 'Sistema', ip: 'Ip', cpu: 'Procesador',
-    delete: 'Eliminar', connect: 'Conectar', connectTitle: 'Conectar con {device} mediante el cliente web',
+    delete: 'Eliminar',
     openWebClient: 'Abrir el cliente web', noWebClient: 'Este servidor no tiene ningún cliente web configurado.',
     online: 'en línea', offline: 'sin conexión',
   },
@@ -53,7 +55,6 @@ export default {
       started: 'Inicio (UTC)', ended: 'Fin (UTC)', device: 'Dispositivo', deviceId: 'Id del dispositivo',
       controlledFrom: 'Controlado desde', user: 'Usuario', type: 'Tipo', address: 'Dirección', note: 'Nota',
     },
-    connectTitle: 'Conectar con {device} mediante el cliente web',
     select: 'Seleccionar {id}', selectAll: 'Seleccionar todas las conexiones de esta página',
     purgeSelected: 'Purgar la selección ({count})', purgeAll: 'Purgar todo',
     purgeTitle: 'Purgar el historial de conexiones',

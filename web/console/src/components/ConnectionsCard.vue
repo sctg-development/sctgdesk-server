@@ -69,15 +69,19 @@ Administrators can also purge it (a selection, or everything). A click on a devi
               <td class="border-b border-[#E8E8E8] py-3 px-2 text-center text-sm">{{ r.started_at }} UTC</td>
               <td class="border-b border-[#E8E8E8] py-3 px-2 text-center text-sm">{{ duration(r) }}</td>
               <td class="border-b border-[#E8E8E8] py-3 px-2 text-center text-sm">
-                <!-- the name and the id both open the web client on the device -->
-                <template v-if="webClientAvailable()">
-                  <a href="#" @click.prevent="openWebClient(r.device_id)"
-                    :title="t('connections.connectTitle', { device: r.device_name || r.device_id })"
+                <!-- the name and the id open the native client; the globe next to them opens the web client -->
+                <div class="inline-flex items-center gap-2">
+                  <a :href="nativeClientUrl(r.device_id)"
+                    :title="t('connect.nativeTitle', { device: r.device_name || r.device_id })"
                     class="text-indigo-600 hover:underline">{{ r.device_name || '' }}<br /><span>{{ r.device_id }}</span></a>
-                </template>
-                <template v-else>
-                  {{ r.device_name || '' }}<br /><span class="text-gray-500">{{ r.device_id }}</span>
-                </template>
+                  <button v-if="webClientAvailable()" type="button" @click="openWebClient(r.device_id)"
+                    :title="t('connect.webTitle', { device: r.device_name || r.device_id })"
+                    :aria-label="t('connect.webTitle', { device: r.device_name || r.device_id })"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-indigo-600 text-white hover:bg-indigo-500">
+                    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><ellipse cx="12" cy="12" rx="4" ry="9" /><path d="M3 12h18" /></svg>
+                  </button>
+                </div>
               </td>
               <td class="border-b border-[#E8E8E8] py-3 px-2 text-center text-sm">
                 {{ r.controller_name || '' }}<br /><span class="text-gray-500">{{ r.controller_id || '' }}</span>
@@ -124,7 +128,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import Modal from '@/components/Modal.vue';
 import { t } from '@/i18n';
-import { openWebClient, webClientAvailable } from '@/utilities/webclient';
+import { nativeClientUrl, openWebClient, webClientAvailable } from '@/utilities/webclient';
 
 interface Connection {
   guid: string;

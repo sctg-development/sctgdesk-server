@@ -73,11 +73,7 @@ This website use:
                         </td>
                         <td
                           class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                          <button v-if="webClientAvailable()" type="button" @click="openWebClient(peer.id)"
-                            :title="t('devices.connectTitle', { device: peer.info.hostname || peer.id })"
-                            class="inline-block mr-2 px-6 py-2.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 font-medium">
-                            {{ t('devices.connect') }}
-                          </button>
+                          <ConnectButtons :device-id="peer.id" :device-name="peer.info.hostname" class="mr-2" />
                           <a href="javascript:alert('todo')"
                             class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
                             {{ t('devices.delete') }}
@@ -100,6 +96,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import ClipboardButton from './ClipboardButton.vue';
 import { t } from '@/i18n';
+import ConnectButtons from '@/components/ConnectButtons.vue';
 import { openWebClient, webClientAvailable } from '@/utilities/webclient';
 
 const userStore = useUserStore();

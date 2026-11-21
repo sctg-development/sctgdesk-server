@@ -29,16 +29,18 @@ export default {
     oauthFailed: 'The sign-in with {provider} failed.',
     oauthCancelled: 'The sign-in window was closed.',
   },
+  connect: {
+    webTitle: 'Connect to {device} with the web client', nativeTitle: 'Connect to {device} with the SCTGDesk client', webLabel: 'Web client', nativeLabel: 'SCTGDesk client',
+  },
   dashboard: {
     os: 'Os', cpus: 'Cpus', others: 'Others',
     recentTitle: 'Last connected devices',
     recentEmpty: 'No device has connected yet.',
     colDevice: 'Device', colUser: 'Username', colLastSeen: 'Last seen', colStatus: 'Status',
-    connect: 'Connect', connectTitle: 'Connect to {device} with the web client',
   },
   devices: {
     id: 'Id', status: 'Status', username: 'Username', os: 'Os', ip: 'Ip', cpu: 'Cpu',
-    delete: 'Delete', connect: 'Connect', connectTitle: 'Connect to {device} with the web client',
+    delete: 'Delete',
     openWebClient: 'Open the web client', noWebClient: 'No web client is configured on this server.',
     online: 'online', offline: 'offline',
   },
@@ -53,7 +55,6 @@ export default {
       started: 'Started (UTC)', ended: 'Ended (UTC)', device: 'Device', deviceId: 'Device id',
       controlledFrom: 'Controlled from', user: 'User', type: 'Type', address: 'Address', note: 'Note',
     },
-    connectTitle: 'Connect to {device} with the web client',
     select: 'Select {id}', selectAll: 'Select all the connections of this page',
     purgeSelected: 'Purge selected ({count})', purgeAll: 'Purge all',
     purgeTitle: 'Purge the history of connections',

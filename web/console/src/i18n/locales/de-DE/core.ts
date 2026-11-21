@@ -29,16 +29,18 @@ export default {
     oauthFailed: 'Die Anmeldung mit {provider} ist fehlgeschlagen.',
     oauthCancelled: 'Das Anmeldefenster wurde geschlossen.',
   },
+  connect: {
+    webTitle: 'Mit {device} über den Web-Client verbinden', nativeTitle: 'Mit {device} über den SCTGDesk-Client verbinden', webLabel: 'Web-Client', nativeLabel: 'SCTGDesk-Client',
+  },
   dashboard: {
     os: 'Betriebssysteme', cpus: 'Prozessoren', others: 'Andere',
     recentTitle: 'Zuletzt verbundene Geräte',
     recentEmpty: 'Es hat sich noch kein Gerät verbunden.',
     colDevice: 'Gerät', colUser: 'Benutzer', colLastSeen: 'Zuletzt gesehen', colStatus: 'Status',
-    connect: 'Verbinden', connectTitle: 'Mit {device} über den Web-Client verbinden',
   },
   devices: {
     id: 'Id', status: 'Status', username: 'Benutzer', os: 'Betriebssystem', ip: 'Ip', cpu: 'Prozessor',
-    delete: 'Löschen', connect: 'Verbinden', connectTitle: 'Mit {device} über den Web-Client verbinden',
+    delete: 'Löschen',
     openWebClient: 'Web-Client öffnen', noWebClient: 'Auf diesem Server ist kein Web-Client konfiguriert.',
     online: 'online', offline: 'offline',
   },
@@ -53,7 +55,6 @@ export default {
       started: 'Beginn (UTC)', ended: 'Ende (UTC)', device: 'Gerät', deviceId: 'Geräte-Id',
       controlledFrom: 'Gesteuert von', user: 'Benutzer', type: 'Typ', address: 'Adresse', note: 'Notiz',
     },
-    connectTitle: 'Mit {device} über den Web-Client verbinden',
     select: '{id} auswählen', selectAll: 'Alle Verbindungen dieser Seite auswählen',
     purgeSelected: 'Auswahl löschen ({count})', purgeAll: 'Alle löschen',
     purgeTitle: 'Verbindungsverlauf bereinigen',

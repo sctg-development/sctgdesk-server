@@ -49,6 +49,18 @@ export function webClientUrl(deviceId?: string): string | null {
 }
 
 /**
+ * Builds the link that the operating system hands to the installed native client.
+ *
+ * The scheme `rustdesk://` is the one the client registers (upstream's, kept by our branding): the browser asks
+ * the user to open the application, and does nothing visible when the client is not installed.
+ *
+ * @param deviceId The device to connect to.
+ */
+export function nativeClientUrl(deviceId: string): string {
+  return `rustdesk://${encodeURIComponent(deviceId)}`
+}
+
+/**
  * Opens the web client in a new tab. `noopener` keeps the web client from reaching back into the console
  * (it receives the session token, so it must not be able to script this window).
  */

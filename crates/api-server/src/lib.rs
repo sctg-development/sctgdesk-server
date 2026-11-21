@@ -798,8 +798,34 @@ async fn webclient() -> Json<WebClientResponse> {
     let url = env::var("WEB_CLIENT_URL")
         .ok()
         .map(|u| u.trim().to_string())
-        .filter(|u| !u.is_empty());
+        .filter(|u| is_valid_web_client_url(u));
     Json(WebClientResponse { url })
+}
+
+/// Tells whether `WEB_CLIENT_URL` can be handed to the console.
+///
+/// The console opens this address in the browser and appends the session token to it, so anything but an
+/// `http(s)` URL with a host is refused: a `javascript:` URL would run in the console's origin, and a
+/// malformed value would only give a broken button. The placeholders (`{id}`, `{token}`, `{user}`) are
+/// replaced by a neutral word first because `{` and `}` are not valid in the host part of a URL.
+///
+/// # Parameters
+/// * `value` - the trimmed value of the environment variable.
+///
+/// # Returns
+/// `true` when the value is an `http` or `https` URL with a non-empty host.
+fn is_valid_web_client_url(value: &str) -> bool {
+    let probe = value
+        .replace("{id}", "id")
+        .replace("{token}", "token")
+        .replace("{user}", "user");
+    match url::Url::parse(&probe) {
+        Ok(parsed) => {
+            matches!(parsed.scheme(), "http" | "https")
+                && parsed.host_str().is_some_and(|h| !h.is_empty())
+        }
+        Err(_) => false,
+    }
 }
 
 /// # Set the note of a connection
@@ -3009,6 +3035,21 @@ async fn readyz(state: &State<ApiState>) -> status::Custom<&'static str> {
 #[cfg(test)]
 mod settings_tests {
     use super::*;
+
+    /// Only `http(s)` URLs with a host reach the console; placeholders are accepted.
+    #[test]
+    fn web_client_url_validation() {
+        assert!(is_valid_web_client_url("https://web.example.org/"));
+        assert!(is_valid_web_client_url("http://localhost:8080/index.html"));
+        assert!(is_valid_web_client_url(
+            "https://x.org/#id={id}&t={token}&u={user}"
+        ));
+        assert!(!is_valid_web_client_url("javascript:alert(1)"));
+        assert!(!is_valid_web_client_url("rustdesk://abc"));
+        assert!(!is_valid_web_client_url("not a url"));
+        assert!(!is_valid_web_client_url("https://"));
+        assert!(!is_valid_web_client_url(""));
+    }
 
     /// Saving keeps the previous content in `.bak`, replaces the file and leaves no temporary file.
     #[test]

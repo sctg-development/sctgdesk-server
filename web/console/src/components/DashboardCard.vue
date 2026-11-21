@@ -44,11 +44,7 @@ This website use:
               <td class="py-3 px-3">{{ peer.status ? t('devices.online') : t('devices.offline') }}</td>
               <td class="py-3 px-3">{{ peer.last_online }}</td>
               <td class="py-3 px-3 text-right">
-                <button v-if="webClientAvailable()" type="button" @click="openWebClient(peer.id)"
-                  :title="t('dashboard.connectTitle', { device: peer.info.hostname || peer.id })"
-                  class="rounded-md bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">
-                  {{ t('dashboard.connect') }}
-                </button>
+                <ConnectButtons :device-id="peer.id" :device-name="peer.info.hostname" />
               </td>
             </tr>
           </tbody>
@@ -63,7 +59,7 @@ import { onMounted, ref } from 'vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { Peer, PeerApi } from '@/api';
 import { t } from '@/i18n';
-import { openWebClient, webClientAvailable } from '@/utilities/webclient';
+import ConnectButtons from '@/components/ConnectButtons.vue';
 import { Chart, registerables, ChartItem, ChartConfiguration } from 'chart.js';
 
 Chart.register(...registerables);
