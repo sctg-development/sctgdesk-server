@@ -3,6 +3,10 @@
 
 name: Generate multi-arch Docker image and release linux binaries
 
+# Builds the multi-arch image (amd64, arm64) and, on a GitHub release, adds the static Linux binaries of the image to
+# that release. A manual run can do the same as a dry run of the release: with `test_release` the tag is
+# `sctg-v<version>` taken from Cargo.toml, it is created as a pre-release when it does not exist yet, and the binaries
+# are uploaded to it.
 permissions:
   id-token: write
   contents: write
@@ -11,12 +15,25 @@ permissions:
 
 on:
   workflow_call:
+    inputs:
+      # always false when called by release.yml, which already has a release
+      test_release:
+        description: "Extract binaries as test release (pre-release sctg-v<version> of Cargo.toml)"
+        required: false
+        default: false
+        type: boolean
     secrets:
       DOCKER_USERNAME:
         required: true
       DOCKER_PASSWORD:
         required: true
   workflow_dispatch:
+    inputs:
+      test_release:
+        description: "Extract binaries as test release (pre-release sctg-v<version> of Cargo.toml)"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   image:
@@ -43,13 +60,31 @@ jobs:
   linux-binaries:
     name: Publish the static Linux binaries of the release
     needs: image
-    if: ${{ github.event_name == 'release' }}
+    if: ${{ github.event_name == 'release' || inputs.test_release }}
     runs-on: ubuntu-latest
     steps:
+      # needed to read the version of Cargo.toml when a manual run has no release to take the tag from
+      - uses: actions/checkout@v7
+
+      # A release carries its own tag; a manual test release uses the tag of the version being built, so that the
+      # published files are named after what the binaries report.
+      - name: Resolve the release tag
+        id: tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ -n "$RELEASE_TAG" ]; then
+            tag="$RELEASE_TAG"
+          else
+            version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)
+            tag="sctg-v$version"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
       - name: Extract the binaries from the image
         env:
           DIGEST: ${{ needs.image.outputs.image-digest }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           for arch in amd64 arm64; do
             mkdir -p "/tmp/$arch/zip"
@@ -62,17 +97,37 @@ jobs:
             docker rmi -f "sctg/sctgdesk-server@$DIGEST" || true
             (cd "/tmp/$arch/zip" && zip -r "/tmp/$arch/linux_static_${TAG}_${arch}.zip" .)
           done
+      - name: Create the release if needed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          TRIGGER: ${{ github.event_name }}
+        run: |
+          # a release event already has its release; a manual test release creates it, as a pre-release so that it
+          # never looks like a full release to the users
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            # a manual run must not replace the assets of a release that users already have
+            if [ "$TRIGGER" != release ] && [ "$(gh release view "$TAG" --json isPrerelease -q .isPrerelease)" != true ]; then
+              echo "::error::$TAG is a full release: bump the version in Cargo.toml, or run from a branch without a release, to test"
+              exit 1
+            fi
+            exit 0
+          fi
+          gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "$TAG" \
+            --notes "Pre-release. Static Linux binaries (amd64, arm64) of hbbs, hbbr and rustdesk-utils, extracted from the Docker image." \
+            || gh release view "$TAG" > /dev/null
       - name: Upload to the release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           for arch in amd64 arm64; do
             gh release upload "$TAG" "/tmp/$arch/linux_static_${TAG}_${arch}.zip" --clobber
           done
       - name: Attest the release files
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           # explicit paths: a glob over /tmp/*/ fails with EACCES on /tmp/snap-private-tmp
           subject-path: |
