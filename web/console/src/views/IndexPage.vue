@@ -103,6 +103,7 @@ This website use:
       </DisclosurePanel>
     </Disclosure>
 
+    <UpdateBanner />
     <header class="bg-white shadow">
       <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ pageTitle }}</h1>
@@ -149,6 +150,7 @@ import DevicesCard from '@/components/DevicesCard.vue';
 import UsersCard from '@/components/UsersCard.vue';
 import DashboardCard from '@/components/DashboardCard.vue';
 import MainFooter from '@/footers/mainfooter.vue';
+import UpdateBanner from '@/components/UpdateBanner.vue';
 import { computed, ref } from 'vue';
 import { t } from '@/i18n';
 import { useProfileStore } from '@/stores/profileStore';

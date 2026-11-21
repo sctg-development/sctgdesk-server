@@ -14,7 +14,12 @@ export default {
     openMenu: 'Open main menu', openUserMenu: 'Open user menu', notifications: 'View notifications',
   },
   userMenu: { settings: 'Your settings', signOut: 'Sign out', unableToLogout: 'Unable to sign out' },
+  update: {
+    available: 'SCTGDesk server {latest} is available (you run {current}). Click to see the release on GitHub.',
+    dontShowAgain: 'Do not show again',
+  },
   footer: {
+    github: 'Source code on GitHub',
     line: '© 2024-{year} Ronan LE MEILLAT for SCTG Development - sctgdesk-api-server v{serverVersion} - latest client version: v{clientVersion}',
   },
   login: {
