@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.9.0.schema.json
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.28.0.schema.json
 PackageIdentifier: SCTG.SCTGDeskServer
 PackageVersion: <version>
 InstallerType: zip
@@ -18,4 +18,4 @@ Installers:
     InstallerUrl: https://github.com/sctg-development/sctgdesk-server/releases/download/sctg-v<version>/sctgdesk-server-<version>-winget-aarch64.zip
     InstallerSha256: <sha256 of the aarch64 zip>
 ManifestType: installer
-ManifestVersion: 1.9.0
+ManifestVersion: 1.28.0

@@ -15,7 +15,9 @@ The automation only updates a package that already exists. Create it from the fi
 1. Copy them to `manifests/s/SCTG/SCTGDeskServer/<version>/` of a fork of `microsoft/winget-pkgs`, replace
    `<version>`, the URLs and the SHA-256 (`Get-FileHash` or `sha256sum`, they are in `SHA256SUMS-windows-macos` of the
    release).
-2. Check: `winget validate --manifest <folder>` and `winget install --manifest <folder>` on a Windows machine.
+2. Check: `winget validate --manifest <folder>` and `winget install --manifest <folder>` on a Windows machine. (On a Windows
+   Server Core only `validate` works: the App Installer package cannot be installed there, and an extracted `winget.exe` fails
+   to install with `0x80040154`.) The schema is the latest one of `winget-pkgs`, 1.28.0 at the time of the first submission.
 3. Open the pull request. Microsoft's bots install the package in a sandbox and a moderator reviews the first one.
 
 Then create the secret `WINGET_TOKEN` of this repository: a classic personal access token with the `public_repo` scope,
