@@ -79,8 +79,12 @@ interface ProviderForm {
 
 const model = defineModel<ProviderForm[]>({ required: true })
 
-/** The provider types the server knows (the `Provider` enum of the api-oauth2 crate). `Dex` is the generic one. */
-const TYPES = ['Github', 'Gitlab', 'Google', 'Facebook', 'Apple', 'Okta', 'Azure', 'Auth0', 'Dex', 'Oauth2']
+/**
+ * The provider types the server can sign in with (`oidc_auth` of the API server). The `Provider` enum has more
+ * names, but their login is not implemented and the server refuses a file that uses them. `Oauth2` is the generic
+ * type for any standard OAuth2 / OpenID Connect provider (Google, GitLab...: fill the addresses by hand).
+ */
+const TYPES = ['Github', 'Dex', 'Oauth2']
 
 /** Addresses and scope that are the same for every installation of a well-known provider. */
 const PRESETS: Record<string, Partial<ProviderForm>> = {

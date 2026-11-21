@@ -916,6 +916,22 @@ pub struct ConfigValidation {
     pub warnings: Vec<String>,
 }
 
+/// One line of the live check of a configuration file (see `POST /api/settings/config/<name>/check`).
+#[derive(Serialize, Debug, JsonSchema)]
+pub struct ConfigCheckItem {
+    /// What was checked (a key of the S3 file, a provider and its endpoint).
+    pub target: String,
+    /// `ok`, `warning` or `error`.
+    pub level: String,
+    pub message: String,
+}
+
+/// Result of the live check of a configuration file.
+#[derive(Serialize, Debug, JsonSchema)]
+pub struct ConfigCheckResponse {
+    pub checks: Vec<ConfigCheckItem>,
+}
+
 /// Distinguishes an absent JSON field (`None`) from an explicit `null` (`Some(None)`).
 fn double_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
 where

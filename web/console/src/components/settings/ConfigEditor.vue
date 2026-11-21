@@ -42,6 +42,9 @@ on the server and refuses (HTTP 422) an invalid file, so a typo can never break 
         <button type="button" :disabled="!!busy" @click="validate()"
           class="rounded-md border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-40">
           {{ busy === 'validate' ? t('settings.validating') : t('settings.validate') }}</button>
+        <button type="button" :disabled="!!busy" @click="check()"
+          class="rounded-md border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-40">
+          {{ busy === 'check' ? t('settings.checking') : t('settings.check') }}</button>
         <button type="button" :disabled="!!busy" @click="save()"
           class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-40">{{ t('settings.save') }}</button>
         <button type="button" :disabled="!!busy" @click="load()"
@@ -60,6 +63,30 @@ on the server and refuses (HTTP 422) an invalid file, so a typo can never break 
           <p class="font-medium">{{ t('settings.warnings') }}</p>
           <ul class="mt-1 list-disc pl-5"><li v-for="w in report.warnings" :key="w">{{ w }}</li></ul>
         </div>
+      </div>
+
+      <!-- The answer of the live check: what the real service says about these values -->
+      <div v-if="checks" class="mt-4 rounded-md border border-gray-200 p-3" role="status">
+        <p class="mb-2 text-sm font-medium text-gray-700">{{ t('settings.checkTitle') }}</p>
+        <ul class="space-y-1 text-sm">
+          <li v-for="c in checks" :key="c.target + c.message" :class="LEVEL_CLASS[c.level] ?? 'text-gray-700'">
+            <span aria-hidden="true">{{ LEVEL_ICON[c.level] ?? '•' }}</span>
+            <span class="font-medium"> {{ c.target }}</span>: {{ c.message }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- A real sign-in per provider: what only a person at the provider's login page can prove -->
+      <div v-if="kind === 'oauth2' && savedOps.length" class="mt-6 border-t border-gray-200 pt-4">
+        <p class="text-sm font-medium text-gray-700">{{ t('settings.signInSection') }}</p>
+        <p class="mb-2 text-xs text-gray-500">{{ t('settings.signInHint') }}</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <button v-for="op in savedOps" :key="op" type="button" :disabled="!!busy || dirty || !!signInState" @click="testSignIn(op)"
+            :title="dirty ? t('settings.saveFirst') : ''"
+            class="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40">
+            {{ t('settings.testSignIn', { op }) }}</button>
+        </div>
+        <p v-if="signInMessage" class="mt-2 text-sm" :class="signInOk ? 'text-green-700' : 'text-gray-700'" role="status">{{ signInMessage }}</p>
       </div>
     </template>
     <p v-else class="text-sm text-gray-500">{{ t('common.loading') }}</p>
@@ -100,7 +127,13 @@ const oauthForm = ref<any[]>([])
 const parseError = ref('')
 const report = ref<Report | null>(null)
 const reportMessage = ref('')
-const busy = ref<'' | 'validate' | 'save'>('')
+const busy = ref<'' | 'validate' | 'save' | 'check'>('')
+
+/** One line of the answer of the live check. */
+interface CheckItem { target: string; level: 'ok' | 'warning' | 'error'; message: string }
+const LEVEL_ICON: Record<string, string> = { ok: '✔', warning: '⚠', error: '✘' }
+const LEVEL_CLASS: Record<string, string> = { ok: 'text-green-700', warning: 'text-amber-700', error: 'text-red-700' }
+const checks = ref<CheckItem[] | null>(null)
 
 /** Builds the guided form from TOML text. Throws when the text is not valid TOML. */
 function fromToml(text: string): void {
@@ -212,6 +245,89 @@ async function validate(): Promise<void> {
     report.value = { valid: false, errors: [t('settings.saveFailed')], warnings: [] }
   } finally {
     busy.value = ''
+  }
+}
+
+/**
+ * Asks the server to check the current values against the real service (network access from the server):
+ * S3 connection and files, or OAuth2 application. Slow, so it is only run on demand.
+ */
+async function check(): Promise<void> {
+  busy.value = 'check'
+  checks.value = null
+  try {
+    const response = await apiRequest<{ checks: CheckItem[] }>('post', `/api/settings/config/${props.kind}/check`, { data: { content: content() } })
+    checks.value = response.data.checks
+  } catch (error) {
+    console.error(error)
+    checks.value = [{ target: props.kind, level: 'error', message: t('settings.saveFailed') }]
+  } finally {
+    busy.value = ''
+  }
+}
+
+// ---- Real sign-in test (oauth2 only) -------------------------------------------------------------------------
+/** Window of the test, so a second click reuses it and it can be closed at the end. */
+let signInWindow: Window | null = null
+const signInState = ref(false)
+const signInMessage = ref('')
+const signInOk = ref(false)
+/** The providers of the *saved* file: the server reads the saved file for a sign-in, not the editor. */
+const savedOps = computed(() => {
+  try {
+    return ((parse(original.value) as any).provider ?? []).map((p: any) => String(p.op)).filter(Boolean) as string[]
+  } catch {
+    return []
+  }
+})
+
+/**
+ * Signs in at the provider for real, with the same endpoints as the login page, and reports the result. The
+ * token that comes back is thrown away: the administrator's own session is not touched.
+ * The window is opened first, still inside the click handler, or the browser blocks it as an unwanted pop-up.
+ */
+async function testSignIn(op: string): Promise<void> {
+  signInWindow = window.open('about:blank', 'sctgdesk-oauth-test', 'popup=yes,width=520,height=720')
+  if (!signInWindow) {
+    signInOk.value = false
+    signInMessage.value = t('settings.signInPopup')
+    return
+  }
+  signInState.value = true
+  signInOk.value = false
+  signInMessage.value = t('settings.signInWaiting', { op })
+  // a throw-away identity: the server only uses it to match the answer to this test
+  const id = 'console-test'
+  const uuid = btoa(crypto.randomUUID())
+  try {
+    const started = (await apiRequest<{ code: string; url: string }>('post', '/api/oidc/auth', {
+      data: { deviceInfo: { name: 'console', os: 'console', type: 'oidc' }, id, op, uuid, console: false },
+    })).data
+    if (!started.url) {
+      throw new Error('no url')
+    }
+    signInWindow.location.href = started.url
+    const until = Date.now() + 2 * 60 * 1000
+    while (Date.now() < until) {
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // the server answers an error until the person has signed in: keep polling, like the login page does
+      const answer = await apiRequest<any>('get', '/api/oidc/auth-query', { params: { code: started.code, id, uuid } })
+        .then((r) => r.data)
+        .catch(() => null)
+      if (answer?.access_token) {
+        signInOk.value = true
+        signInMessage.value = t('settings.signInOk', { name: answer.user?.name ?? '' })
+        return
+      }
+    }
+    signInMessage.value = t('settings.signInTimeout')
+  } catch (error) {
+    console.error(error)
+    signInMessage.value = t('settings.signInFailed')
+  } finally {
+    signInWindow?.close()
+    signInWindow = null
+    signInState.value = false
   }
 }
 

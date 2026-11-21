@@ -62,9 +62,9 @@ use utils::{
     OidcState, OidcUser, OidcUserInfo, OidcUserStatus,
 };
 use utils::{
-    AuditConnDeleteRequest, AuditConnDeleteResponse, ChangePasswordRequest, ConfigFileRequest,
-    ConfigFileResponse, ConfigValidation, ErrorBody, UserProfile, UserProfileUpdate,
-    WebClientResponse,
+    AuditConnDeleteRequest, AuditConnDeleteResponse, ChangePasswordRequest, ConfigCheckItem,
+    ConfigCheckResponse, ConfigFileRequest, ConfigFileResponse, ConfigValidation, ErrorBody,
+    UserProfile, UserProfileUpdate, WebClientResponse,
 };
 use utils::{AuditConnEvent, AuditConnList, AuditNoteRequest};
 use utils::{DeviceGroupPayload, DeviceGroupsResponse};
@@ -138,6 +138,7 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 audit_conn_delete,
                 config_file_get,
                 config_file_validate,
+                config_file_check,
                 config_file_save,
                 user_profile_get,
                 user_profile_put,
@@ -655,6 +656,54 @@ async fn config_file_validate(
 ) -> Result<Json<ConfigValidation>, status::Custom<Json<ConfigValidation>>> {
     config_file_guard(state, &user, name).await?;
     Ok(Json(validate_config_content(name, &request.content)))
+}
+
+/// # Check a configuration file against the real services
+///
+/// Administrators only. Unlike `validate` this talks to the network, with the values of the text (saved or
+/// not): for `s3`, the connection and the presence of each download file; for `oauth2`, whether each provider
+/// recognises the application (`app_id` / `app_secret`) and its authorization page answers. It is slow (up to
+/// a few seconds per provider or file), hence a separate endpoint. A real sign-in needs a person and is tested
+/// from the console with the login flow.
+#[openapi(tag = "settings")]
+#[post(
+    "/api/settings/config/<name>/check",
+    format = "application/json",
+    data = "<request>"
+)]
+async fn config_file_check(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    name: &str,
+    request: ExtendedJson<ConfigFileRequest>,
+) -> Result<Json<ConfigCheckResponse>, status::Custom<Json<ConfigValidation>>> {
+    config_file_guard(state, &user, name).await?;
+    // the redirect URI the server really gives to the providers (see `oidc_auth`)
+    let callback_url = format!("{}/api/oidc/callback", get_host(request.headers()));
+    let content = request.data.content;
+    let checks: Vec<(String, &str, String)> = if name == "s3" {
+        s3software::check_live(&content)
+            .await
+            .into_iter()
+            .map(|c| (c.target, c.level, c.message))
+            .collect()
+    } else {
+        oauth2::check_live(&content, &callback_url)
+            .await
+            .into_iter()
+            .map(|c| (c.target, c.level, c.message))
+            .collect()
+    };
+    Ok(Json(ConfigCheckResponse {
+        checks: checks
+            .into_iter()
+            .map(|(target, level, message)| ConfigCheckItem {
+                target,
+                level: level.to_string(),
+                message,
+            })
+            .collect(),
+    }))
 }
 
 /// # Save a configuration file
