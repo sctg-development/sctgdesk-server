@@ -10,62 +10,118 @@
 
 # SCTGDesk
 
-![Docker Pulls](https://img.shields.io/docker/pulls/sctg/sctgdesk-server)
-[![CI](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml/badge.svg)](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml)
+![Docker Pulls](https://img.shields.io/docker/pulls/sctg/sctgdesk-server)並以服務形式運行
+([![CI](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml/badge.svg)](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml)
 
-SCTGDesk 是一台自架的遠端桌面伺服器，擁有自己的客戶端，源自[鏽桌](https://github.com/rustdesk/rustdesk).它是自由軟體，屬於**AGPL-3.0**.
+，以 創建[）： 參見](https://github.com/rustdesk/rustdesk)在 Windows 上**.**Docker
 
-> **SCTGDesk 是一個獨立專案。它與 RustDesk 專案無關聯、不被其背書或贊助
-> 或稱 Purslane Ltd。**「RustDesk」是該專案的名稱;此處僅用來說明這軟體是什麼
-> 衍生自並相容於。
+> **圖片發佈於**Docker 樞紐
 
-這個儲存庫包含整個專案：伺服器、API 伺服器、網頁主控台和用戶端覆蓋層。它取代了
-前任倉庫`sctgdesk-api-server`以及`sctgdesk`這些資料已被存檔。
+如`sctgdesk-api-server`.
+另存為`sctgdesk`，取代
 
-## 你得到的是什麼
+## 附上您的伺服器地址：
 
-*   RustDesk 伺服器：`hbbs`（ID 與約會伺服器）以及`hbbr`（中繼），加`rustdesk-utils`（鑰匙對，
-    連線檢查）。與官方 RustDesk 用戶端相容。
-*   伺服器端**加密的 TCP 與 WebSocket 連線**（金鑰交換版本 0 與 1），其中
-    開源上游伺服器不實作。這就是使**網頁用戶端**工作。
-*   A**REST API**嵌入於`hbbs`，與用戶端相容：登入（密碼，OpenID Connect / OAuth2：
-    GitHub、GitLab、Google、Dex......）、重啟後仍存的工作階段、個人與共享通訊錄（每位使用者及
-    每組，唯讀/讀寫/管理員）、使用者與群組，軟體更新端點。
-*   A**網頁主控台**管理這些，以及互動式 API 文件。
-*   A**連接歷史**每個連線都會附上備註（完成了什麼），可搜尋並匯出成 CSV，由 RustDesk 用戶端填寫。
-*   拒絕未經認證控制的選項（`--logged-in-only`).
-*   A**客戶端**(`client/`）：上游的 RustDesk 加上一個小型覆蓋層，在建置時標示你的名稱、伺服器和
-    鍵;以及**網頁用戶端**.
+*   對於 SELinux，請附加`hbbs`到卷，或使用`hbbr`.沒有`rustdesk-utils`直接點對點
+    連線無法正常運作（所有設備都經過繼電器）。舵手圖已在內
+*   （待重構）以及
+    範例顯示於**.**移植版本**|埠 |協定 |使用者 |目的 |
+    |---|---|---|---|
+    |21114 |TCP |**|REST API、網頁控制台、API 文件（
+*   ) |
+    |21115 |TCP |**|NAT 類型測試 |
+    |21116 |TCP +**UDP`hbbs`|
+*   |ID / 會合 |
+    |21117 |TCP |**|中繼 |
+    |21118 |TCP |**|WebSocket（網頁用戶端）|
+    |21119 |TCP |
+*   |WebSocket（網頁用戶端）|**請在防火牆上開啟它們。API 和 WebSocket 連接埠應該位於網際網路上的 TLS 反向代理後方：請參閱
+    該**部署指南
+*   .`--logged-in-only`首次演出
+*   以及**將他們的資料（金鑰對、SQLite 資料庫）保存在**現行目錄`client/`.**首次起跑**創造
 
-相容性優先：伺服器必須持續與官方 RustDesk 客戶端運作，並持續進行上游的變更
-檔案會保持小巧，以便合併新的上游版本。
+（秘密） 以及
 
-## 安裝
+## （
 
-選一個。不管你選什麼，都需要一個**金鑰對**以及下方的港口。
+公鑰**，你將它交給
+您的客戶）。若要自行建立金鑰配對，或檢查其中一組：**若要拒絕沒有金鑰的用戶端，請以以下方式啟動兩台伺服器
 
-### Linux 套件（deb、rpm）
+### （或
 
-每個版本都有`sctgdesk-server-hbbs`,`sctgdesk-server-hbbr`以及`sctgdesk-server-utils`對於**AMD64**以及**arm64**，作為`.deb`以及`.rpm`，由靜態 musl 二進位構成（無函式庫依賴）。它們取代了前者`rustdesk-server-*`包裹。
+).檢查一下
+伺服器在所有連接埠上回應如下：`sctgdesk-server-hbbs`.`sctgdesk-server-hbbr`預設管理員。`sctgdesk-server-utils`網頁主控台位於**以及 API 文件**.一個新的資料庫包含使用者**使用密碼**，即
+公眾：**首次登入時更改**.`armhf`配置`.deb`以及`.rpm`在命令列上取得選項（`rustdesk-server-*`）以及來自環境變數，或
+
+**檔案。**|變數 |二進位 |說明 |
+|--- |--- |--- |
+|ALWAYS_USE_RELAY |hbbs |如果設定為
+
+```bash
+# Debian, Ubuntu
+sudo mkdir -p /etc/apt/keyrings
+sudo curl -fsSL https://sctg-development.github.io/sctgdesk-server/apt/sctgdesk.gpg -o /etc/apt/keyrings/sctgdesk.gpg
+echo "deb [signed-by=/etc/apt/keyrings/sctgdesk.gpg] https://sctg-development.github.io/sctgdesk-server/apt stable main" |
+  sudo tee /etc/apt/sources.list.d/sctgdesk.list
+sudo apt update && sudo apt install sctgdesk-server-hbbs sctgdesk-server-hbbr
+
+# Fedora, RHEL and clones: see docs/repositories.md for the .repo file, then
+sudo dnf install sctgdesk-server-hbbs sctgdesk-server-hbbr
+```
+
+**「Y」**
 
 ```bash
 sudo apt install ./sctgdesk-server-hbbs_*_amd64.deb ./sctgdesk-server-hbbr_*_amd64.deb ./sctgdesk-server-utils_*_amd64.deb
 # or: sudo dnf install ./sctgdesk-server-*.rpm
 ```
 
-首次安裝於空資料目錄時，會以隨機的金鑰對啟動兩個服務;選項會被放入`/etc/default/sctgdesk-hbbs`以及`-hbbr`（參見[部署指南](docs/deployment.md)，這也解釋了
-從前者遷移`rustdesk-server-*`套裝：**不要清除它們**).升級後服務會重新啟動
-正在運行。資料已輸入`/var/lib/rustdesk-server`，日誌`/var/log/rustdesk-server`;這些單元以 root 方式執行。
+禁止直接連線 |
+|DB_URL |hbbs |SQLite 資料庫路徑（預設）`/etc/default/sctgdesk-hbbs`) |
+|LOGGED_IN_ONLY |hbbs |如果設定為`-hbbr`「Y」[只有已登入的使用者才能控制對等端（與](docs/deployment.md)) |
+|ALLOW_REMOTE_BACKUP |hbbs |如果設定為`rustdesk-server-*`「Y」**，管理員可以下載備份（資料庫、金鑰對、設定），並搭配**或從主控台（與`/var/lib/rustdesk-server`);預設關閉，請參閱`/var/log/rustdesk-server`部署指南
 
-### 二進位（Linux、Windows、macOS）
+|
+|REQUIRE_KX_V1 |hbbs |如果設定為[「Y」](docs/repositories.md)拒絕使用舊版（版本 0）TCP 金鑰交換的用戶端（與
 
-該[發行](https://github.com/sctg-development/sctgdesk-server/releases)頁面也有壓縮檔`hbbs`,`hbbr`以及`rustdesk-utils`適用於 Windows（amd64、arm64）及 macOS（Intel、Apple Silicon），且`SHA256SUMS-*`檔案。
-解壓後，從資料應該存放的目錄執行它們（參見[首次運行](#first-run)).
+### ) |&#xA;|DOWNGRADE_START_CHECK |HBBR |降級檢查前的延遲（秒數） |&#xA;|DOWNGRADE_THRESHOLD |HBBR |降級檢查門檻（bit/ms） |&#xA;|KEY |hbbs/hbbr |如果設定為 ，則強制使用特定鍵，若設定為
+
+"\_"`apk`強制使用任意金鑰 |
+|LIMIT_SPEED |hbbr |速限（以 Mb/s） |
+|OAUTH2\_CONFIG_FILE |hbbs |OAuth2 / OpenID Connect 提供者檔案的路徑（`mips_24kc`) |
+|OAUTH2\_CREATE_USER |hbbs |如果設定為`mipsel_24kc`"1"
+
+```sh
+wget -O /etc/apk/keys/sctgdesk.rsa.pub https://sctg-development.github.io/sctgdesk-server/apk/sctgdesk.rsa.pub
+echo "https://sctg-development.github.io/sctgdesk-server/apk/$(apk --print-arch)/APKINDEX.tar.gz" > /etc/apk/repositories.d/sctgdesk.list
+apk update && apk add sctgdesk-server-hbbs sctgdesk-server-hbbr
+```
+
+首次登入時使用提供者建立使用者 |
+|埠 |HBBS/HBBR |聆聽埠（HBBS 為 21116 - HBBR 為 21117）|
+|HEALTH_PORT |HBBR |如果設定，HBBR 會回應`procd`以及`/etc/config/sctgdesk-hbbs`（HTTP）在此埠上;預設關閉 |
+|中繼 |hbbs |執行 hbbr 的機器的 IP 位址/DNS 名稱（以逗號分隔）|
+|LOG_FORMAT |HBBS， HBBR |`hbbs`“json”[：每條日誌行一個 JSON 物件 （](docs/repositories.md),
+
+### ,
+
+,[,](https://github.com/sctg-development/sctgdesk-server/releases),`hbbs`);預設：文字 |
+|RUST_LOG |全部 |設定除錯等級（錯誤|警告|資訊|除錯|追蹤）|
+|ROCKET_SECRET_KEY |hbbs |用於簽署 API 伺服器 Cookie 的金鑰（base64,64 位元組）。預設值：於首次啟動時產生`hbbr`資料庫旁 |
+|S3CONFIG_FILE |hbbs |軟體更新檔案路徑（`rustdesk-utils`) |
+|SINGLE_BANDWIDTH |hbbr |單一連線的最大頻寬（單位：Mb/s）|
+|TOTAL_BANDWIDTH |hbbr |最大總頻寬（單位：Mb/s） |`SHA256SUMS-*`只有已登入的使用者才能控制[（或](#first-run)）
+
+詢問 API 伺服器用戶端的權杖是否為有效
+在連線兩個節點之前，會話。任何人仍然可以註冊自己的裝置，但沒有人能控制裝置
+未登入。未登入的用戶端會看到「此連線不被允許。您尚未登入。」;一
+其會話結束時顯示「您的會話已過期」。**使用 GitHub、GitLab、Google、Dex 登入......**複製`winget install SCTG.SCTGDeskServer --scope machine`並填寫您使用的提供者（每個提供者都需要在該提供者註冊的應用程式，該應用程式的提供者
+回調是你的 API 伺服器，然後設定`hbbs.exe --windows-service`, created with `sc.exe`): see [On Windows](docs/windows.md).
 
 ### Docker
 
-圖片刊登於[Docker 樞紐](https://hub.docker.com/r/sctg/sctgdesk-server/)作為`sctg/sctgdesk-server`.
-另存為`docker-compose.yml`，取代`sctgdesk.example.com`附上你的伺服器地址：
+Images are published on [Docker hub](https://hub.docker.com/r/sctg/sctgdesk-server/) as `sctg/sctgdesk-server`.
+Save as `docker-compose.yml`, replacing `sctgdesk.example.com` with the address of your server:
 
 ```yaml
 networks:
@@ -109,27 +165,27 @@ services:
 mkdir -p data && docker compose up -d
 ```
 
-關於 SELinux，請附錄`:z`到體積或使用`--security-opt label=disable`.沒有`--net=host`直接點對點
-連線無法正常運作（所有東西都經過繼電器）。Helm 圖表已輸入`deploy/helm`（待重構）以及
-一個例子`kubernetes/`.
+For SELinux, append `:z` to the volume, or use `--security-opt label=disable`. Without `--net=host` direct peer-to-peer
+connections cannot work (everything goes through the relay). A Helm chart is in `deploy/helm` (to be refactored) and
+an example manifest in `kubernetes/`.
 
-### 移植版本
+### Ports
 
-|埠 |協定 |使用 |目的 |
+| Port | Protocol | Used by | Purpose |
 |---|---|---|---|
-|21114 |TCP |`hbbs`|REST API、網頁控制台、API 文件（`--api-port`) |
-|21115 |TCP |`hbbs`|NAT 類型測試 |
-|21116 |TCP +**UDP**|`hbbs`|身分證 / 約會地點 |
-|21117 |TCP |`hbbr`|接力 |
-|21118 |TCP |`hbbs`|WebSocket（網頁客戶端） |
-|21119 |TCP |`hbbr` | WebSocket (web client) |
+| 21114 | TCP | `hbbs` | REST API, web console, API documentation (`--api-port`) |
+| 21115 | TCP | `hbbs` | NAT type test |
+| 21116 | TCP + **UDP** | `hbbs` | ID / rendezvous |
+| 21117 | TCP | `hbbr` | relay |
+| 21118 | TCP | `hbbs` | WebSocket (web client) |
+| 21119 | TCP | `hbbr` | WebSocket (web client) |
 
-API 文件[在客戶端](docs/deployment.md)安全性
+Open them on your firewall. The API and WebSocket ports should be behind a TLS reverse proxy on the Internet: see
+the [deployment guide](docs/deployment.md).
 
-## 嵌入式 API 伺服器沒有防止濫用：在前面放置一個 TLS 反向代理（HAProxy、NGINX、Caddy 等）&#xA;以及 WebSocket 埠口。HAProxy 的一個範例是
+## First run
 
-`hbbs`部署指南`hbbr`.**更改預設的管理員密碼，保持不變**秘密並備份：改變它會讓每個客戶都拒絕
-你的伺服器。
+`hbbs` and `hbbr` keep their data (key pair, SQLite database) in the **current directory**.
 
 ```bash
 mkdir -p /var/lib/sctgdesk && cd /var/lib/sctgdesk
@@ -137,22 +193,24 @@ hbbr &
 hbbs -r relay.example.com &
 ```
 
-如描述的漏洞報告`hbbs`SECURITY.md`id_ed25519`.`id_ed25519.pub`授權與原始碼**SCTGDesk 以**GNU Affero 通用公共授權條款 v3
+On the first start `hbbs` creates `id_ed25519` (secret) and `id_ed25519.pub` (the **public key**, which you give to
+your clients). To make a key pair yourself, or to check one:
 
 ```bash
 rustdesk-utils genkeypair
 rustdesk-utils validatekeypair <public key> <secret key>
 ```
 
-.每個版本的原始碼
-就在這個倉庫裡，該版本的標籤中。如果你修改了這個軟體，並讓其他人使用它，而不是
-Network，授權條款第 13 條要求你提供修改版本的對應原始碼。`-k <key>`在執行下載的二進位檔前，請檢查每次發行時公布的 SHA-256 總和。`KEY=<key>`貢獻`rustdesk-utils doctor <server>`開發者手冊
+To refuse clients that do not have the key, start both servers with `-k <key>` (or `KEY=<key>`). Check that a
+server answers on all its ports with `rustdesk-utils doctor <server>`.
 
-**·**CONTRIBUTING.md`http://<server>:21114/`·`http://<server>:21114/api/doc/`CODE_OF_CONDUCT.md`admin`·`Hello,world!`SECURITY.md**.關於一般自家主機的問題，請參考**RustDesk 文件
+**Default admin.** The web console is at `http://<server>:21114/` and the API documentation at
+`http://<server>:21114/api/doc/`. A new database has the user `admin` with the password `Hello,world!`, which is
+public: **change it at the first login**.
 
-## 同樣適用。
+## Configuration
 
-`hbbs`如果你喜歡這部作品，請考慮給它一顆星，或`hbbr`贊助`hbbs --help`.`.env`
+`hbbs` and `hbbr` take options on the command line (`hbbs --help`) and from environment variables, or an `.env`
 file.
 
 | variable | binary | description |
