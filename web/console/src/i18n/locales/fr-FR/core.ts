@@ -27,7 +27,7 @@ export default {
     connections: 'Connexions', settings: 'Paramètres',
     openMenu: 'Ouvrir le menu principal', openUserMenu: 'Ouvrir le menu utilisateur', notifications: 'Voir les notifications',
   },
-  userMenu: { settings: 'Vos paramètres', signOut: 'Se déconnecter', unableToLogout: 'Impossible de se déconnecter' },
+  userMenu: { copyToken: "Copier le jeton Bearer", tokenCopied: "Jeton Bearer copié.", tokenCopyFailed: "Le jeton n’a pas pu être copié.", settings: 'Vos paramètres', signOut: 'Se déconnecter', unableToLogout: 'Impossible de se déconnecter' },
   update: {
     available: 'SCTGDesk server {latest} est disponible (vous utilisez {current}). Cliquez pour voir la version sur GitHub.',
     dontShowAgain: 'Ne plus afficher',

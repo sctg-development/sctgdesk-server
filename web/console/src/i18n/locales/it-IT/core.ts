@@ -27,7 +27,7 @@ export default {
     connections: 'Connessioni', settings: 'Impostazioni',
     openMenu: 'Apri il menu principale', openUserMenu: 'Apri il menu utente', notifications: 'Visualizza le notifiche',
   },
-  userMenu: { settings: 'Le tue impostazioni', signOut: 'Esci', unableToLogout: 'Impossibile uscire' },
+  userMenu: { copyToken: "Copia il token Bearer", tokenCopied: "Token Bearer copiato.", tokenCopyFailed: "Impossibile copiare il token.", settings: 'Le tue impostazioni', signOut: 'Esci', unableToLogout: 'Impossibile uscire' },
   update: {
     available: 'SCTGDesk server {latest} è disponibile (stai usando {current}). Clicca per vedere la versione su GitHub.',
     dontShowAgain: 'Non mostrare più',

@@ -154,6 +154,8 @@ This website use:
       </div>
     </main>
     <MainFooter />
+    <p v-if="toast" role="status" data-test="toast"
+      class="fixed bottom-4 right-4 z-50 rounded-md bg-gray-900 px-4 py-2 text-sm text-white shadow-lg">{{ toast }}</p>
   </div>
 </template>
 
@@ -210,8 +212,40 @@ const navigation = ref([
 const userNavigation = computed(() => [
   { key: 'who', label: `${userStore.user?.name} ${userStore.user?.email ?? ''}`.trim(), href: '#', action: nop },
   { key: 'userSettings', label: t('userMenu.settings'), href: '#', action: () => makePageCurrent('userSettings') },
+  { key: 'copyToken', label: t('userMenu.copyToken'), href: '#', action: copyToken },
   { key: 'signOut', label: t('userMenu.signOut'), href: '#', action: logout },
 ])
+
+/** Short message shown after the token was copied (or could not be), then cleared. */
+const toast = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+/**
+ * Copies the Bearer token of the current session, to paste it in the "api-token" field of the API documentation
+ * (RapiDoc), which asks for the bare token. It is only copied on this explicit action and never displayed.
+ * `navigator.clipboard` exists only in a secure context (https or localhost), so a console served over plain
+ * http falls back to a hidden textarea and `execCommand`.
+ */
+async function copyToken(): Promise<void> {
+  const token = String(userStore.api_configuration?.accessToken ?? '')
+  let copied = false
+  try {
+    await navigator.clipboard.writeText(token)
+    copied = true
+  } catch {
+    const area = document.createElement('textarea')
+    area.value = token
+    area.style.position = 'fixed'
+    area.style.opacity = '0'
+    document.body.appendChild(area)
+    area.select()
+    copied = token !== '' && document.execCommand('copy')
+    document.body.removeChild(area)
+  }
+  toast.value = copied ? t('userMenu.tokenCopied') : t('userMenu.tokenCopyFailed')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => (toast.value = ''), 3000)
+}
 
 /** The page being shown; `userSettings` is none of the navigation items, so no tab is highlighted for it. */
 const pageTitle = computed(() => {
