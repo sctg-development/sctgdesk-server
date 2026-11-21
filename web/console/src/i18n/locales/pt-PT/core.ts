@@ -8,6 +8,18 @@ export default {
     notSaved: 'Não guardado', error: 'Erro', unknown: 'Desconhecido', previous: 'Anterior', next: 'Seguinte',
     all: 'Todos', none: 'Nenhum', show: 'Mostrar', hide: 'Ocultar',
   },
+  backup: {
+    title: "Cópia de segurança do servidor",
+    intro: "Transfere um arquivo (.tar.gz) com uma cópia consistente da base de dados, dos ficheiros de configuração (oauth2.toml, s3config.toml) e do par de chaves do servidor.",
+    warning: "O arquivo contém a chave privada e os segredos do servidor: guarde-o cifrado e em privado. Cada transferência fica registada no registo do servidor.",
+    requires: "Só funciona se o hbbs tiver sido iniciado com --allow-remote-backup (ou ALLOW_REMOTE_BACKUP=Y).",
+    download: "Transferir uma cópia de segurança",
+    preparing: "A preparar a cópia de segurança…",
+    saved: "{filename} guardado.",
+    disabled: "A cópia de segurança está desativada neste servidor: inicie o hbbs com --allow-remote-backup.",
+    adminOnly: "Só um administrador pode transferir uma cópia de segurança.",
+    failed: "O servidor não conseguiu criar a cópia de segurança (HTTP {status}).",
+  },
   nav: {
     backup: 'Cópia de segurança',
     dashboard: 'Painel', devices: 'Dispositivos', users: 'Utilizadores', groups: 'Grupos', addressBooks: 'Livros de endereços',

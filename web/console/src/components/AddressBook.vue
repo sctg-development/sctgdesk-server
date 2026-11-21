@@ -126,6 +126,7 @@ This website use:
                                         </td>
                                         <td
                                             class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
+                                            <ConnectButtons :device-id="peer.id" :device-name="peer.alias || peer.hostname || undefined" />
                                         </td>
                                     </tr>
                                 </tbody>
@@ -151,6 +152,7 @@ import { ref } from 'vue';
 import ViewRules from '@/components/ViewRules.vue';
 import AddRule from '@/components/AddRule.vue';
 import ClipboardButton from '@/components/ClipboardButton.vue';
+import ConnectButtons from '@/components/ConnectButtons.vue';
 import EditAddressBook from '@/components/EditAddressBook.vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { AddressBookApi } from '@/api';

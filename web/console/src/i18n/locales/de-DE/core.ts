@@ -8,6 +8,18 @@ export default {
     notSaved: 'Nicht gespeichert', error: 'Fehler', unknown: 'Unbekannt', previous: 'Zurück', next: 'Weiter',
     all: 'Alle', none: 'Keine', show: 'Anzeigen', hide: 'Verbergen',
   },
+  backup: {
+    title: "Sicherung des Servers",
+    intro: "Lädt ein Archiv (.tar.gz) mit einer konsistenten Kopie der Datenbank, der Konfigurationsdateien (oauth2.toml, s3config.toml) und des Schlüsselpaars des Servers herunter.",
+    warning: "Das Archiv enthält den privaten Schlüssel und die Geheimnisse des Servers: Bewahren Sie es verschlüsselt und privat auf. Jeder Download wird im Protokoll des Servers festgehalten.",
+    requires: "Funktioniert nur, wenn hbbs mit --allow-remote-backup (oder ALLOW_REMOTE_BACKUP=Y) gestartet wurde.",
+    download: "Sicherung herunterladen",
+    preparing: "Sicherung wird erstellt…",
+    saved: "{filename} gespeichert.",
+    disabled: "Die Sicherung ist auf diesem Server deaktiviert: Starten Sie hbbs mit --allow-remote-backup.",
+    adminOnly: "Nur ein Administrator kann eine Sicherung herunterladen.",
+    failed: "Der Server konnte die Sicherung nicht erstellen (HTTP {status}).",
+  },
   nav: {
     backup: 'Backup',
     dashboard: 'Übersicht', devices: 'Geräte', users: 'Benutzer', groups: 'Gruppen', addressBooks: 'Adressbücher',
