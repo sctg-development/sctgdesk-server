@@ -1,0 +1,17 @@
+@import "tailwindcss";
+/* Tailwind 4 reads the JS configuration (colors, spacing, plugins) of the previous setup through @config */
+@config "../tailwind.config.cjs";
+
+/*
+ * Tailwind 4 draws borders in `currentColor` by default (3 used light gray). The pages rely on the old default for
+ * every `border` without an explicit color, so it is restored here instead of editing each template.
+ */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
