@@ -7,6 +7,7 @@
   - [REST API](api.md)
 - [Building from source](building.md)
 - [Deploying a server](deployment.md)
+  - [On Windows](windows.md)
 - [Custom builds](custom-builds.md)
 - [Testing](testing.md)
 - [The client](client.md)

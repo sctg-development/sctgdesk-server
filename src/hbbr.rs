@@ -8,15 +8,33 @@ mod health;
 mod json_log;
 mod version;
 
+/// As a Windows service (`hbbr --windows-service`, see docs/windows.md) the program talks to the service manager and
+/// runs `run_relay` as its body; otherwise it is the usual console program.
 fn main() -> ResultType<()> {
-    let _logger = Logger::try_with_env_or_str("info")?
-        .log_to_stdout()
+    if hbbs::windows_service::requested() {
+        return hbbs::windows_service::run("hbbr", run_relay);
+    }
+    run_relay()
+}
+
+fn run_relay() -> ResultType<()> {
+    let logger = Logger::try_with_env_or_str("info")?;
+    // a service has no console: its log goes to files (rotated) in the data directory
+    let logger = match hbbs::windows_service::log_dir() {
+        Some(dir) => logger
+            .log_to_file(FileSpec::default().directory(dir).basename("hbbr").suppress_timestamp())
+            .rotate(Criterion::Size(10_000_000), Naming::Numbers, Cleanup::KeepLogFiles(5))
+            .append(),
+        None => logger.log_to_stdout(),
+    };
+    let _logger = logger
         .format(json_log::format_or(opt_format))
         .write_mode(WriteMode::Async)
         .start()?;
     let args = format!(
         "-p, --port=[NUMBER(default={RELAY_PORT})] 'Sets the listening port'
         -k, --key=[KEY] 'Only allow the client with the same key'
+        , --windows-service 'Runs hbbr as a Windows service (put it in the binPath of sc.exe create, not for a console)'
         ",
     );
     let matches = App::new("hbbr")
