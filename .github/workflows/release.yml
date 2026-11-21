@@ -8,6 +8,9 @@ name: Release
 #   - the Windows and macOS clients on S3 (the downloads of the landing page and of the update check), and the web
 #     client on S3 and Cloudflare Pages
 #
+# Once the packages are on a full release, the package repositories and the manual are deployed to GitHub Pages
+# (pages.yml) and, when WINGET_ENABLED is set, the winget pull request is opened (winget.yml).
+#
 # A pre-release publishes the server side only: the clients on S3 and Cloudflare Pages, and the `latest` Docker
 # tag, change what users get, so they wait for a full release. To redo a part, re-run the failed jobs of this run
 # from the Actions tab (the called workflows read the release event, which a new manual run would not have).
@@ -81,3 +84,29 @@ jobs:
     secrets: inherit
     with:
       publish: ${{ !github.event.release.prerelease }}
+
+  # Both are started as separate runs on the default branch: the environment github-pages refuses a deployment from a tag,
+  # and a failure there must not mark the release as failed.
+  pages:
+    name: Manual and package repositories
+    needs: [packages, binaries]
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.event.repository.default_branch }}" -f deploy=true
+
+  winget:
+    name: winget pull request
+    needs: [binaries]
+    if: ${{ !github.event.release.prerelease && vars.WINGET_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run winget.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.event.repository.default_branch }}" -f tag="${{ github.event.release.tag_name }}"

@@ -20,3 +20,7 @@ The automation only updates a package that already exists. Create it from the fi
 
 Then create the secret `WINGET_TOKEN` of this repository: a classic personal access token with the `public_repo` scope,
 of the account that owns the fork of `winget-pkgs`.
+
+Last, create the repository variable `WINGET_ENABLED` with the value `true` (Settings, Secrets and variables, Actions,
+Variables): `release.yml` only starts `winget.yml` when it is set, so that releases do not fail before the first
+submission exists.

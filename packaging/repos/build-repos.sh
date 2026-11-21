@@ -23,6 +23,12 @@ site="$(cd "$2" && pwd)"
 : "${APK_PRIVATE_KEY:?APK_PRIVATE_KEY is required}"
 GPG_PASSPHRASE="${GPG_PASSPHRASE:-}"
 
+shopt -s nullglob
+files=("$packages"/*.deb "$packages"/*.rpm "$packages"/*.apk)
+if [ ${#files[@]} -eq 0 ]; then
+  echo "no .deb, .rpm or .apk in $packages: nothing to publish" >&2
+  exit 1
+fi
 mkdir -p "$site/apt/pool/main" "$site/rpm" "$site/apk"
 cp "$packages"/*.deb "$site/apt/pool/main/" 2>/dev/null || echo "no deb package"
 cp "$packages"/*.rpm "$site/rpm/" 2>/dev/null || echo "no rpm package"
@@ -85,6 +91,7 @@ docker run --rm -e APK_PRIVATE_KEY -v "$site/apk:/repo" alpine:3.22 sh -eu -c '
     mv "$f" "$arch/$name-$version.apk"
   done
   for dir in */; do
+    [ -d "$dir" ] || continue
     dir=${dir%/}
     ( cd "$dir"
       # Only the index is signed: apk (2 and 3, the one of OpenWrt) checks a package against the checksum that the signed

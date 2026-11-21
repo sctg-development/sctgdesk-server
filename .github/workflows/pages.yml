@@ -5,9 +5,10 @@ name: Pages
 # the whole site.
 #
 # - On a push or a pull request touching the manual it only builds the manual, and publishes nothing.
-# - Publishing is a decision: it happens when a release is published as a full release (a pre-release promoted by the
-#   maintainer, docs/releases.md), or when someone runs the workflow by hand and asks for it. The repositories are then
-#   rebuilt from the packages of the latest full releases, so a site never depends on a previous deployment.
+# - Publishing is a decision: release.yml runs this workflow (on the default branch: the environment github-pages refuses
+#   other refs, such as a tag) once the packages of a full release are on it, and someone can run it by hand and tick
+#   Deploy. The repositories are rebuilt from the packages of the latest full releases, so a site never depends on a
+#   previous deployment.
 # Secrets of the repository (docs/repositories.md says how to create them):
 #   REPO_GPG_PRIVATE_KEY (+ REPO_GPG_PASSPHRASE if it has one): signs the apt and rpm repositories
 #   REPO_APK_PRIVATE_KEY: RSA key in PEM, signs the apk indexes
@@ -17,8 +18,6 @@ on:
     paths: ["docs/**", "CONTRIBUTING.md", "client/README.md", "packaging/repos/**", ".github/workflows/pages.yml"]
   pull_request:
     paths: ["docs/**", "CONTRIBUTING.md", "client/README.md", "packaging/repos/**", ".github/workflows/pages.yml"]
-  release:
-    types: [released]
   workflow_dispatch:
     inputs:
       deploy:
@@ -42,7 +41,7 @@ jobs:
     name: Manual and repositories
     runs-on: ubuntu-latest
     env:
-      PUBLISH: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
+      PUBLISH: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy }}
     steps:
       - uses: actions/checkout@v4
       - uses: taiki-e/install-action@v2
@@ -85,7 +84,7 @@ jobs:
   deploy:
     name: GitHub Pages
     needs: build
-    if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy }}
     runs-on: ubuntu-latest
     permissions:
       pages: write
