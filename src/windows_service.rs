@@ -89,9 +89,24 @@ mod imp {
 
     pub fn run(name: &'static str, main: fn() -> ResultType<()>) -> ResultType<()> {
         BODY.set((name, main)).ok();
-        // Fails with ERROR_FAILED_SERVICE_CONTROLLER_CONNECT when started from a console.
         service_dispatcher::start(name, ffi_service_main).map_err(|e| {
-            hbb_common::anyhow::anyhow!("not started by the Windows service manager: {e}")
+            // ERROR_FAILED_SERVICE_CONTROLLER_CONNECT: the program was started from a console and not by the service
+            // manager, the usual mistake. Its raw text ("IO error in winapi call") says nothing to the user.
+            const ERROR_FAILED_SERVICE_CONTROLLER_CONNECT: i32 = 1063;
+            let from_console = matches!(
+                &e,
+                windows_service::Error::Winapi(io)
+                    if io.raw_os_error() == Some(ERROR_FAILED_SERVICE_CONTROLLER_CONNECT)
+            );
+            if from_console {
+                hbb_common::anyhow::anyhow!(
+                    "{} is meant for the Windows service manager (it is set by `sc.exe create`, see docs/windows.md): \
+                     to run {name} in this console, leave it out",
+                    super::FLAG
+                )
+            } else {
+                hbb_common::anyhow::anyhow!("cannot connect to the Windows service manager: {e}")
+            }
         })?;
         Ok(())
     }

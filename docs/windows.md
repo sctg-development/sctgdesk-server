@@ -56,8 +56,17 @@ New-NetFirewallRule -DisplayName "SCTGDesk (UDP)" -Direction Inbound -Protocol U
 | Logs (rotated at 10 MB, 5 kept) | `%ProgramData%\SCTGDesk\logs\hbbs*.log`, `hbbr*.log` |
 | Environment variables of the programs | a `.env` file in `%ProgramData%\SCTGDesk` (`KEY=value` lines, for example `OAUTH2_CREATE_USER=1`) |
 
-Set the system environment variable `SCTGDESK_DATA_DIR` (and restart the services) to use another folder. Both services
-share the folder. Back it up: it holds the private key.
+To use another folder, set `SCTGDESK_DATA_DIR`, either for the whole machine (a system environment variable) or for one
+service only, in its own `Environment` value in the registry (a service reads it when it starts, so restart it):
+
+```powershell
+foreach ($service in 'SCTGDeskHbbr', 'SCTGDeskHbbs') {
+  New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\$service" -Name Environment `
+    -PropertyType MultiString -Value @('SCTGDESK_DATA_DIR=D:\SCTGDesk') -Force
+}
+```
+
+Both services must use the same folder. Back it up: it holds the private key.
 
 ## Stop and remove
 
@@ -70,8 +79,8 @@ The data folder is never deleted.
 
 ## Notes
 
-- The flag only works when the service manager starts the program. Typed in a console it fails with "not started by the
-  Windows service manager": to run the server by hand, leave it out.
+- The flag only works when the service manager starts the program. Typed in a console it stops with a message saying so:
+  to run the server by hand, leave it out.
 - The services run as `LocalSystem` by default. For a less privileged account, use `sc.exe config ... obj=` and give the
   account write access to the data folder.
 - The Windows binaries are not code-signed: SmartScreen or an antivirus may warn on the first run.

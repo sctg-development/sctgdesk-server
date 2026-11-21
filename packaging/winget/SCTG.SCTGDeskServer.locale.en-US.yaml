@@ -18,6 +18,8 @@ Tags:
   - rustdesk
   - server
   - self-hosted
-DocumentationUrl: https://sctg-development.github.io/sctgdesk-server/windows.html
+Documentations:
+  - DocumentLabel: Running the server as Windows services
+    DocumentUrl: https://sctg-development.github.io/sctgdesk-server/windows.html
 ManifestType: defaultLocale
 ManifestVersion: 1.9.0
