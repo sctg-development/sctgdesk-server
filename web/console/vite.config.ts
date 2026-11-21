@@ -19,7 +19,9 @@ export default defineConfig({
     targets: [
       {
         src: './src/assets/sctg.svg',
-        dest: 'assets'
+        dest: 'assets',
+        // vite-plugin-static-copy 4 keeps the source folders in the output; the pages expect /ui/assets/sctg.svg
+        rename: { stripBase: true }
       }
     ],
     silent: false

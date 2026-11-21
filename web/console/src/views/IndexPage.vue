@@ -1,6 +1,6 @@
 <!--
 =========================================================
-* © 2024 Ronan LE MEILLAT for SCTG Development
+* © 2024-2026 Ronan LE MEILLAT for SCTG Development
 =========================================================
 This website use:
 - Vite, Vue3, FontAwesome 6, TailwindCss 3
@@ -17,9 +17,9 @@ This website use:
             </div>
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-4">
-                <a v-for="item in navigation" :key="item.name" :href="item.href" @click="makePageCurrent(item.name)"
+                <a v-for="item in navigation" :key="item.key" :href="item.href" @click="makePageCurrent(item.key)"
                   :class="[item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white', 'rounded-md px-3 py-2 text-sm font-medium']"
-                  :aria-current="item.current ? 'page' : undefined">{{ item.name }}</a>
+                  :aria-current="item.current ? 'page' : undefined">{{ t('nav.' + item.key) }}</a>
               </div>
             </div>
           </div>
@@ -28,9 +28,18 @@ This website use:
               <button type="button"
                 class="relative rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                 <span class="absolute -inset-1.5" />
-                <span class="sr-only">View notifications</span>
+                <span class="sr-only">{{ t('nav.notifications') }}</span>
                 <BellIcon class="h-6 w-6" aria-hidden="true" />
               </button>
+
+              <!-- API documentation (RapiDoc): administrators only, in a new tab so the console stays open -->
+              <a v-if="isAdmin" href="/api/doc/" target="_blank" rel="noopener" data-test="api-doc-link"
+                :title="t('nav.apiDocs')"
+                class="relative ml-3 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                <span class="absolute -inset-1.5" />
+                <span class="sr-only">{{ t('nav.apiDocs') }}</span>
+                <BookOpenIcon class="h-6 w-6" aria-hidden="true" />
+              </a>
 
               <!-- Profile dropdown -->
               <Menu as="div" class="relative ml-3">
@@ -38,8 +47,8 @@ This website use:
                   <MenuButton
                     class="relative flex max-w-xs items-center rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                     <span class="absolute -inset-1.5" />
-                    <span class="sr-only">Open user menu</span>
-                    <img class="h-8 w-8 rounded-full" :src="user.imageUrl" alt="" />
+                    <span class="sr-only">{{ t('nav.openUserMenu') }}</span>
+                    <img class="h-8 w-8 rounded-full object-cover" :src="user.imageUrl" alt="" />
                   </MenuButton>
                 </div>
                 <transition enter-active-class="transition ease-out duration-100"
@@ -48,10 +57,9 @@ This website use:
                   leave-to-class="transform opacity-0 scale-95">
                   <MenuItems
                     class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <MenuItem v-for="item in userNavigation" :key="item.name" v-slot="{ active }">
-                    <a :href="item.href" @click="item.action"
-                      :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{ item.name
-                      }}</a>
+                    <MenuItem v-for="item in userNavigation" :key="item.key" v-slot="{ active }">
+                    <a :href="item.href" @click.prevent="item.action"
+                      :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{ item.label }}</a>
                     </MenuItem>
                   </MenuItems>
                 </transition>
@@ -63,7 +71,7 @@ This website use:
             <DisclosureButton
               class="relative inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
               <span class="absolute -inset-0.5" />
-              <span class="sr-only">Open main menu</span>
+              <span class="sr-only">{{ t('nav.openMenu') }}</span>
               <Bars3Icon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
               <XMarkIcon v-else class="block h-6 w-6" aria-hidden="true" />
             </DisclosureButton>
@@ -73,15 +81,15 @@ This website use:
 
       <DisclosurePanel class="md:hidden">
         <div class="space-y-1 px-2 pb-3 pt-2 sm:px-3">
-          <DisclosureButton v-for="item in navigation" :key="item.name" as="a" :href="item.href"
-            @click="makePageCurrent(item.name)"
+          <DisclosureButton v-for="item in navigation" :key="item.key" as="a" :href="item.href"
+            @click="makePageCurrent(item.key)"
             :class="[item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white', 'block rounded-md px-3 py-2 text-base font-medium']"
-            :aria-current="item.current ? 'page' : undefined">{{ item.name }}</DisclosureButton>
+            :aria-current="item.current ? 'page' : undefined">{{ t('nav.' + item.key) }}</DisclosureButton>
         </div>
         <div class="border-t border-gray-700 pb-3 pt-4">
           <div class="flex items-center px-5">
             <div class="flex-shrink-0">
-              <img class="h-10 w-10 rounded-full" :src="user.imageUrl" alt="" />
+              <img class="h-10 w-10 rounded-full object-cover" :src="user.imageUrl" alt="" />
             </div>
             <div class="ml-3">
               <div class="text-base font-medium leading-none text-white">{{ user.name }}</div>
@@ -90,121 +98,184 @@ This website use:
             <button type="button"
               class="relative ml-auto flex-shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
               <span class="absolute -inset-1.5" />
-              <span class="sr-only">View notifications</span>
+              <span class="sr-only">{{ t('nav.notifications') }}</span>
               <BellIcon class="h-6 w-6" aria-hidden="true" />
             </button>
+            <a v-if="isAdmin" href="/api/doc/" target="_blank" rel="noopener" :title="t('nav.apiDocs')"
+              class="relative ml-3 flex-shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+              <span class="absolute -inset-1.5" />
+              <span class="sr-only">{{ t('nav.apiDocs') }}</span>
+              <BookOpenIcon class="h-6 w-6" aria-hidden="true" />
+            </a>
           </div>
           <div class="mt-3 space-y-1 px-2">
-            <DisclosureButton v-for="item in userNavigation" :key="item.name" as="a" :href="item.href"
-              @click="item.action"
+            <DisclosureButton v-for="item in userNavigation" :key="item.key" as="a" :href="item.href"
+              @click.prevent="item.action"
               class="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white">
-              {{ item.name }}</DisclosureButton>
+              {{ item.label }}</DisclosureButton>
           </div>
         </div>
       </DisclosurePanel>
     </Disclosure>
 
+    <UpdateBanner />
     <header class="bg-white shadow">
       <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ getCurrentPage() }}</h1>
+        <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ pageTitle }}</h1>
       </div>
     </header>
     <main>
-      <div v-if="isCurrentPage('Dashboard')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+      <div v-if="isCurrentPage('dashboard')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <DashboardCard />
       </div>
-      <div v-if="isCurrentPage('Devices')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+      <div v-if="isCurrentPage('devices')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <DevicesCard />
       </div>
-      <div v-if="isCurrentPage('Users')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+      <div v-if="isCurrentPage('users')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <UsersCard />
       </div>
-      <div v-if="isCurrentPage('Groups')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+      <div v-if="isCurrentPage('groups')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <GroupsCard />
       </div>
-      <div v-if="isCurrentPage('Address books')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+      <div v-if="isCurrentPage('addressBooks')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <AccessibleAddressBooks />
       </div>
-      <div v-if="isCurrentPage('Backup')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+      <div v-if="isCurrentPage('connections')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+        <ConnectionsCard />
+      </div>
+      <div v-if="isCurrentPage('backup') && isAdmin" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <BackupCard />
       </div>
-      <div v-if="isCurrentPage('Connections')" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-        <ConnectionsCard />
+      <div v-if="isCurrentPage('settings') && isAdmin" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+        <SettingsCard />
+      </div>
+      <div v-if="isCurrentPage('userSettings')" class="mx-auto max-w-3xl py-6 sm:px-6 lg:px-8">
+        <UserSettings />
       </div>
     </main>
     <MainFooter />
+    <p v-if="toast" role="status" data-test="toast"
+      class="fixed bottom-4 right-4 z-50 rounded-md bg-gray-900 px-4 py-2 text-sm text-white shadow-lg">{{ toast }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { $require } from '@/utilities/viteHelper.js'
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { Bars3Icon, BellIcon, BookOpenIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useRouter } from 'vue-router';
-import { generateAvatar } from '@/utilities/avatar'
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { LoginApi } from '@/api';
 import DevicesCard from '@/components/DevicesCard.vue';
 import UsersCard from '@/components/UsersCard.vue';
 import DashboardCard from '@/components/DashboardCard.vue';
 import MainFooter from '@/footers/mainfooter.vue';
-import { ref } from 'vue';
+import UpdateBanner from '@/components/UpdateBanner.vue';
+import { computed, ref } from 'vue';
+import { t } from '@/i18n';
+import { useProfileStore } from '@/stores/profileStore';
+import SettingsCard from '@/components/SettingsCard.vue';
+import UserSettings from '@/components/UserSettings.vue';
 import GroupsCard from '@/components/GroupsCard.vue';
 import AccessibleAddressBooks from '@/components/AccessibleAddressBooks.vue';
 import ConnectionsCard from '@/components/ConnectionsCard.vue';
 import BackupCard from '@/components/BackupCard.vue';
 const userStore = useUserStore();
 const router = useRouter();
+const profileStore = useProfileStore();
 
-const user = {
-  name: userStore.user?.name || 'Unknown',
+/** The user shown in the header; computed so that a new avatar or name shows at once. */
+const user = computed(() => ({
+  name: userStore.user?.name || t('common.unknown'),
   email: userStore.user?.email || '',
-  imageUrl: generateAvatar(userStore.user?.name),
-}
+  imageUrl: profileStore.avatarUrl,
+}))
 
-const navigation = ref([
-  { name: 'Dashboard', href: '#', current: true },
-  { name: 'Devices', href: '#', current: false },
-  { name: 'Users', href: '#', current: false },
-  { name: 'Groups', href: '#', current: false },
-  { name: 'Address books', href: '#', current: false },
-  { name: 'Connections', href: '#', current: false },
-  // the backup is for the administrators (the server refuses the others anyway)
-  ...(userStore.user?.admin ? [{ name: 'Backup', href: '#', current: false }] : []),
-])
-const userNavigation = [
-  { name: `${userStore.user?.name} ${userStore.user?.email}`, href: '#', action: nop },
-  { name: 'Settings', href: 'javascript:alert("todo")', action: nop },
-  { name: 'Sign out', href: '#', action: logout },
-]
+const isAdmin = computed(() => !!userStore.user?.admin)
 
 /**
- * Returns the name of the current page in the navigation menu.
- *
- * @return {string} The name of the current page, or 'Dashboard' if no page is currently selected.
+ * The pages of the main navigation. `key` is both the page id and the suffix of the `nav.*` message.
+ * The settings page changes the server configuration, so it only exists for administrators.
  */
-function getCurrentPage(): string {
-  return navigation.value.find((item) => item.current)?.name || 'Dashboard';
+const navigation = ref([
+  { key: 'dashboard', href: '#', current: true, adminOnly: false },
+  { key: 'devices', href: '#', current: false, adminOnly: false },
+  { key: 'users', href: '#', current: false, adminOnly: false },
+  { key: 'groups', href: '#', current: false, adminOnly: false },
+  { key: 'addressBooks', href: '#', current: false, adminOnly: false },
+  { key: 'connections', href: '#', current: false, adminOnly: false },
+  { key: 'backup', href: '#', current: false, adminOnly: true },
+  { key: 'settings', href: '#', current: false, adminOnly: true },
+].filter((item) => !item.adminOnly || userStore.user?.admin))
+
+/** Entries of the avatar menu. `userSettings` is a page too, but it is not part of the main navigation. */
+const userNavigation = computed(() => [
+  { key: 'who', label: `${userStore.user?.name} ${userStore.user?.email ?? ''}`.trim(), href: '#', action: nop },
+  { key: 'userSettings', label: t('userMenu.settings'), href: '#', action: () => makePageCurrent('userSettings') },
+  { key: 'copyToken', label: t('userMenu.copyToken'), href: '#', action: copyToken },
+  { key: 'signOut', label: t('userMenu.signOut'), href: '#', action: logout },
+])
+
+/** Short message shown after the token was copied (or could not be), then cleared. */
+const toast = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+/**
+ * Copies the Bearer token of the current session, to paste it in the "api-token" field of the API documentation
+ * (RapiDoc), which asks for the bare token. It is only copied on this explicit action and never displayed.
+ * `navigator.clipboard` exists only in a secure context (https or localhost), so a console served over plain
+ * http falls back to a hidden textarea and `execCommand`.
+ */
+async function copyToken(): Promise<void> {
+  const token = String(userStore.api_configuration?.accessToken ?? '')
+  let copied = false
+  try {
+    await navigator.clipboard.writeText(token)
+    copied = true
+  } catch {
+    const area = document.createElement('textarea')
+    area.value = token
+    area.style.position = 'fixed'
+    area.style.opacity = '0'
+    document.body.appendChild(area)
+    area.select()
+    copied = token !== '' && document.execCommand('copy')
+    document.body.removeChild(area)
+  }
+  toast.value = copied ? t('userMenu.tokenCopied') : t('userMenu.tokenCopyFailed')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => (toast.value = ''), 3000)
 }
+
+/** The page being shown; `userSettings` is none of the navigation items, so no tab is highlighted for it. */
+const pageTitle = computed(() => {
+  const current = navigation.value.find((item) => item.current)
+  return current ? t('nav.' + current.key) : t('userMenu.settings')
+})
+
 /**
  * Checks if the given page is the current page.
  *
- * @param {string} page - The name of the page to check.
+ * @param {string} page - The id of the page to check.
  * @return {boolean} True if the page is the current page, false otherwise.
  */
 function isCurrentPage(page: string): boolean {
-  return navigation.value.find((item) => item.name === page)?.current || false;
+  return currentPage.value === page;
 }
 
+/** The id of the page being shown. */
+const currentPage = ref('dashboard')
+
 /**
- * Updates the current page in the navigation menu based on the provided page name.
+ * Shows another page and highlights its entry in the navigation (none for pages outside of it).
  *
- * @param {string} page - The name of the page to set as the current page.
+ * @param {string} page - The id of the page to show.
  * @return {void} This function does not return anything.
  */
 function makePageCurrent(page: string): void {
+  currentPage.value = page;
   navigation.value.forEach((item) => {
-    item.current = item.name === page;
+    item.current = item.key === page;
   });
 }
 /**
@@ -218,11 +289,12 @@ function logout(): void {
     if (response.status == 200) {
       userStore.user = null;
       userStore.api_configuration = null;
+      profileStore.reset();
       router.push({ name: 'login' });
     }
   }).catch((error) => {
     console.error(error);
-    alert("Unable to logout");
+    alert(t('userMenu.unableToLogout'));
   });
 }
 

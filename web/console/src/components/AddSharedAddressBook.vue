@@ -7,16 +7,16 @@ This website use:
 - And many others
 -->
 <template>
-  <Modal @modalOk="addSharedAddressBook()" @modalCancel="closeModal()" okLabel="Add" title="Add shared address book">
+  <Modal @modalOk="addSharedAddressBook()" @modalCancel="closeModal()" :okLabel="t('common.add')" :title="t('admin.ab.addShared')">
     <div>
-      <label for="name" class="block text-sm font-medium leading-6 text-gray-900">Shared address book name</label>
+      <label for="name" class="block text-sm font-medium leading-6 text-gray-900">{{ t('admin.ab.sharedName') }}</label>
       <div class="mt-2">
         <input v-model="name" id="name" name="name" type="text" required
           class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
       </div>
     </div>
     <div>
-      <label for="note" class="block text-sm font-medium leading-6 text-gray-900">Note</label>
+      <label for="note" class="block text-sm font-medium leading-6 text-gray-900">{{ t('admin.fields.note') }}</label>
       <div class="mt-2">
         <input v-model="note" id="note" name="note" type="text" required
           class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
@@ -26,6 +26,7 @@ This website use:
 </template>
 
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Modal from '@/components/Modal.vue';
 import { ref } from 'vue';
 import { useUserStore } from '@/stores/sctgDeskStore';

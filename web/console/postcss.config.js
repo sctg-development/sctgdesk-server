@@ -1,27 +1,12 @@
 /*!
 =========================================================
-* © 2024 Ronan LE MEILLAT for SCTG Development
+* © 2024-2026 Ronan LE MEILLAT for SCTG Development
 =========================================================
-This website use:
-- Vite, Vue3, FontAwesome 6, TailwindCss 3
-- And many others
+Tailwind 4 runs as a PostCSS plugin and brings its own vendor prefixing and removal of unused CSS, which
+replaces autoprefixer and purgecss of the previous setup.
 */
-import tailwindcss from 'tailwindcss'
-import autoprefixer from 'autoprefixer'
-import purgecss from '@fullhuman/postcss-purgecss'
+import tailwindcss from '@tailwindcss/postcss'
 
 export default {
-  plugins: [
-    tailwindcss,
-    autoprefixer,
-    (process.env.NODE_ENV !== 'development') ? purgecss({
-      content: ['./index.html', './src/**/*.ts', './src/**/*.js', './src/**/*.vue'],
-      defaultExtractor(content) {
-        const contentWithoutStyleBlocks = content.replace(/<style[^]+?<\/style>/gi, '')
-        return contentWithoutStyleBlocks.match(/[A-Za-z0-9-_/:]*[A-Za-z0-9-_/]+/g) || []
-      },
-      safelist: [/-(leave|enter|appear)(|-(to|from|active))$/, /^(?!(|.*?:)cursor-move).+-move$/, /^router-link(|-exact)-active$/, /data-v-.*/,/tick.*/,/pt-1\.5/],
-      fontFace: true
-    }) : ()=>{},
-  ]
+  plugins: [tailwindcss],
 }

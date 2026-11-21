@@ -60,6 +60,16 @@ client itself becomes `sctgdesk.html`. `branding.py --web` points the browser at
 ports 21120 and 21121 of a reverse proxy in front of `hbbs` 21118 and `hbbr` 21119), replaces the default servers and
 key of upstream, and fails if one is left. The workflow is `.github/workflows/client-web.yml`.
 
+## Launch from the web console
+
+The console opens the web client with `<WEB_CLIENT_URL>?id=<device>#access_token=<token>&user_name=<name>`. The web
+client of 1.2.5 reads none of this, so `branding.py --web` adds `consumeLaunchParams` to its `globals.js`: before the
+Flutter app starts it stores the token and user as the local options the login dialog would have written, keeps the
+id in `last_remote_id`, sets a one-shot `launch-connect` flag and removes the id and the fragment from the address
+bar. A one-line addition to the desktop `connection_page.dart` (also a branding rule) makes the page connect when the
+flag is set. The native clients never set it. The server only hands `WEB_CLIENT_URL` to the console when it is a
+valid `http(s)` URL.
+
 ## Known gaps
 
 - The web client was branded on a clean `1.4.0` checkout, not built yet. The upstream README of its sources says

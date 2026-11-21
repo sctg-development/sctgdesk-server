@@ -183,6 +183,41 @@ async function oidcAuth(value) {
 
 """
 
+# Hand-off from the web console (the "web" buttons of the console open `<web client>?id=<device>#access_token=..&user_name=..`).
+# The web client runs on another origin than the console, so the console cannot write into its storage: the page
+# receives the values in its address and this code, which runs before the Flutter app starts, moves them to where the
+# app reads them. The fragment (never sent to a server nor logged) carries the token; both are removed from the
+# address bar at once so that the token does not stay in the history or in a copied link.
+WEB_LAUNCH_JS = """// ===== launch from the web console (client/branding.py) =====
+(function consumeLaunchParams() {
+  try {
+    const query = new URLSearchParams(window.location.search);
+    const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const token = fragment.get('access_token');
+    const user = fragment.get('user_name');
+    const id = query.get('id');
+    if (token) {
+      // same keys as the login dialog of the Dart code (local options are stored under "option:local:")
+      localStorage.setItem('option:local:access_token', token);
+      localStorage.setItem('option:local:user_info', JSON.stringify({ name: user || '', status: 1 }));
+    }
+    if (id) {
+      localStorage.setItem('last_remote_id', id); // pre-fills the id field of the connection page
+      localStorage.setItem('launch-connect', 'Y'); // read once by the connection page, which then connects
+    }
+    if (token || id || user) {
+      query.delete('id');
+      const rest = query.toString();
+      window.history.replaceState(null, '', window.location.pathname + (rest ? '?' + rest : ''));
+    }
+  } catch (e) {
+    console.log('launch parameters ignored', e);
+  }
+})();
+// ===== end of the launch from the web console =====
+
+"""
+
 
 def web_rules_for(cfg):
     """The web client of upstream (flutter/web/js, see apply.sh) and our landing page (flutter/web/client.html)."""
@@ -231,7 +266,7 @@ def web_rules_for(cfg):
         Rule(['flutter/web/js/src/globals.js'], "  return 'https://admin.rustdesk.com';\n}",
              f"  return '{api}';\n}}"),
         # The login of the browser (OAuth2, and the id, uuid and device info of the password login): JavaScript
-        Rule(['flutter/web/js/src/globals.js'], 'function getApiServer() {\n', WEB_LOGIN_JS + 'function getApiServer(/* brand */) {\n'),
+        Rule(['flutter/web/js/src/globals.js'], 'function getApiServer() {\n', WEB_LOGIN_JS + WEB_LAUNCH_JS + 'function getApiServer(/* brand */) {\n'),
         Rule(['flutter/web/js/src/globals.js'], "    case 'option':\n      value = JSON.parse(value);\n      localStorage.setItem(value.name, value.value);\n",
              "    case 'account_auth':\n      oidcAuth(value);\n      break;\n    case 'account_auth_cancel':\n      oidcAuthCancel();\n      break;\n"
              "    case 'option':\n      value = JSON.parse(value);\n      localStorage.setItem(value.name, value.value); // brand\n"),
@@ -260,6 +295,17 @@ def web_rules_for(cfg):
         Rule(['flutter/lib/web/bridge.dart'],
              'String mainGetLoginDeviceInfo({dynamic hint}) {\n    throw UnimplementedError();',
              "String mainGetLoginDeviceInfo({dynamic hint}) {\n    return js.context.callMethod('getByName', ['login_device_info']) as String;"),
+        # Connect at once when the console opened the page with ?id=: the JavaScript above leaves the id in
+        # "last_remote_id" and a one-shot flag; the native clients never set it, so this is a no-op for them
+        Rule(['flutter/lib/desktop/pages/connection_page.dart'],
+             "          setState(() {\n            _idController.id = lastRemoteId;\n          });\n        }\n      }();",
+             "          setState(() {\n            _idController.id = lastRemoteId;\n          });\n        }\n"
+             "        if (await bind.mainGetOption(key: 'launch-connect') == 'Y') {\n"
+             "          await bind.mainSetOption(key: 'launch-connect', value: '');\n"
+             "          WidgetsBinding.instance.addPostFrameCallback((_) {\n"
+             "            if (mounted) onConnect();\n"
+             "          });\n"
+             "        }\n      }();"),
         # The landing page asks our API server for the download links
         Rule(['flutter/web/client.html'], '__API_SERVER__', api),
         Rule(['flutter/lib/**/*.dart'], 'RustDesk', app),

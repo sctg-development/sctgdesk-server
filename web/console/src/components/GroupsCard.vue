@@ -18,22 +18,22 @@ This website use:
                                 <tr class="text-center bg-primary">
                                     <th
                                         class="w-1/6 min-w-[160px] border-l border-transparent py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                        Guid
+                                        {{ t('admin.fields.guid') }}
                                     </th>
                                     <th
                                         class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                        Name
+                                        {{ t('admin.fields.name') }}
                                     </th>
                                     <th
                                         class="w-1/6 min-w-[160px] border-r border-transparent py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                        Note
+                                        {{ t('admin.fields.note') }}
                                     </th>
                                     <th>
                                         <Menu as="div" class="relative inline-block text-left">
                                             <div>
                                                 <MenuButton
                                                     class="inline-flex w-full justify-center rounded-md bg-black/20 px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75">
-                                                    Actions
+                                                    {{ t('common.actions') }}
                                                 </MenuButton>
                                             </div>
 
@@ -51,7 +51,7 @@ This website use:
                                                             active ? 'bg-slate-400 text-white' : 'text-gray-900',
                                                             'group flex w-full items-center rounded-md px-2 py-2 text-sm',
                                                         ]">
-                                                            Add group
+                                                            {{ t('admin.groups.add') }}
                                                         </button>
                                                         </MenuItem>
                                                     </div>
@@ -79,11 +79,11 @@ This website use:
                                         class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
                                         <a @click="toggle_edit_group(group.guid)"
                                             class="inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
-                                            Edit
+                                            {{ t('common.edit') }}
                                         </a>
                                         <a @click="delete_group(group.guid)"
                                             class="ml-1 inline-block px-6 py-2.5 border rounded-md border-primary text-primary hover:bg-primary hover:text-white font-medium">
-                                            Delete
+                                            {{ t('common.delete') }}
                                         </a>
                                     </td>
                                 </tr>
@@ -101,6 +101,7 @@ This website use:
         @group_updated="refresh_groups(); bModalEditGroup = false" :uuid="uuid" />
 </template>
 <script setup lang="ts">
+import { t } from '@/i18n';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { onMounted, ref } from 'vue';
 import { Group, GroupApi } from '@/api';
@@ -137,7 +138,7 @@ function refresh_groups(): void {
  * @return {void} This function does not return anything.
  */
 function delete_group(groupGuid: string): void {
-    if (confirm("Are you sure you want to delete this group?")) {
+    if (confirm(t('admin.groups.confirmDelete'))) {
         const groupApi = new GroupApi(useUserStore().api_configuration);
         groupApi.groupDelete([], groupGuid).then(() => {
             refresh_groups();

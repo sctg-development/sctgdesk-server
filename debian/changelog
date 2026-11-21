@@ -1,3 +1,8 @@
+rustdesk-server (1.1.16-sctg.7) UNRELEASED; urgency=medium
+
+  * web console: administrators purge the connection history, edit s3config.toml and oauth2.toml with validation, users set their avatar, password and language, and open the web client on a device (WEB_CLIENT_URL)
+  * API: DELETE /api/audit/conn, /api/settings/config/<s3|oauth2>, /api/user/profile, /api/user/password, /api/webclient
+
 rustdesk-server (1.1.16-sctg.5) UNRELEASED; urgency=medium
 
   * fix: a failed login answers a JSON error body, which the clients can read

@@ -32,12 +32,12 @@ This website use:
                                 <button type="button"
                                     class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 m-1 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                                     @click="modalOk">
-                                    {{ props.okLabel }}
+                                    {{ props.okLabel ?? t('common.ok') }}
                                 </button>
                                 <button type="button"
                                     class="inline-flex justify-center rounded-md border border-transparent bg-gray-100 m-1 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                                     @click="modalCancel">
-                                    {{ props.cancelLabel }}
+                                    {{ props.cancelLabel ?? t('common.cancel') }}
                                 </button>
                             </div>
                         </DialogPanel>
@@ -55,6 +55,7 @@ import {
     DialogPanel,
     DialogTitle,
 } from '@headlessui/vue'
+import { t } from '@/i18n'
 
 const emit = defineEmits(['modalOk', 'modalCancel'])
 const props = withDefaults(defineProps<{
@@ -63,8 +64,9 @@ const props = withDefaults(defineProps<{
     title: string;
 }>(),
     {
-        okLabel: 'Ok',
-        cancelLabel: 'Cancel',
+        // undefined = the translated default of the active language (see the template)
+        okLabel: undefined,
+        cancelLabel: undefined,
         title: '',
     })
 

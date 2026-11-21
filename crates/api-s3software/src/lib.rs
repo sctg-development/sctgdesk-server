@@ -104,6 +104,253 @@ pub async fn get_signed_release_url(
     get_object(&client, &bucket, &object, expires_in).await
 }
 
+/// Template shown by the console when the S3 config file does not exist yet.
+pub const CONFIG_TEMPLATE: &str = include_str!("../../api-server/s3config.toml");
+
+/// Validates the text of an `s3config.toml` without touching the disk or the network.
+///
+/// # Returns
+/// `(errors, warnings)`. Errors make the file unusable (syntax, missing key, bad endpoint URL); warnings are
+/// things that parse but will not work (empty or placeholder credentials).
+pub fn validate_config_toml(content: &str) -> (Vec<String>, Vec<String>) {
+    let mut errors = Vec::new();
+    let mut warnings = Vec::new();
+    let config: Config = match toml::from_str(content) {
+        Ok(c) => c,
+        Err(e) => {
+            errors.push(format!("Syntax error: {e}"));
+            return (errors, warnings);
+        }
+    };
+    let s = &config.s3config;
+    let is_http = |v: &str| {
+        url::Url::parse(v)
+            .map(|u| matches!(u.scheme(), "http" | "https") && u.host_str().is_some())
+            .unwrap_or(false)
+    };
+    if !is_http(&s.endpoint) {
+        errors.push("`Endpoint` must be an absolute http(s) URL.".into());
+    }
+    // `Page` is only used to find the latest version number: it may stay empty if the keys are fixed
+    if !s.page.is_empty() && !is_http(&s.page) {
+        errors.push("`Page` must be an absolute http(s) URL.".into());
+    }
+    for (name, value) in [
+        ("Region", &s.region),
+        ("Bucket", &s.bucket),
+        ("Windows64Key", &s.windows64_key),
+        ("Windows32Key", &s.windows32_key),
+        ("OSXKey", &s.osxkey),
+        ("OSXArm64Key", &s.osxarm64_key),
+        ("IOSKey", &s.ioskey),
+    ] {
+        if value.trim().is_empty() {
+            errors.push(format!("`{name}` must not be empty."));
+        }
+    }
+    for (name, value) in [("AccessKey", &s.access_key), ("SecretKey", &s.secret_key)] {
+        if value.trim().is_empty() {
+            warnings.push(format!(
+                "`{name}` is empty: the download links cannot be signed."
+            ));
+        } else if value.starts_with("your_") {
+            warnings.push(format!("`{name}` still looks like a placeholder."));
+        }
+    }
+    (errors, warnings)
+}
+
+/// One line of the result of [`check_live`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LiveCheck {
+    /// What was checked, for example `OSXKey`.
+    pub target: String,
+    /// `ok`, `warning` or `error`.
+    pub level: &'static str,
+    pub message: String,
+}
+
+/// How long the bucket has to answer one request of [`check_live`].
+const LIVE_TIMEOUT: Duration = Duration::from_secs(15);
+
+/// The five download keys of `s3config.toml`, with the name shown to the administrator.
+fn download_keys(s: &S3Config) -> [(&'static str, &str); 5] {
+    [
+        ("Windows64Key", &s.windows64_key),
+        ("Windows32Key", &s.windows32_key),
+        ("OSXKey", &s.osxkey),
+        ("OSXArm64Key", &s.osxarm64_key),
+        ("IOSKey", &s.ioskey),
+    ]
+}
+
+/// Explains a failed request to the bucket. A `ServiceError` means the server was reached and answered (so the
+/// connection works) with an HTTP status that tells what is wrong; anything else is a network failure.
+///
+/// # Returns
+/// `(reached, message)`: whether the S3 endpoint answered at all, and what to show.
+fn explain_s3_error<E: std::fmt::Debug, R>(
+    error: &aws_sdk_s3::error::SdkError<E, R>,
+    status: impl Fn(&R) -> u16,
+) -> (bool, String) {
+    use aws_sdk_s3::error::SdkError;
+    match error {
+        SdkError::ServiceError(e) => {
+            let code = status(e.raw());
+            let text = match code {
+                404 => "the file does not exist in the bucket (check the key, and `Bucket`)"
+                    .to_string(),
+                403 => {
+                    "access denied: check `AccessKey` / `SecretKey` and their rights on the bucket"
+                        .to_string()
+                }
+                301 | 307 => {
+                    "the bucket is in another region or endpoint: check `Region` and `Endpoint`"
+                        .to_string()
+                }
+                other => format!("the storage answered HTTP {other}"),
+            };
+            (true, text)
+        }
+        SdkError::TimeoutError(_) => (false, "timeout: the endpoint did not answer".into()),
+        SdkError::DispatchFailure(_) => (
+            false,
+            "cannot connect to the endpoint (check `Endpoint`, DNS and the network of the server)"
+                .into(),
+        ),
+        other => (false, format!("{other}")),
+    }
+}
+
+/// Checks an `s3config.toml` against the real storage, with the credentials it holds: for each download key,
+/// asks the bucket for the first byte of the object (the same signed `GET` that a user's download does, so a
+/// success here means the download works). A key with `{version}` is first resolved to the newest object.
+///
+/// The first request also tells whether the connection works at all: when the endpoint cannot be reached the
+/// check stops there instead of waiting for a timeout per file.
+///
+/// # Returns
+/// A `connection` line, then one line per key. A text that does not parse gives a single `error` line.
+pub async fn check_live(content: &str) -> Vec<LiveCheck> {
+    let config: Config = match toml::from_str(content) {
+        Ok(c) => c,
+        Err(e) => {
+            return vec![LiveCheck {
+                target: "file".into(),
+                level: "error",
+                message: format!("Syntax error: {e}"),
+            }]
+        }
+    };
+    let s = &config.s3config;
+    let credentials = Credentials::new(&s.access_key, &s.secret_key, None, None, "s3config.toml");
+    let shared = ConfigLoader::default()
+        .behavior_version(BehaviorVersion::latest())
+        .http_client(https_client())
+        .region(Region::new(s.region.clone()))
+        .endpoint_url(&s.endpoint)
+        .credentials_provider(credentials)
+        .load()
+        .await;
+    let client = Client::new(&shared);
+
+    let mut lines = Vec::new();
+    let mut connection: Option<LiveCheck> = None;
+    for (name, template) in download_keys(s) {
+        let resolved =
+            match tokio::time::timeout(LIVE_TIMEOUT, resolve_key(&config, template)).await {
+                Ok(Ok(r)) => r,
+                Ok(Err(e)) => {
+                    lines.push(LiveCheck {
+                        target: name.into(),
+                        level: "error",
+                        message: format!("cannot find the newest version of `{template}`: {e}"),
+                    });
+                    continue;
+                }
+                Err(_) => {
+                    lines.push(LiveCheck {
+                        target: name.into(),
+                        level: "error",
+                        message: "timeout while listing the bucket".into(),
+                    });
+                    continue;
+                }
+            };
+        let request = client
+            .get_object()
+            .bucket(&s.bucket)
+            .key(&resolved.key)
+            .range("bytes=0-0")
+            .send();
+        let line = match tokio::time::timeout(LIVE_TIMEOUT, request).await {
+            Ok(Ok(_)) => {
+                connection.get_or_insert(LiveCheck {
+                    target: "connection".into(),
+                    level: "ok",
+                    message: "The storage answers and accepts the credentials.".into(),
+                });
+                LiveCheck {
+                    target: name.into(),
+                    level: "ok",
+                    message: format!("`{}` is downloadable.", resolved.key),
+                }
+            }
+            Ok(Err(e)) => {
+                let (reached, why) = explain_s3_error(&e, |r| r.status().as_u16());
+                if reached {
+                    // answered: the connection is fine even when this file is not
+                    connection.get_or_insert(LiveCheck {
+                        target: "connection".into(),
+                        level: if why.contains("access denied") {
+                            "error"
+                        } else {
+                            "ok"
+                        },
+                        message: if why.contains("access denied") {
+                            why.clone()
+                        } else {
+                            "The storage answers.".into()
+                        },
+                    });
+                } else {
+                    // nothing reached: say it once and stop, the other keys would fail the same way
+                    lines.insert(
+                        0,
+                        LiveCheck {
+                            target: "connection".into(),
+                            level: "error",
+                            message: why,
+                        },
+                    );
+                    return lines;
+                }
+                LiveCheck {
+                    target: name.into(),
+                    level: "error",
+                    message: format!("`{}`: {why}.", resolved.key),
+                }
+            }
+            Err(_) => {
+                lines.insert(
+                    0,
+                    LiveCheck {
+                        target: "connection".into(),
+                        level: "error",
+                        message: "timeout: the endpoint did not answer".into(),
+                    },
+                );
+                return lines;
+            }
+        };
+        lines.push(line);
+    }
+    if let Some(c) = connection {
+        lines.insert(0, c);
+    }
+    lines
+}
+
 pub async fn parse_config(config: &str) -> Result<Config, Box<dyn Error>> {
     let config = toml::from_str(config);
     if config.is_err() {
@@ -160,7 +407,43 @@ pub async fn get_signed_release_url_with_config(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn validate_the_shipped_template_and_bad_files() {
+        let (e, _) = validate_config_toml(CONFIG_TEMPLATE);
+        assert!(e.is_empty(), "{e:?}");
+        let (e, _) = validate_config_toml("[s3config]\nPage = \"x\"");
+        assert!(e[0].starts_with("Syntax error"));
+        let bad = CONFIG_TEMPLATE.replace(
+            "https://compat.objectstorage",
+            "nope://compat.objectstorage",
+        );
+        let (e, _) = validate_config_toml(&bad);
+        assert_eq!(e.len(), 1, "{e:?}");
+        let empty_key = CONFIG_TEMPLATE.replace(
+            "AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"",
+            "AccessKey = \"\"",
+        );
+        let (e, w) = validate_config_toml(&empty_key);
+        assert!(e.is_empty());
+        assert_eq!(w.len(), 1);
+    }
     use reqwest::StatusCode;
+
+    /// With an endpoint nobody listens on, the check reports the connection (once) instead of one error per file.
+    #[tokio::test]
+    async fn live_check_reports_an_unreachable_endpoint() {
+        let line = CONFIG_TEMPLATE
+            .lines()
+            .find(|l| l.starts_with("Endpoint"))
+            .unwrap();
+        let content = CONFIG_TEMPLATE.replace(line, "Endpoint = \"https://127.0.0.1:1\"");
+        let lines = check_live(&content).await;
+        assert_eq!(lines[0].target, "connection", "{lines:?}");
+        assert_eq!(lines[0].level, "error");
+        let bad = check_live("nope").await;
+        assert_eq!(bad[0].level, "error");
+    }
 
     /// The HTTPS client must work with the one rustls provider of the build (ring): a second
     /// provider makes rustls panic when it is first used. A closed local port is enough to get there.

@@ -9,8 +9,8 @@ This website use:
 <template>
     <button
         class="text-white h-10 bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700"
-        @click="bModalAddSharedAb = !bModalAddSharedAb">Create a shared address book</button>
-    <AddressBook class="mb-4" name="Personal address book" :peers="ab_personal_peers" :isPersonal="true"
+        @click="bModalAddSharedAb = !bModalAddSharedAb">{{ t('admin.ab.createShared') }}</button>
+    <AddressBook class="mb-4" :name="t('admin.ab.personal')" :peers="ab_personal_peers" :isPersonal="true"
         :ab="ab_personal_guid" />
     <div v-for="sharedAddressBook in ab_shared_address_books" :key="sharedAddressBook.name">
         <AddressBook class="mb-4" 
@@ -28,6 +28,7 @@ import { useUserStore } from '@/stores/sctgDeskStore';
 import { AbPeer, AddressBookApi } from '@/api';
 import AddressBook from '@/components/AddressBook.vue';
 import AddSharedAddressBook from '@/components/AddSharedAddressBook.vue';
+import { t } from '@/i18n';
 
 type sharedAddressBooks = {
     guid: string;

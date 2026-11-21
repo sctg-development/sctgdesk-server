@@ -8,7 +8,7 @@ the devices of their own group and of the groups it may connect to).
 <template>
   <div class="grid grid-cols-2 gap-4">
     <fieldset>
-      <legend class="block text-sm font-medium leading-6 text-gray-900">Can connect to</legend>
+      <legend class="block text-sm font-medium leading-6 text-gray-900">{{ t('admin.groups.canConnectTo') }}</legend>
       <div v-if="others.length === 0" class="mt-2 text-sm text-gray-500">No other group</div>
       <div v-for="group in others" :key="'out-' + group.guid" class="mt-1 flex items-center">
         <input :id="'out-' + group.guid" type="checkbox" :value="group.guid" v-model="outgoing"
@@ -17,7 +17,7 @@ the devices of their own group and of the groups it may connect to).
       </div>
     </fieldset>
     <fieldset>
-      <legend class="block text-sm font-medium leading-6 text-gray-900">Can be reached by</legend>
+      <legend class="block text-sm font-medium leading-6 text-gray-900">{{ t('admin.groups.canBeReachedBy') }}</legend>
       <div v-if="others.length === 0" class="mt-2 text-sm text-gray-500">No other group</div>
       <div v-for="group in others" :key="'in-' + group.guid" class="mt-1 flex items-center">
         <input :id="'in-' + group.guid" type="checkbox" :value="group.guid" v-model="incoming"
@@ -29,6 +29,7 @@ the devices of their own group and of the groups it may connect to).
 </template>
 
 <script setup lang="ts">
+import { t } from '@/i18n';
 import { computed, onMounted, ref } from 'vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { Group, GroupApi } from '@/api';

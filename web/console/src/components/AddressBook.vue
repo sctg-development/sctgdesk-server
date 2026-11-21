@@ -20,34 +20,34 @@ This website use:
                                     <tr class="text-center bg-primary">
                                         <th
                                             class="w-1/6 min-w-[160px] border-l border-transparent py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                            Id
+                                            {{ t('admin.fields.id') }}
                                         </th>
                                         <th
                                             class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                            Alias
+                                            {{ t('admin.fields.alias') }}
                                         </th>
                                         <th
                                             class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                            Hostname
+                                            {{ t('admin.fields.hostname') }}
                                         </th>
                                         <th
                                             class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                            Login
+                                            {{ t('admin.fields.login') }}
                                         </th>
                                         <th
                                             class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                            Platform
+                                            {{ t('admin.fields.platform') }}
                                         </th>
                                         <th
                                             class="w-1/6 min-w-[160px] border-r border-transparent py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                            Username
+                                            {{ t('admin.fields.username') }}
                                         </th>
                                         <th>
                                             <Menu as="div" class="relative inline-block text-left m-1">
                                                 <div>
                                                     <MenuButton
                                                         class="inline-flex w-full justify-center rounded-md bg-black/20 px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75">
-                                                        Actions
+                                                        {{ t('common.actions') }}
                                                     </MenuButton>
                                                 </div>
                                                 <transition enter-active-class="transition duration-100 ease-out"
@@ -64,7 +64,7 @@ This website use:
                                                                 active ? 'bg-slate-400 text-white' : 'text-gray-900',
                                                                 'group flex w-full items-center rounded-md px-2 py-2 text-sm',
                                                             ]" @click="isViewRulesVisible = true">
-                                                                View rules
+                                                                {{ t('admin.ab.viewRules') }}
                                                             </button>
                                                             </MenuItem>
                                                             <MenuItem v-slot="{ active }" v-if="!props.isPersonal">
@@ -72,7 +72,7 @@ This website use:
                                                                 active ? 'bg-slate-400 text-white' : 'text-gray-900',
                                                                 'group flex w-full items-center rounded-md px-2 py-2 text-sm',
                                                             ]" @click="isAddRulesVisible = true">
-                                                                Add rule
+                                                                {{ t('admin.ab.addRule') }}
                                                             </button>
                                                             </MenuItem>
                                                             <MenuItem v-slot="{ active }" v-if="!props.isPersonal">
@@ -80,7 +80,7 @@ This website use:
                                                                 active ? 'bg-slate-400 text-white' : 'text-gray-900',
                                                                 'group flex w-full items-center rounded-md px-2 py-2 text-sm',
                                                             ]" @click="isEditNameVisible = true">
-                                                                Edit address book
+                                                                {{ t('admin.ab.edit') }}
                                                             </button>
                                                             </MenuItem>
                                                             <MenuItem v-slot="{ active }" v-if="!props.isPersonal">
@@ -88,7 +88,7 @@ This website use:
                                                                 active ? 'bg-slate-400 text-white' : 'text-gray-900',
                                                                 'group flex w-full items-center rounded-md px-2 py-2 text-sm',
                                                             ]" @click="deleteAddressBook()">
-                                                                Delete address book
+                                                                {{ t('admin.ab.delete') }}
                                                             </button>
                                                             </MenuItem>
                                                         </div>
@@ -126,6 +126,7 @@ This website use:
                                         </td>
                                         <td
                                             class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
+                                            <ConnectButtons :device-id="peer.id" :device-name="peer.alias || peer.hostname || undefined" />
                                         </td>
                                     </tr>
                                 </tbody>
@@ -144,12 +145,14 @@ This website use:
     <EditAddressBook v-if="isEditNameVisible" :uuid="props.ab" @update_ab_edit_close="isEditNameVisible = false" @ab_updated="abUpdated()"/>
 </template>
 <script setup lang="ts">
+import { t } from '@/i18n';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { AbPeer } from '@/api';
 import { ref } from 'vue';
 import ViewRules from '@/components/ViewRules.vue';
 import AddRule from '@/components/AddRule.vue';
 import ClipboardButton from '@/components/ClipboardButton.vue';
+import ConnectButtons from '@/components/ConnectButtons.vue';
 import EditAddressBook from '@/components/EditAddressBook.vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { AddressBookApi } from '@/api';
@@ -178,7 +181,7 @@ const props = withDefaults(defineProps<{
  */
 function deleteAddressBook(): void {
     console.log("Delete address book")
-    if (confirm("Are you sure you want to delete this address book ?")) {
+    if (confirm(t('admin.ab.confirmDelete'))) {
         const addressBookApi = new AddressBookApi(useUserStore().api_configuration);
         addressBookApi.abSharedDelete([props.ab]).then(() => {
             emit('needRefresh');

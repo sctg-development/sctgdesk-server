@@ -12,7 +12,7 @@ import { createWebHistory, createRouter, RouteRecordRaw, NavigationGuardNext } f
 import { createPinia } from 'pinia'
 import { addJsonLD } from "./config/StructuredLDJson"
 import { useUserStore } from '@/stores/sctgDeskStore';
-import '@/index.scss'
+import '@/index.css'
 import { RouteLocationNormalized } from 'vue-router'
 import { useVersionsStore } from '@/stores/versionsStore';
 

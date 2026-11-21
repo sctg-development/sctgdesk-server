@@ -7,7 +7,7 @@ This website use:
 - And many others
 -->
 <template>
-    <Modal @modalOk="emit('viewRulesOK')" @modalCancel="emit('viewRulesCancel')" title="Rules">
+    <Modal @modalOk="emit('viewRulesOK')" @modalCancel="emit('viewRulesCancel')" :title="t('admin.ab.rulesTitle')">
         <section class="bg-white dark:bg-dark">
         <div class="container mx-auto">
             <div class="flex flex-wrap -mx-4">
@@ -18,19 +18,19 @@ This website use:
                                 <tr class="text-center bg-primary">
                                     <th
                                         class="w-1/6 min-w-[160px] border-l border-transparent py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                        guid
+                                        {{ t('admin.fields.guid') }}
                                     </th>
                                     <th
                                         class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                        Group
+                                        {{ t('admin.fields.group') }}
                                     </th>
                                     <th
                                         class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                        User
+                                        {{ t('admin.fields.user') }}
                                     </th>
                                     <th
                                         class="w-1/6 min-w-[160px] py-4 px-3 text-lg font-medium text-white lg:py-7 lg:px-4">
-                                        Rights
+                                        {{ t('admin.fields.rights') }}
                                     </th>
                                     <th>
                                         &nbsp;
@@ -57,7 +57,7 @@ This website use:
                                     </td>
                                     <td
                                         class="text-dark border-b border-r border-[#E8E8E8] bg-[#F3F6FF] dark:border-dark dark:bg-dark-2 dark:text-dark-7 py-5 px-2 text-center text-base font-medium">
-                                        <a @click="deleteRule(rule.guid)" class="text-blue-500">Delete</a>
+                                        <a @click="deleteRule(rule.guid)" class="text-blue-500">{{ t('common.delete') }}</a>
                                     </td>
                                 </tr>
                             </tbody>
@@ -70,6 +70,7 @@ This website use:
     </Modal>
 </template>
 <script setup lang="ts">
+import { t } from '@/i18n';
 import { AbRule, AddressBookApi, AbRuleDeleteRequest } from '@/api';
 import Modal from '@/components/Modal.vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
@@ -110,15 +111,15 @@ onMounted(() => {
 function decodeRights(rights: number): string {
     switch (rights) {
         case 0:
-            return "None";
+            return t('admin.ab.viewRights.none');
         case 1:
-            return "Read";
+            return t('admin.ab.viewRights.read');
         case 2:
-            return "Read/Write";
+            return t('admin.ab.viewRights.readWrite');
         case 3:
-            return "Total Control";
+            return t('admin.ab.viewRights.total');
         default:
-            return "Unknown";
+            return t('admin.ab.viewRights.unknown');
     }
 }
 

@@ -39,6 +39,10 @@ release (nothing to type) :
 | Windows client, macOS client | `client-windows.yml`, `client-macos.yml` | installers copied to S3: they become the downloads of the landing page and of the update check |
 | Web client | `client-web.yml` | archives on S3, and the site on Cloudflare Pages (**replaces the live page**) |
 
+`multiarch-docker-hub.yml` also runs by hand (with the Docker Hub secrets): tick **Extract binaries as test release**
+to do a dry run of the release, which creates `sctg-v<version>` from `Cargo.toml` as a **pre-release** when it does not
+exist yet and uploads the static Linux zips to it. It needs no `tag` input, unlike `packages.yml` and `binaries.yml`.
+
 A **pre-release** runs the server jobs and builds the clients, but publishes none of them: the clients on S3 and
 the web client change what users get, and `latest` moves the Docker tag. The tag guard of `packages.yml` and
 `binaries.yml` stops them if the tag does not match `Cargo.toml`. A failed job is re-run from the run's page in the

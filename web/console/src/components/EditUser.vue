@@ -7,51 +7,51 @@ This website use:
 - And many others
 -->
 <template>
-    <Modal @modalOk="updateUser()" @modalCancel="closeModal()" okLabel="Save" title="Edit user">
+    <Modal @modalOk="updateUser()" @modalCancel="closeModal()" :okLabel="t('common.save')" :title="t('admin.users.edit')">
         <div>
-            <label for="name" class="block text-sm font-medium leading-6 text-gray-900">Username</label>
+            <label for="name" class="block text-sm font-medium leading-6 text-gray-900">{{ t('admin.fields.username') }}</label>
             <div class="mt-2">
                 <input v-model="name" id="name" name="name" type="text" required readonly
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
             </div>
         </div>
         <div>
-            <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password</label>
+            <label for="password" class="block text-sm font-medium leading-6 text-gray-900">{{ t('admin.fields.password') }}</label>
             <div class="mt-2">
                 <input v-model="password" id="passwors" name="password" type="password" required
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
             </div>
         </div>
         <div>
-            <label for="confirm-password" class="block text-sm font-medium leading-6 text-gray-900">Confirm</label>
+            <label for="confirm-password" class="block text-sm font-medium leading-6 text-gray-900">{{ t('admin.fields.confirm') }}</label>
             <div class="mt-2">
                 <input v-model="confirm_password" id="confirm_password" name="confirm_password" type="password" required
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
             </div>
         </div>
         <div>
-            <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Email</label>
+            <label for="email" class="block text-sm font-medium leading-6 text-gray-900">{{ t('admin.fields.email') }}</label>
             <div class="mt-2">
                 <input v-model="email" id="email" name="email" type="text" required
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
             </div>
         </div>
         <div>
-            <label for="note" class="block text-sm font-medium leading-6 text-gray-900">Note</label>
+            <label for="note" class="block text-sm font-medium leading-6 text-gray-900">{{ t('admin.fields.note') }}</label>
             <div class="mt-2">
                 <input v-model="note" id="note" name="note" type="text"
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
             </div>
         </div>
         <div>
-            <label for="is_admin" class="block text-sm font-medium leading-6 text-gray-900">Administrator</label>
+            <label for="is_admin" class="block text-sm font-medium leading-6 text-gray-900">{{ t('admin.fields.administrator') }}</label>
             <div class="mt-2">
                 <input v-model="is_admin" id="is_admin" name="is_admon" type="checkbox" required
                     class="block rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
             </div>
         </div>
         <div>
-            <label for="grp" class="block text-sm font-medium leading-6 text-gray-900">Group</label>
+            <label for="grp" class="block text-sm font-medium leading-6 text-gray-900">{{ t('admin.fields.group') }}</label>
             <div class="mt-2">
                 <select v-model="grp" id="grp" name="grp" required
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
@@ -64,6 +64,7 @@ This website use:
     </Modal>
 </template>
 <script setup lang="ts">
+import { t } from '@/i18n';
 import { onMounted } from 'vue';
 import { ref } from 'vue';
 import { UpdateUserRequest, UserApi, GroupApi, Group, UserListResponse } from '@/api';
@@ -124,7 +125,7 @@ onMounted(() => {
  */
 function updateUser(): void {
     if (password.value != confirm_password.value) {
-        alert("Password and confirm password do not match");
+        alert(t('admin.users.mismatch'));
         return;
     }
     // Add user
@@ -145,7 +146,7 @@ function updateUser(): void {
             closeModal();
         }
         else {
-            alert("Failed to update user");
+            alert(t('admin.users.updateFailed'));
         }
     });
 }
