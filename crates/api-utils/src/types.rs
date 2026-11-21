@@ -490,6 +490,11 @@ pub struct OidcAuthRequest {
     pub id: String,
     pub op: String,
     pub uuid: String,
+    /// Set by the web console when it signs in by redirecting its own tab (popup blocked): the callback then
+    /// sends the browser back to the console instead of answering with a bare "OK". The RustDesk clients never
+    /// send it, hence the default.
+    #[serde(default)]
+    pub console: bool,
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
@@ -570,6 +575,8 @@ pub struct OidcState {
     pub provider: Option<Arc<dyn OAuthProvider>>,
     pub name: Option<String>,
     pub email: Option<String>,
+    /// The sign-in was started by the web console in redirect mode (see `OidcAuthRequest::console`).
+    pub console: bool,
 }
 impl Default for OidcState {
     fn default() -> Self {
@@ -583,6 +590,7 @@ impl Default for OidcState {
             provider: None,
             name: None,
             email: None,
+            console: false,
         }
     }
 }
@@ -863,4 +871,99 @@ pub struct AuditNoteRequest {
 pub struct AuditConnList {
     pub total: u32,
     pub data: Vec<AuditConnRecord>,
+}
+
+/// Body of `DELETE /api/audit/conn`: purge some or all of the connection history.
+#[derive(Deserialize, Debug, JsonSchema)]
+pub struct AuditConnDeleteRequest {
+    /// The guids (as given by the list) of the records to delete. Ignored when `all` is true.
+    #[serde(default)]
+    pub guids: Vec<String>,
+    /// Delete every record.
+    #[serde(default)]
+    pub all: bool,
+}
+
+/// Answer of `DELETE /api/audit/conn`.
+#[derive(Serialize, Debug, JsonSchema)]
+pub struct AuditConnDeleteResponse {
+    /// How many records were removed.
+    pub deleted: u64,
+}
+
+/// Content of one of the configuration files an administrator can edit (`s3` or `oauth2`).
+#[derive(Serialize, Debug, JsonSchema)]
+pub struct ConfigFileResponse {
+    pub name: String,
+    pub path: String,
+    /// False when the file does not exist yet: `content` is then a commented template.
+    pub exists: bool,
+    pub content: String,
+}
+
+/// Body of the validate / save endpoints of the configuration files.
+#[derive(Deserialize, Debug, JsonSchema)]
+pub struct ConfigFileRequest {
+    pub content: String,
+}
+
+/// Result of the validation of a configuration file.
+#[derive(Serialize, Debug, JsonSchema)]
+pub struct ConfigValidation {
+    /// True when `errors` is empty.
+    pub valid: bool,
+    pub errors: Vec<String>,
+    pub warnings: Vec<String>,
+}
+
+/// Distinguishes an absent JSON field (`None`) from an explicit `null` (`Some(None)`).
+fn double_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    Option::<T>::deserialize(deserializer).map(Some)
+}
+
+/// Profile of the current user, as stored by the console.
+#[derive(Serialize, Debug, Clone, PartialEq, JsonSchema)]
+pub struct UserProfile {
+    pub name: String,
+    pub email: String,
+    pub admin: bool,
+    /// A `data:image/...;base64,...` URL.
+    pub avatar: Option<String>,
+    /// One of `en-US`, `fr-FR`, `de-DE`, `es-ES`, `pt-PT`, `it-IT`.
+    pub language: Option<String>,
+}
+
+/// Body of `PUT /api/user/profile`. A missing field is left unchanged.
+#[derive(Deserialize, Debug, JsonSchema)]
+pub struct UserProfileUpdate {
+    /// Absent: unchanged; `null` or `""`: remove the avatar.
+    #[serde(default, deserialize_with = "double_option")]
+    pub avatar: Option<Option<String>>,
+    #[serde(default)]
+    pub language: Option<String>,
+}
+
+/// Body of `PUT /api/user/password`.
+#[derive(Deserialize, Debug, JsonSchema)]
+pub struct ChangePasswordRequest {
+    /// Required unless the account has no local password.
+    #[serde(default)]
+    pub current_password: Option<String>,
+    pub new_password: String,
+}
+
+/// Answer of `GET /api/webclient`.
+#[derive(Serialize, Debug, JsonSchema)]
+pub struct WebClientResponse {
+    pub url: Option<String>,
+}
+
+/// Body of the errors of the profile endpoints.
+#[derive(Serialize, Debug, JsonSchema)]
+pub struct ErrorBody {
+    pub error: String,
 }

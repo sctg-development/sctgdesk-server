@@ -128,6 +128,28 @@ impl Database {
         ] {
             sqlx::query(statement).execute(&mut *conn).await.unwrap();
         }
+
+        // The profile of a user (avatar and language). Added here and not by a sqlx migration because
+        // migrations only run on a database that already has tables, while db.sql (a fresh database) is
+        // type-checked by the sqlx macros at compile time and must not change under them. SQLite has no
+        // `ADD COLUMN IF NOT EXISTS`, so the columns are looked up first.
+        for (column, definition) in [("avatar", "TEXT"), ("language", "TEXT")] {
+            let present: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM pragma_table_info('user') WHERE name = ?",
+            )
+            .bind(column)
+            .fetch_one(&mut *conn)
+            .await
+            .unwrap_or(0);
+            if present == 0 {
+                sqlx::query(sqlx::AssertSqlSafe(format!(
+                    "ALTER TABLE \"user\" ADD COLUMN {column} {definition}"
+                )))
+                .execute(&mut *conn)
+                .await
+                .unwrap();
+            }
+        }
     }
 
     /// Sessions older than this are forgotten.

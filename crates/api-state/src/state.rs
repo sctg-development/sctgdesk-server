@@ -43,7 +43,7 @@ pub struct ApiState {
     address_books: RwLock<HashMap<UserId, AddressBookInfo>>,
     oidc_sessions: RwLock<HashMap<String, OidcState>>,
     pub(crate) db: Database,
-    oauth2_providers: RwLock<Vec<ProviderConfig>>,
+    pub(crate) oauth2_providers: RwLock<Vec<ProviderConfig>>,
 }
 
 impl ApiState {
@@ -487,6 +487,16 @@ impl ApiState {
     ///
     /// If the code exchange was successful, an `Option` containing the access
     /// and refresh tokens is returned, otherwise `None`.
+    /// Whether the OIDC session `uuid_code` was started by the web console in redirect mode.
+    pub async fn oidc_session_is_console(&self, uuid_code: &str) -> bool {
+        self.oidc_sessions
+            .read()
+            .await
+            .get(uuid_code)
+            .map(|session| session.console)
+            .unwrap_or(false)
+    }
+
     pub async fn oidc_session_exchange_code(
         &self,
         authorization_code: String,

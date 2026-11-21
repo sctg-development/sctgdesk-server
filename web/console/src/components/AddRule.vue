@@ -7,27 +7,27 @@ This website use:
 - And many others
 -->
 <template>
-    <Modal @modal-ok="addRule()" @modal-cancel="cancel" :title="`Add rule for ${props.ab}`">
-        <label for="selectedUser" class="block text-sm font-medium text-gray-700">User</label>
+    <Modal @modal-ok="addRule()" @modal-cancel="cancel" :title="t('admin.ab.addRuleFor', { ab: props.ab })">
+        <label for="selectedUser" class="block text-sm font-medium text-gray-700">{{ t('admin.fields.user') }}</label>
         <select id="selectedUser" v-model="selectedUser" class="w-full p-2 border border-gray-300 rounded-md">
-            <option selected value="">Null</option>
+            <option selected value="">{{ t('admin.ab.nullOption') }}</option>
             <option v-for="user in users" :key="user.guid" :value="user.guid">{{ user.name }}</option>
         </select>
-        <label for="selectedGroup" class="block text-sm font-medium text-gray-700">Group</label>
+        <label for="selectedGroup" class="block text-sm font-medium text-gray-700">{{ t('admin.fields.group') }}</label>
         <select id="selectedGroup" v-model="selectedGroup" class="w-full p-2 border border-gray-300 rounded-md">
-            <option selected value="">Null</option>
+            <option selected value="">{{ t('admin.ab.nullOption') }}</option>
             <option v-for="group in groups" :key="group.guid" :value="group.guid">{{ group.name }}</option>
         </select>
-        <label for="selectedRights" class="block text-sm font-medium text-gray-700">Rights</label>
+        <label for="selectedRights" class="block text-sm font-medium text-gray-700">{{ t('admin.fields.rights') }}</label>
         <select if="selectedRights" v-model="selectedRights" class="w-full p-2 border border-gray-300 rounded-md">
             <option v-for="right in rights" :key="right.value" :value="right.value">{{ right.name }}</option>
         </select>
-        <span class="text-red-800" v-if="berrorSpanVisible" ref="errorSpan">User must be null for a group rule, group must be null for a user
-            rule</span>
+        <span class="text-red-800" v-if="berrorSpanVisible" ref="errorSpan">{{ t('admin.ab.ruleError') }}</span>
     </Modal>
 </template>
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { t } from '@/i18n';
 import Modal from './Modal.vue';
 import { useUserStore } from '@/stores/sctgDeskStore';
 import { getGroups, getUsers } from '@/utilities/api';
@@ -39,12 +39,13 @@ const props = defineProps<{
     ab: string,
 }>()
 
-const rights = [
-    { name: 'None', value: '0' },
-    { name: 'Read', value: '1' },
-    { name: 'Write', value: '2' },
-    { name: 'Full Control', value: '3' },
-];
+// A computed so that the labels follow the language when the user changes it.
+const rights = computed(() => [
+    { name: t('admin.ab.rights.none'), value: '0' },
+    { name: t('admin.ab.rights.read'), value: '1' },
+    { name: t('admin.ab.rights.write'), value: '2' },
+    { name: t('admin.ab.rights.full'), value: '3' },
+]);
 
 const configuration = useUserStore().api_configuration;
 

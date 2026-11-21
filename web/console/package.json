@@ -1,7 +1,7 @@
 {
   "name": "sctgdesk-api-server-webconsole",
   "private": false,
-  "version": "1.1.16-sctg.5",
+  "version": "1.1.16-sctg.7",
   "type": "module",
   "scripts": {
     "preview": "vite preview",
@@ -21,7 +21,8 @@
     "@pqina/flip": "^1.8.3",
     "flowbite": "^2.5.2",
     "chart.js": "^4.4.5",
-    "@heroicons/vue": "^2.1.5"
+    "@heroicons/vue": "^2.1.5",
+    "smol-toml": "^1.3.1"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",

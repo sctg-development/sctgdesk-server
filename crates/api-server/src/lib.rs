@@ -62,6 +62,10 @@ use utils::{
     OidcState, OidcUser, OidcUserInfo, OidcUserStatus,
 };
 use utils::{AuditConnEvent, AuditConnList, AuditNoteRequest};
+use utils::{
+    AuditConnDeleteRequest, AuditConnDeleteResponse, ChangePasswordRequest, ConfigFileRequest,
+    ConfigFileResponse, ConfigValidation, ErrorBody, UserProfile, UserProfileUpdate, WebClientResponse,
+};
 use utils::{DeviceGroupPayload, DeviceGroupsResponse};
 
 use base64::prelude::{Engine as _, BASE64_STANDARD};
@@ -130,7 +134,14 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
                 audit_conn_active,
                 audit_note,
                 audit_conn_list,
-
+                audit_conn_delete,
+                config_file_get,
+                config_file_validate,
+                config_file_save,
+                user_profile_get,
+                user_profile_put,
+                user_password_put,
+                webclient,
                 login_options,
                 ab_get,
                 ab_post,
@@ -518,6 +529,255 @@ async fn audit_conn_active(
             .audit_conn_active_guid(&user.info.user_id, id, session_id)
             .await,
     )
+}
+
+/// # Purge the history of the connections
+///
+/// Administrators only. Deletes the listed records (`guids`), or every record when `all` is true.
+#[openapi(tag = "audit")]
+#[delete("/api/audit/conn", format = "application/json", data = "<request>")]
+async fn audit_conn_delete(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    request: Json<AuditConnDeleteRequest>,
+) -> Result<Json<AuditConnDeleteResponse>, status::Custom<()>> {
+    if !state
+        .is_current_user_admin(&user.info)
+        .await
+        .unwrap_or(false)
+    {
+        return Err(forbidden());
+    }
+    let deleted = state
+        .audit_conn_delete(&request.guids, request.all)
+        .await;
+    Ok(Json(AuditConnDeleteResponse { deleted }))
+}
+
+/// Where the editable configuration file `name` lives, and the text to show when it does not exist yet.
+/// `None` for a name that is not editable: only these two files are, never an arbitrary path.
+fn config_file_target(name: &str) -> Option<(PathBuf, &'static str)> {
+    match name {
+        "s3" => Some((
+            PathBuf::from(env::var("S3CONFIG_FILE").unwrap_or_else(|_| "s3config.toml".to_string())),
+            s3software::CONFIG_TEMPLATE,
+        )),
+        "oauth2" => Some((
+            PathBuf::from(oauth2::get_providers_config_file()),
+            oauth2::CONFIG_TEMPLATE,
+        )),
+        _ => None,
+    }
+}
+
+/// Runs the validator of the file `name` and wraps its answer.
+fn validate_config_content(name: &str, content: &str) -> ConfigValidation {
+    let (errors, warnings) = match name {
+        "s3" => s3software::validate_config_toml(content),
+        _ => oauth2::validate_config_toml(content),
+    };
+    ConfigValidation {
+        valid: errors.is_empty(),
+        errors,
+        warnings,
+    }
+}
+
+/// The body of a refusal of the settings endpoints, in the shape of a validation so the console has one
+/// thing to display.
+fn config_refusal(status: Status, message: &str) -> status::Custom<Json<ConfigValidation>> {
+    status::Custom(
+        status,
+        Json(ConfigValidation {
+            valid: false,
+            errors: vec![message.to_string()],
+            warnings: vec![],
+        }),
+    )
+}
+
+/// Checks the user is an administrator and the file name is editable.
+async fn config_file_guard(
+    state: &State<ApiState>,
+    user: &AuthenticatedUser,
+    name: &str,
+) -> Result<(PathBuf, &'static str), status::Custom<Json<ConfigValidation>>> {
+    if !state
+        .is_current_user_admin(&user.info)
+        .await
+        .unwrap_or(false)
+    {
+        return Err(config_refusal(Status::Forbidden, "Administrators only."));
+    }
+    config_file_target(name).ok_or_else(|| config_refusal(Status::NotFound, "Unknown configuration file."))
+}
+
+/// # Read a configuration file
+///
+/// Administrators only. `name` is `s3` or `oauth2`. The raw TOML is returned (secrets included: the
+/// administrator is the one who edits them). A missing file gives `exists: false` and a commented template.
+#[openapi(tag = "settings")]
+#[get("/api/settings/config/<name>", format = "application/json")]
+async fn config_file_get(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    name: &str,
+) -> Result<Json<ConfigFileResponse>, status::Custom<Json<ConfigValidation>>> {
+    let (path, template) = config_file_guard(state, &user, name).await?;
+    let (exists, content) = match std::fs::read_to_string(&path) {
+        Ok(c) => (true, c),
+        Err(_) => (false, template.to_string()),
+    };
+    Ok(Json(ConfigFileResponse {
+        name: name.to_string(),
+        path: path.display().to_string(),
+        exists,
+        content,
+    }))
+}
+
+/// # Validate a configuration file without saving it
+///
+/// Administrators only. Parses the text and checks the values (no network access).
+#[openapi(tag = "settings")]
+#[post("/api/settings/config/<name>/validate", format = "application/json", data = "<request>")]
+async fn config_file_validate(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    name: &str,
+    request: Json<ConfigFileRequest>,
+) -> Result<Json<ConfigValidation>, status::Custom<Json<ConfigValidation>>> {
+    config_file_guard(state, &user, name).await?;
+    Ok(Json(validate_config_content(name, &request.content)))
+}
+
+/// # Save a configuration file
+///
+/// Administrators only. The text is validated first (HTTP 422 with the validation if it is not valid). It is
+/// then written atomically (temporary file, then rename), the previous file is kept as `<file>.bak`, and the
+/// cached OAuth2 providers are dropped so the change applies without a restart.
+#[openapi(tag = "settings")]
+#[put("/api/settings/config/<name>", format = "application/json", data = "<request>")]
+async fn config_file_save(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    name: &str,
+    request: Json<ConfigFileRequest>,
+) -> Result<Json<ConfigValidation>, status::Custom<Json<ConfigValidation>>> {
+    let (path, _) = config_file_guard(state, &user, name).await?;
+    let validation = validate_config_content(name, &request.content);
+    if !validation.valid {
+        return Err(status::Custom(Status::UnprocessableEntity, Json(validation)));
+    }
+    write_config_atomically(&path, &request.content).map_err(|e| {
+        log::error!("cannot write {}: {}", path.display(), e);
+        config_refusal(Status::InternalServerError, "The file could not be written.")
+    })?;
+    if name == "oauth2" {
+        state.invalidate_oauth2_config().await;
+    }
+    Ok(Json(validation))
+}
+
+/// Writes `content` to `path` so a crash never leaves a half-written file: the text goes to a sibling
+/// temporary file which then replaces `path` with a rename (atomic on one filesystem). The previous file is
+/// copied to `<path>.bak` first, and its permissions are kept (the files hold secrets).
+fn write_config_atomically(path: &std::path::Path, content: &str) -> std::io::Result<()> {
+    let sibling = |suffix: &str| {
+        let mut os = path.as_os_str().to_owned();
+        os.push(suffix);
+        PathBuf::from(os)
+    };
+    if path.exists() {
+        std::fs::copy(path, sibling(".bak"))?;
+    }
+    let tmp = sibling(".tmp");
+    std::fs::write(&tmp, content)?;
+    if let Ok(meta) = std::fs::metadata(path) {
+        std::fs::set_permissions(&tmp, meta.permissions())?;
+    }
+    std::fs::rename(&tmp, path)
+}
+
+/// Maps a [`state::ProfileError`] to its HTTP status and a message.
+fn profile_error(e: state::ProfileError) -> status::Custom<Json<ErrorBody>> {
+    use state::ProfileError::*;
+    let (status, error) = match e {
+        Invalid(m) => (Status::BadRequest, m),
+        TooLarge => (Status::PayloadTooLarge, "The avatar is too large.".to_string()),
+        WrongPassword => (Status::Forbidden, "The current password is wrong.".to_string()),
+        Internal => (Status::InternalServerError, "Internal error.".to_string()),
+    };
+    status::Custom(status, Json(ErrorBody { error }))
+}
+
+/// # The profile of the current user
+///
+/// Name, email, rights, avatar (a data URL) and language.
+#[openapi(tag = "user")]
+#[get("/api/user/profile", format = "application/json")]
+async fn user_profile_get(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+) -> Result<Json<UserProfile>, status::Custom<Json<ErrorBody>>> {
+    state
+        .user_profile(&user.info.user_id)
+        .await
+        .map(Json)
+        .ok_or_else(|| profile_error(state::ProfileError::Internal))
+}
+
+/// # Update the profile of the current user
+///
+/// A missing field is left unchanged; `avatar: null` removes the avatar. The avatar must be a png, jpeg, webp
+/// or gif data URL of at most 256 KiB once decoded (413 otherwise).
+#[openapi(tag = "user")]
+#[put("/api/user/profile", format = "application/json", data = "<request>")]
+async fn user_profile_put(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    request: Json<UserProfileUpdate>,
+) -> Result<Json<UserProfile>, status::Custom<Json<ErrorBody>>> {
+    state
+        .user_profile_update(&user.info.user_id, request.0)
+        .await
+        .map(Json)
+        .map_err(profile_error)
+}
+
+/// # Change the password of the current user
+///
+/// The current password is checked (403 if wrong); the new one must have at least 8 characters (400).
+#[openapi(tag = "user")]
+#[put("/api/user/password", format = "application/json", data = "<request>")]
+async fn user_password_put(
+    state: &State<ApiState>,
+    user: AuthenticatedUser,
+    request: Json<ChangePasswordRequest>,
+) -> Result<Json<serde_json::Value>, status::Custom<Json<ErrorBody>>> {
+    state
+        .user_change_password(
+            &user.info.user_id,
+            request.current_password.as_deref(),
+            &request.new_password,
+        )
+        .await
+        .map(|_| Json(serde_json::json!({ "ok": true })))
+        .map_err(profile_error)
+}
+
+/// # Where the web client is
+///
+/// Public. The URL of the web client the console opens to control a device (`WEB_CLIENT_URL`), or `null`
+/// when none is configured.
+#[openapi(tag = "webconsole")]
+#[get("/api/webclient", format = "application/json")]
+async fn webclient() -> Json<WebClientResponse> {
+    let url = env::var("WEB_CLIENT_URL")
+        .ok()
+        .map(|u| u.trim().to_string())
+        .filter(|u| !u.is_empty());
+    Json(WebClientResponse { url })
 }
 
 /// # Set the note of a connection
@@ -1189,6 +1449,7 @@ async fn oidc_auth(
                 provider: Some(provider_trait_object),
                 name: None,
                 email: None,
+                console: request.console,
             },
         )
         .await;
@@ -1214,7 +1475,7 @@ async fn oidc_auth(
 ///
 /// ## Returns
 ///
-/// If successful, this function returns "OK".  <br>
+/// If successful, this function returns "OK" (or, for a sign-in started by the web console in redirect mode, redirects to `/ui/login?oidc_code=<session code>`).  <br>
 /// If the session does not exist or the code exchange fails, this function returns "ERROR".  <br>
 ///
 /// ## Errors
@@ -1226,16 +1487,33 @@ async fn oidc_auth(
 /// GET /api/oidc/callback?code=authorization_code&state=session_code
 #[openapi(tag = "login")]
 #[get("/api/oidc/callback?<code>&<state>")]
-async fn oidc_callback(apistate: &State<ApiState>, code: &str, state: &str) -> String {
+async fn oidc_callback(
+    apistate: &State<ApiState>,
+    code: &str,
+    state: &str,
+) -> Result<Redirect, String> {
     let oidc_code = state; // this is the session code
     let oidc_authorization_code = code;
     let updated_oidc_session = apistate
         .oidc_session_exchange_code(oidc_authorization_code.to_string(), oidc_code.to_string())
         .await;
     if updated_oidc_session.is_none() {
-        return "ERROR".to_string();
+        return Err("ERROR".to_string());
     }
-    "OK".to_string()
+    // The console signs in by redirecting its own tab when the browser blocked the popup: it must get the
+    // browser back. `state` is a UUID generated by us, but it comes from the URL, so only the lookup result
+    // (a flag) decides, and the target is a fixed path plus the code as a query value.
+    if apistate.oidc_session_is_console(oidc_code).await {
+        let target = format!("/ui/login?oidc_code={}", urlencoding_code(oidc_code));
+        return Ok(Redirect::to(target));
+    }
+    // `Err` is only how this Result carries the plain-text answer of the RustDesk clients (HTTP 200 either way)
+    Err("OK".to_string())
+}
+
+/// Keeps only the characters of a UUID, so the session code can be put in a URL without any escaping.
+fn urlencoding_code(code: &str) -> String {
+    code.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '-').collect()
 }
 
 /// # OIDC State
@@ -2701,5 +2979,36 @@ async fn readyz(state: &State<ApiState>) -> status::Custom<&'static str> {
         status::Custom(Status::Ok, "ok")
     } else {
         status::Custom(Status::ServiceUnavailable, "database unavailable")
+    }
+}
+
+#[cfg(test)]
+mod settings_tests {
+    use super::*;
+
+    /// Saving keeps the previous content in `.bak`, replaces the file and leaves no temporary file.
+    #[test]
+    fn atomic_write_keeps_a_backup() {
+        let dir = std::env::temp_dir().join(format!("settings-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("oauth2.toml");
+        let _ = std::fs::remove_file(&path);
+        write_config_atomically(&path, "first").unwrap();
+        assert!(!dir.join("oauth2.toml.bak").exists(), "nothing to back up the first time");
+        write_config_atomically(&path, "second").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "second");
+        assert_eq!(std::fs::read_to_string(dir.join("oauth2.toml.bak")).unwrap(), "first");
+        assert!(!dir.join("oauth2.toml.tmp").exists());
+    }
+
+    /// Only the two known files can be edited; the validation is wired to the right validator.
+    #[test]
+    fn only_known_files_are_editable() {
+        assert!(config_file_target("s3").is_some());
+        assert!(config_file_target("oauth2").is_some());
+        assert!(config_file_target("../etc/passwd").is_none());
+        assert!(!validate_config_content("s3", "nonsense =").valid);
+        assert!(validate_config_content("oauth2", "# empty").valid);
+        assert!(validate_config_content("s3", s3software::CONFIG_TEMPLATE).valid);
     }
 }

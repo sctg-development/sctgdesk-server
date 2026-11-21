@@ -104,6 +104,60 @@ pub async fn get_signed_release_url(
     get_object(&client, &bucket, &object, expires_in).await
 }
 
+/// Template shown by the console when the S3 config file does not exist yet.
+pub const CONFIG_TEMPLATE: &str = include_str!("../../api-server/s3config.toml");
+
+/// Validates the text of an `s3config.toml` without touching the disk or the network.
+///
+/// # Returns
+/// `(errors, warnings)`. Errors make the file unusable (syntax, missing key, bad endpoint URL); warnings are
+/// things that parse but will not work (empty or placeholder credentials).
+pub fn validate_config_toml(content: &str) -> (Vec<String>, Vec<String>) {
+    let mut errors = Vec::new();
+    let mut warnings = Vec::new();
+    let config: Config = match toml::from_str(content) {
+        Ok(c) => c,
+        Err(e) => {
+            errors.push(format!("Syntax error: {e}"));
+            return (errors, warnings);
+        }
+    };
+    let s = &config.s3config;
+    let is_http = |v: &str| {
+        url::Url::parse(v)
+            .map(|u| matches!(u.scheme(), "http" | "https") && u.host_str().is_some())
+            .unwrap_or(false)
+    };
+    if !is_http(&s.endpoint) {
+        errors.push("`Endpoint` must be an absolute http(s) URL.".into());
+    }
+    // `Page` is only used to find the latest version number: it may stay empty if the keys are fixed
+    if !s.page.is_empty() && !is_http(&s.page) {
+        errors.push("`Page` must be an absolute http(s) URL.".into());
+    }
+    for (name, value) in [
+        ("Region", &s.region),
+        ("Bucket", &s.bucket),
+        ("Windows64Key", &s.windows64_key),
+        ("Windows32Key", &s.windows32_key),
+        ("OSXKey", &s.osxkey),
+        ("OSXArm64Key", &s.osxarm64_key),
+        ("IOSKey", &s.ioskey),
+    ] {
+        if value.trim().is_empty() {
+            errors.push(format!("`{name}` must not be empty."));
+        }
+    }
+    for (name, value) in [("AccessKey", &s.access_key), ("SecretKey", &s.secret_key)] {
+        if value.trim().is_empty() {
+            warnings.push(format!("`{name}` is empty: the download links cannot be signed."));
+        } else if value.starts_with("your_") {
+            warnings.push(format!("`{name}` still looks like a placeholder."));
+        }
+    }
+    (errors, warnings)
+}
+
 pub async fn parse_config(config: &str) -> Result<Config, Box<dyn Error>> {
     let config = toml::from_str(config);
     if config.is_err() {
@@ -160,6 +214,21 @@ pub async fn get_signed_release_url_with_config(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn validate_the_shipped_template_and_bad_files() {
+        let (e, _) = validate_config_toml(CONFIG_TEMPLATE);
+        assert!(e.is_empty(), "{e:?}");
+        let (e, _) = validate_config_toml("[s3config]\nPage = \"x\"");
+        assert!(e[0].starts_with("Syntax error"));
+        let bad = CONFIG_TEMPLATE.replace("https://compat.objectstorage", "nope://compat.objectstorage");
+        let (e, _) = validate_config_toml(&bad);
+        assert_eq!(e.len(), 1, "{e:?}");
+        let empty_key = CONFIG_TEMPLATE.replace("AccessKey = \"c324ead11faa0d87337c07ddc4a1129fab76188d\"", "AccessKey = \"\"");
+        let (e, w) = validate_config_toml(&empty_key);
+        assert!(e.is_empty());
+        assert_eq!(w.len(), 1);
+    }
     use reqwest::StatusCode;
 
     /// The HTTPS client must work with the one rustls provider of the build (ring): a second

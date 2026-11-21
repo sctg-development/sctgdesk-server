@@ -43,6 +43,8 @@ pub enum Provider {
     Facebook,
     Azure,
     Auth0,
+    /// `Custom` is the name used by the sample files (and by `FromStr`) for a Dex / generic OIDC server.
+    #[serde(alias = "Custom")]
     Dex,
     Oauth2,
 }
@@ -131,9 +133,135 @@ pub fn get_providers_config_file() -> String {
     std::env::var("OAUTH2_CONFIG_FILE").unwrap_or_else(|_| "oauth2.toml".to_string())
 }
 
+/// Template shown by the console when `oauth2.toml` does not exist yet.
+pub const CONFIG_TEMPLATE: &str = "# No oauth2 provider configured yet. Example:\n\
+# [[provider]]\n\
+# provider = \"Github\"\n\
+# authorization_url = \"https://github.com/login/oauth/authorize\"\n\
+# token_exchange_url = \"https://github.com/login/oauth/access_token\"\n\
+# app_id = \"your_github_app_id\"\n\
+# app_secret = \"your_github_app_secret\"\n\
+# scope = \"read:user\"\n\
+# op_auth_string = \"oidc/github\"\n\
+# op = \"github\"\n";
+
+/// Whether `value` is an absolute http(s) URL with a host.
+fn is_http_url(value: &str) -> bool {
+    url::Url::parse(value)
+        .map(|u| matches!(u.scheme(), "http" | "https") && u.host_str().is_some())
+        .unwrap_or(false)
+}
+
+/// Validates the text of an `oauth2.toml` without touching the disk or the network.
+///
+/// It exists so the web console can tell an administrator what is wrong *before* the file is saved: a broken
+/// file would otherwise make the server panic at the next provider lookup (`get_providers_config_from_file`).
+///
+/// # Returns
+/// `(errors, warnings)`. The file is usable only when `errors` is empty. An empty provider list is a warning
+/// (login by password still works), not an error.
+pub fn validate_config_toml(content: &str) -> (Vec<String>, Vec<String>) {
+    let mut errors = Vec::new();
+    let mut warnings = Vec::new();
+    let config: Config = match toml::from_str(content) {
+        Ok(c) => c,
+        Err(e) => {
+            // an empty or fully commented file is a valid TOML document that lacks the `provider` array
+            if content.lines().all(|l| l.trim().is_empty() || l.trim_start().starts_with('#')) {
+                warnings.push("No provider is configured: only the password login is available.".into());
+            } else {
+                errors.push(format!("Syntax error: {e}"));
+            }
+            return (errors, warnings);
+        }
+    };
+    if config.provider.is_empty() {
+        warnings.push("No provider is configured: only the password login is available.".into());
+    }
+    let mut seen_ops = std::collections::HashSet::new();
+    for (i, p) in config.provider.iter().enumerate() {
+        let label = format!("provider #{} ({})", i + 1, p.op);
+        for (field, value) in [
+            ("op", &p.op),
+            ("app_id", &p.app_id),
+            ("app_secret", &p.app_secret),
+            ("scope", &p.scope),
+            ("op_auth_string", &p.op_auth_string),
+        ] {
+            if value.trim().is_empty() {
+                errors.push(format!("{label}: `{field}` must not be empty."));
+            }
+        }
+        for (field, value) in [
+            ("authorization_url", &p.authorization_url),
+            ("token_exchange_url", &p.token_exchange_url),
+        ] {
+            if !is_http_url(value) {
+                errors.push(format!("{label}: `{field}` must be an absolute http(s) URL."));
+            }
+        }
+        if !p.op.trim().is_empty() && !seen_ops.insert(p.op.clone()) {
+            errors.push(format!("{label}: `op` is used by another provider."));
+        }
+        // the clients send `op` and the server looks the provider up by `oidc/<op>`
+        if !p.op.is_empty() && p.op_auth_string != format!("oidc/{}", p.op) {
+            errors.push(format!("{label}: `op_auth_string` must be \"oidc/{}\".", p.op));
+        }
+        if p.app_id.starts_with("your_") || p.app_secret.starts_with("your_") {
+            warnings.push(format!("{label}: `app_id` or `app_secret` still looks like a placeholder."));
+        }
+    }
+    (errors, warnings)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const GOOD: &str = r#"
+        [[provider]]
+        provider = "Github"
+        authorization_url = "https://github.com/login/oauth/authorize"
+        token_exchange_url = "https://github.com/login/oauth/access_token"
+        app_id = "id"
+        app_secret = "secret"
+        scope = "read:user"
+        op_auth_string = "oidc/github"
+        op = "github"
+    "#;
+
+    #[test]
+    fn validate_accepts_a_good_file() {
+        let (e, w) = validate_config_toml(GOOD);
+        assert!(e.is_empty(), "{e:?}");
+        assert!(w.is_empty(), "{w:?}");
+    }
+
+    #[test]
+    fn validate_accepts_the_custom_alias_and_an_empty_file() {
+        let (e, _) = validate_config_toml(&GOOD.replace("Github", "Custom"));
+        assert!(e.is_empty(), "{e:?}");
+        let (e, w) = validate_config_toml("# nothing\n");
+        assert!(e.is_empty());
+        assert_eq!(w.len(), 1);
+    }
+
+    #[test]
+    fn validate_reports_the_problems() {
+        let (e, _) = validate_config_toml("[[provider]\nx");
+        assert!(e[0].starts_with("Syntax error"));
+        let (e, _) = validate_config_toml(&GOOD.replace("Github", "Nope"));
+        assert!(e[0].starts_with("Syntax error"), "unknown provider enum: {e:?}");
+        let bad = GOOD
+            .replace("https://github.com/login/oauth/authorize", "ftp://x")
+            .replace("scope = \"read:user\"", "scope = \"\"")
+            .replace("oidc/github", "oidc/other");
+        let (e, _) = validate_config_toml(&bad);
+        assert_eq!(e.len(), 3, "{e:?}");
+        let two = format!("{GOOD}{GOOD}");
+        let (e, _) = validate_config_toml(&two);
+        assert!(e.iter().any(|m| m.contains("used by another")));
+    }
 
     #[test]
     fn test_get_provider_config_one_provider() {

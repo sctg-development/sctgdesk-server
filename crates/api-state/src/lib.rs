@@ -17,12 +17,14 @@ mod audit;
 mod bearer;
 mod database;
 mod password;
+mod profile;
 mod state;
 
 pub use utils::{SessionId, UserId};
 
 pub use bearer::{AuthenticatedAdmin, AuthenticatedUser};
 pub use password::UserPasswordInfo;
+pub use profile::ProfileError;
 pub use state::ApiState;
 
 pub mod types;
