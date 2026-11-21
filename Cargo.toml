@@ -1,6 +1,6 @@
 [package]
 name = "hbbs"
-version = "1.1.16-sctg.7"
+version = "1.1.16-sctg.8"
 authors = ["sctg <sctgdesk@k-cloud.pp.ua>", "rustdesk <info@rustdesk.com>"]
 edition = "2021"
 build = "build.rs"
@@ -65,6 +65,10 @@ num_cpus = "1.16"
 
 [dev-dependencies]
 tar = "0.4"
+
+[target.'cfg(windows)'.dependencies]
+# runs hbbs and hbbr as Windows services (src/windows_service.rs)
+windows-service = "0.8"
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 # https://github.com/rustdesk/rustdesk-server-pro/issues/189, using native-tls for better tls support

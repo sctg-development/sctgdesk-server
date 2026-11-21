@@ -102,9 +102,26 @@ fn log_format(
     )
 }
 
+/// As a Windows service (`hbbs --windows-service`, see docs/windows.md) the program talks to the service manager and
+/// runs `run_server` as its body; otherwise it is the usual console program.
 fn main() -> ResultType<()> {
-    let _logger = Logger::try_with_env_or_str("info")?
-        .log_to_stdout()
+    if hbbs::windows_service::requested() {
+        return hbbs::windows_service::run("hbbs", run_server);
+    }
+    run_server()
+}
+
+fn run_server() -> ResultType<()> {
+    let logger = Logger::try_with_env_or_str("info")?;
+    // a service has no console: its log goes to files (rotated) in the data directory
+    let logger = match hbbs::windows_service::log_dir() {
+        Some(dir) => logger
+            .log_to_file(FileSpec::default().directory(dir).basename("hbbs").suppress_timestamp())
+            .rotate(Criterion::Size(10_000_000), Naming::Numbers, Cleanup::KeepLogFiles(5))
+            .append(),
+        None => logger.log_to_stdout(),
+    };
+    let _logger = logger
         .format(json_log::format_or(log_format))
         .write_mode(WriteMode::Async)
         .start()?;
@@ -121,6 +138,7 @@ fn main() -> ResultType<()> {
         -k, --key=[KEY] 'Only allow the client with the same key'
         , --logged-in-only 'Only allow logged in user to control'
         , --allow-remote-backup 'Lets an administrator download a backup (database, key pair and configuration) with GET /api/backup; can also be set with ALLOW_REMOTE_BACKUP=Y'
+        , --windows-service 'Runs hbbs as a Windows service (put it in the binPath of sc.exe create, not for a console)'
         , --require-kx-v1 'Refuse TCP key exchange version 0 (clients older than the signed key exchange); can also be set with REQUIRE_KX_V1=Y'",
     );
     init_args(&args, "hbbs", "RustDesk ID/Rendezvous Server");

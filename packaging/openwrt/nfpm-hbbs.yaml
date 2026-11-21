@@ -1,0 +1,34 @@
+# OpenWrt package (apk) of hbbs from the static musl binary (see .github/workflows/packages.yml).
+# Environment: VERSION, NFPM_ARCH (the OpenWrt architecture, for example aarch64_generic or mips_24kc: the repository
+# of a release is per architecture), BIN_DIR (folder with the binaries).
+name: sctgdesk-server-hbbs
+arch: ${NFPM_ARCH}
+platform: linux
+version: ${VERSION}
+section: net
+priority: optional
+maintainer: SCTG Development
+vendor: SCTG Development
+homepage: https://github.com/sctg-development/sctgdesk-server
+license: AGPL-3.0-only
+description: |
+  SCTGDesk signal server (ID and rendezvous server, with the API server and the web console) for OpenWrt.
+  The binary is static (musl): it needs no library of the system. Options: /etc/config/sctgdesk-hbbs.
+contents:
+  - src: ${BIN_DIR}/hbbs
+    expand: true
+    dst: /usr/bin/hbbs
+    file_info:
+      mode: 0755
+  - src: packaging/openwrt/hbbs.init
+    dst: /etc/init.d/sctgdesk-hbbs
+    file_info:
+      mode: 0755
+  - src: packaging/openwrt/hbbs.config
+    dst: /etc/config/sctgdesk-hbbs
+    type: config|noreplace
+    file_info:
+      mode: 0600
+scripts:
+  postinstall: packaging/openwrt/hbbs.postinstall.sh
+  preremove: packaging/openwrt/hbbs.preremove.sh

@@ -45,11 +45,27 @@ files are kept small so that new upstream releases can be merged.
 
 Pick one. Whatever you choose, you need a **key pair** and the ports below.
 
-### Linux packages (deb, rpm)
+### Linux packages (deb, rpm) and package repositories
 
-Each release has `sctgdesk-server-hbbs`, `sctgdesk-server-hbbr` and `sctgdesk-server-utils` for **amd64** and
-**arm64**, as `.deb` and `.rpm`, built from static musl binaries (no library dependency). They replace the former
-`rustdesk-server-*` packages.
+Each release has `sctgdesk-server-hbbs`, `sctgdesk-server-hbbr` and `sctgdesk-server-utils` for **amd64**, **arm64** and
+**armv7** (32-bit ARM, `armhf`), as `.deb` and `.rpm`, built from static musl binaries (no library dependency). They
+replace the former `rustdesk-server-*` packages.
+
+**From the signed repositories** (updates with the system):
+
+```bash
+# Debian, Ubuntu
+sudo mkdir -p /etc/apt/keyrings
+sudo curl -fsSL https://sctg-development.github.io/sctgdesk-server/apt/sctgdesk.gpg -o /etc/apt/keyrings/sctgdesk.gpg
+echo "deb [signed-by=/etc/apt/keyrings/sctgdesk.gpg] https://sctg-development.github.io/sctgdesk-server/apt stable main" |
+  sudo tee /etc/apt/sources.list.d/sctgdesk.list
+sudo apt update && sudo apt install sctgdesk-server-hbbs sctgdesk-server-hbbr
+
+# Fedora, RHEL and clones: see docs/repositories.md for the .repo file, then
+sudo dnf install sctgdesk-server-hbbs sctgdesk-server-hbbr
+```
+
+**Or from the files of a release:**
 
 ```bash
 sudo apt install ./sctgdesk-server-hbbs_*_amd64.deb ./sctgdesk-server-hbbr_*_amd64.deb ./sctgdesk-server-utils_*_amd64.deb
@@ -62,11 +78,31 @@ migration from the former `rustdesk-server-*` packages: **do not purge them**). 
 that were running. Data is in `/var/lib/rustdesk-server`, logs in
 `/var/log/rustdesk-server`; the units run as root.
 
+The repositories and the signing keys are described in [Package repositories](docs/repositories.md).
+
+### OpenWrt
+
+For OpenWrt 25.12 and later (`apk`), on x86_64, ARM (aarch64, armv7) and MIPS (`mips_24kc` for ath79, `mipsel_24kc` for
+ramips) routers:
+
+```sh
+wget -O /etc/apk/keys/sctgdesk.rsa.pub https://sctg-development.github.io/sctgdesk-server/apk/sctgdesk.rsa.pub
+echo "https://sctg-development.github.io/sctgdesk-server/apk/$(apk --print-arch)/APKINDEX.tar.gz" > /etc/apk/repositories.d/sctgdesk.list
+apk update && apk add sctgdesk-server-hbbs sctgdesk-server-hbbr
+```
+
+Each program is a `procd` service configured with UCI (`/etc/config/sctgdesk-hbbs`). `hbbs` is about 30 MB: put it, and
+its data, on a USB disk or an extroot. The MIPS builds are untested on real routers. Older OpenWrt releases and other
+architectures can use the static binaries of a release. Details: [Package repositories](docs/repositories.md).
+
 ### Binaries (Linux, Windows, macOS)
 
 The [releases](https://github.com/sctg-development/sctgdesk-server/releases) page also has zip archives with `hbbs`,
 `hbbr` and `rustdesk-utils` for Windows (amd64, arm64) and macOS (Intel, Apple Silicon), with `SHA256SUMS-*` files.
 Unpack, then run them from the directory where the data should live (see [First run](#first-run)).
+
+On **Windows** they can be installed with `winget install SCTG.SCTGDeskServer --scope machine` and run as services
+(`hbbs.exe --windows-service`, created with `sc.exe`): see [On Windows](docs/windows.md).
 
 ### Docker
 

@@ -1,0 +1,46 @@
+#!/bin/sh /etc/rc.common
+# procd init script of hbbs, the SCTGDesk signal server (ID and rendezvous server, with the API server and the web console).
+# Options come from /etc/config/sctgdesk-hbbs (UCI): see that file. Logs go to the system log (logread -e hbbs).
+# Ports used: 21115-21116 and 21118 (+ the API port 21114).
+USE_PROCD=1
+START=95
+STOP=10
+
+CONF=sctgdesk-hbbs
+PROG=/usr/bin/hbbs
+
+# one "list env" line of the UCI file = one environment variable of the program
+append_env() {
+	procd_append_param env "$1"
+}
+
+start_service() {
+	local enabled datadir args
+	config_load "$CONF"
+	config_get_bool enabled main enabled 1
+	[ "$enabled" -eq 1 ] || return 0
+	config_get datadir main datadir /etc/sctgdesk-server
+	config_get args main args ""
+
+	# the key pair, the database and the secrets live here and are for root only
+	mkdir -p "$datadir"
+	chmod 700 "$datadir"
+
+	procd_open_instance
+	# The program reads and writes its files in its working directory, and procd has no setting for it: a tiny
+	# shell moves there and replaces itself with the program ($args is split on purpose, it holds several options).
+	procd_set_param command /bin/sh -c 'dir=$1; shift; cd "$dir" && exec "$@"' sh "$datadir" "$PROG" $args
+	procd_set_param env OAUTH2_CREATE_USER=1 S3CONFIG_FILE=s3config.toml OAUTH2_CONFIG_FILE=oauth2.toml
+	config_list_foreach main env append_env
+	procd_set_param limits nofile="1000000 1000000"
+	# restart after a crash, forever, waiting 10 s between two attempts
+	procd_set_param respawn 3600 10 0
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param file /etc/config/$CONF
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$CONF"
+}

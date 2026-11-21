@@ -1,0 +1,98 @@
+name: Pages
+
+# The one GitHub Pages site of the repository: the developer manual (mdBook) at the root, and the package repositories
+# under /apt, /rpm and /apk (see docs/repositories.md). They are deployed together because a Pages deployment replaces
+# the whole site.
+#
+# - On a push or a pull request touching the manual it only builds the manual, and publishes nothing.
+# - Publishing is a decision: it happens when a release is published as a full release (a pre-release promoted by the
+#   maintainer, docs/releases.md), or when someone runs the workflow by hand and asks for it. The repositories are then
+#   rebuilt from the packages of the latest full releases, so a site never depends on a previous deployment.
+# Secrets of the repository (docs/repositories.md says how to create them):
+#   REPO_GPG_PRIVATE_KEY (+ REPO_GPG_PASSPHRASE if it has one): signs the apt and rpm repositories
+#   REPO_APK_PRIVATE_KEY: RSA key in PEM, signs the apk indexes
+on:
+  push:
+    branches: [tcpserver-master-build, "docs/**"]
+    paths: ["docs/**", "CONTRIBUTING.md", "client/README.md", "packaging/repos/**", ".github/workflows/pages.yml"]
+  pull_request:
+    paths: ["docs/**", "CONTRIBUTING.md", "client/README.md", "packaging/repos/**", ".github/workflows/pages.yml"]
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy to GitHub Pages (manual and package repositories)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  # how many full releases stay in the repositories (the 1 GB limit of Pages, about 100 MB of packages per release)
+  KEEP_RELEASES: 4
+
+jobs:
+  build:
+    name: Manual and repositories
+    runs-on: ubuntu-latest
+    env:
+      PUBLISH: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook
+      - run: mdbook build docs
+      - name: Site
+        run: |
+          mkdir site
+          cp -R target/book/. site/
+          touch site/.nojekyll
+
+      - name: Packages of the latest releases
+        if: ${{ env.PUBLISH == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir packages
+          for tag in $(gh release list --repo "$GITHUB_REPOSITORY" --exclude-pre-releases --limit "$KEEP_RELEASES" --json tagName --jq '.[].tagName'); do
+            echo "== $tag"
+            gh release download "$tag" --repo "$GITHUB_REPOSITORY" --dir packages --pattern '*.deb' --pattern '*.rpm' --pattern '*.apk' --clobber || true
+          done
+          ls packages | wc -l
+
+      - name: Signed apt, rpm and apk repositories
+        if: ${{ env.PUBLISH == 'true' }}
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.REPO_GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.REPO_GPG_PASSPHRASE }}
+          APK_PRIVATE_KEY: ${{ secrets.REPO_APK_PRIVATE_KEY }}
+        run: |
+          [ -n "$GPG_PRIVATE_KEY" ] && [ -n "$APK_PRIVATE_KEY" ] || {
+            echo "::error::the secrets REPO_GPG_PRIVATE_KEY and REPO_APK_PRIVATE_KEY are required (docs/repositories.md)"; exit 1; }
+          packaging/repos/build-repos.sh packages site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: GitHub Pages
+    needs: build
+    if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

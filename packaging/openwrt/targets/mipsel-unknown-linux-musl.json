@@ -1,0 +1,95 @@
+{
+  "arch": "mips",
+  "cpu": "mips32r2",
+  "crt-objects-fallback": "musl",
+  "crt-static-respected": true,
+  "data-layout": "e-m:m-p:32:32-i8:8:32-i16:16:32-i64:64-n32-S64",
+  "default-uwtable": true,
+  "dynamic-linking": true,
+  "env": "musl",
+  "features": "+mips32r2,+soft-float",
+  "has-rpath": true,
+  "has-thread-local": true,
+  "linker-flavor": "gnu-cc",
+  "llvm-abiname": "o32",
+  "llvm-args": [
+    "-mno-check-zero-division"
+  ],
+  "llvm-target": "mipsel-unknown-linux-musl",
+  "max-atomic-width": 64,
+  "metadata": {
+    "description": "MIPS (little endian) Linux with musl 1.2.5",
+    "host_tools": false,
+    "std": true,
+    "tier": 3
+  },
+  "os": "linux",
+  "position-independent-executables": true,
+  "post-link-objects-fallback": {
+    "dynamic-dylib": [
+      "crtendS.o",
+      "crtn.o"
+    ],
+    "dynamic-nopic-exe": [
+      "crtend.o",
+      "crtn.o"
+    ],
+    "dynamic-pic-exe": [
+      "crtendS.o",
+      "crtn.o"
+    ],
+    "static-dylib": [
+      "crtendS.o",
+      "crtn.o"
+    ],
+    "static-nopic-exe": [
+      "crtend.o",
+      "crtn.o"
+    ],
+    "static-pic-exe": [
+      "crtendS.o",
+      "crtn.o"
+    ]
+  },
+  "pre-link-objects-fallback": {
+    "dynamic-dylib": [
+      "crti.o",
+      "crtbeginS.o"
+    ],
+    "dynamic-nopic-exe": [
+      "crt1.o",
+      "crti.o",
+      "crtbegin.o"
+    ],
+    "dynamic-pic-exe": [
+      "Scrt1.o",
+      "crti.o",
+      "crtbeginS.o"
+    ],
+    "static-dylib": [
+      "crti.o",
+      "crtbeginS.o"
+    ],
+    "static-nopic-exe": [
+      "crt1.o",
+      "crti.o",
+      "crtbegin.o"
+    ],
+    "static-pic-exe": [
+      "rcrt1.o",
+      "crti.o",
+      "crtbeginS.o"
+    ]
+  },
+  "relro-level": "full",
+  "supported-split-debuginfo": [
+    "packed",
+    "unpacked",
+    "off"
+  ],
+  "target-family": [
+    "unix"
+  ],
+  "target-mcount": "_mcount",
+  "target-pointer-width": 32
+}

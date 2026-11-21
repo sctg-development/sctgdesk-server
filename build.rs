@@ -6,7 +6,10 @@ fn main() {
     let version = env::var("CARGO_PKG_VERSION").unwrap();
 
     // Build a temporary file path
-    let tmp_dir = env::var("TMP").or_else(|_| env::var("TEMP")).or_else(|_| env::var("TMPDIR")).unwrap_or_else(|_| "/tmp".to_string());
+    let tmp_dir = env::var("TMP")
+        .or_else(|_| env::var("TEMP"))
+        .or_else(|_| env::var("TMPDIR"))
+        .unwrap_or_else(|_| "/tmp".to_string());
     let mut path = PathBuf::from(tmp_dir);
     path.push("version-8659B48F-5726-433D-BEC2-C7042FE9D93B.txt");
 

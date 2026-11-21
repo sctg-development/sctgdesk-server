@@ -1,7 +1,7 @@
-name: Linux packages (deb, rpm)
+name: Linux packages (deb, rpm, OpenWrt apk)
 
-# Static musl binaries of hbbs, hbbr and rustdesk-utils for amd64 and arm64, packed as deb and rpm with nfpm
-# (packaging/). Run by release.yml when a release is published, or by hand. Without `publish` it builds, packs and installs the packages in containers, and
+# Static musl binaries of hbbs, hbbr and rustdesk-utils for amd64, arm64 and armv7, packed as deb and rpm with nfpm
+# (packaging/), and as OpenWrt apk (packaging/openwrt/, one per OpenWrt architecture). Run by release.yml when a release is published, or by hand. Without `publish` it builds, packs and installs the packages in containers, and
 # publishes nothing; with `publish` it also uploads them to the GitHub release of the tag, created as a pre-release
 # when it does not exist yet. A release is a decision of the maintainer (docs/releases.md).
 on:
@@ -48,14 +48,31 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # arch: name of the artifact; nfpm_arch: the name nfpm knows (deb and rpm architectures);
+          # nfpm_os_arch: the nfpm download that runs on the runner; openwrt_archs: the OpenWrt architectures that
+          # this binary runs on (the repository of OpenWrt is per architecture, the binary is the same for all of them)
           - arch: amd64
             runner: ubuntu-26.04
             target: x86_64-unknown-linux-musl
+            nfpm_arch: amd64
             nfpm_os_arch: x86_64
+            openwrt_archs: "x86_64"
           - arch: arm64
             runner: ubuntu-26.04-arm
             target: aarch64-unknown-linux-musl
+            nfpm_arch: arm64
             nfpm_os_arch: arm64
+            openwrt_archs: "aarch64_generic aarch64_cortex-a53 aarch64_cortex-a72 aarch64_cortex-a76"
+          # 32-bit ARM, hard float: cross-compiled on x86 with zig as the C compiler (the project has C dependencies:
+          # libsodium, openssl, sqlite, ring) and run under QEMU for the tests
+          - arch: armv7
+            runner: ubuntu-26.04
+            target: armv7-unknown-linux-musleabihf
+            nfpm_arch: arm7
+            nfpm_os_arch: x86_64
+            openwrt_archs: "arm_cortex-a7_neon-vfpv4 arm_cortex-a7_vfpv4 arm_cortex-a9 arm_cortex-a15_neon-vfpv4"
+            cross: true
+            docker_platform: linux/arm/v7
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -92,10 +109,41 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install zig and cargo-zigbuild (cross-compilation)
+        if: ${{ matrix.cross }}
+        run: |
+          python3 -m venv "$RUNNER_TEMP/zig"
+          "$RUNNER_TEMP/zig/bin/pip" install --quiet ziglang==0.17.1
+          echo "$RUNNER_TEMP/zig/bin" >> "$GITHUB_PATH"
+      - uses: taiki-e/install-action@v2
+        if: ${{ matrix.cross }}
+        with:
+          tool: cargo-zigbuild
+      - uses: docker/setup-qemu-action@v3
+        if: ${{ matrix.cross }}
+
       - name: Build
-        run: cargo build --release --locked --bins --target ${{ matrix.target }}
+        run: |
+          if [ "${{ matrix.cross }}" = true ]; then
+            cargo zigbuild --release --locked --bins --target ${{ matrix.target }}
+          else
+            cargo build --release --locked --bins --target ${{ matrix.target }}
+          fi
+
+      # The runner cannot run an armv7 binary: it is checked with `file` and run in a container under QEMU
+      - name: The cross-compiled binaries are static and run
+        if: ${{ matrix.cross }}
+        run: |
+          bin="target/${{ matrix.target }}/release"
+          for b in hbbs hbbr rustdesk-utils; do
+            file "$bin/$b"
+            file "$bin/$b" | grep -q "statically linked" || { echo "::error::$b is not static"; exit 1; }
+          done
+          docker run --rm --platform ${{ matrix.docker_platform }} -v "$PWD/$bin:/b:ro" alpine:3.22 sh -c '
+            /b/rustdesk-utils genkeypair >/dev/null && /b/hbbs --version && /b/hbbr --version'
 
       - name: The binaries are static and run
+        if: ${{ !matrix.cross }}
         run: |
           bin="target/${{ matrix.target }}/release"
           for b in hbbs hbbr rustdesk-utils; do
@@ -118,7 +166,7 @@ jobs:
 
       - name: Pack
         env:
-          NFPM_ARCH: ${{ matrix.arch }}
+          NFPM_ARCH: ${{ matrix.nfpm_arch }}
           BIN_DIR: target/${{ matrix.target }}/release
         run: |
           mkdir dist
@@ -127,13 +175,21 @@ jobs:
               nfpm package --config "packaging/nfpm-$p.yaml" --packager "$f" --target dist/
             done
           done
+          # OpenWrt: one apk per OpenWrt architecture. apk versions are numbers (and a few fixed suffixes), so
+          # 1.1.16-sctg.8 becomes 1.1.16.8, which also sorts after 1.1.16.7
+          export VERSION="$(echo "$VERSION" | sed 's/-sctg\././')"
+          for openwrt in ${{ matrix.openwrt_archs }}; do
+            for p in hbbs hbbr utils; do
+              NFPM_ARCH="$openwrt" nfpm package --config "packaging/openwrt/nfpm-$p.yaml" --packager apk --target dist/
+            done
+          done
           cd dist && sha256sum * | tee "SHA256SUMS-${{ matrix.arch }}"
 
       # Install them on a Debian and a Fedora of the same architecture (no systemd in the containers: the maintainer
       # scripts skip it) and run a binary from each
       - name: Install the deb on Debian
         run: |
-          docker run --rm -v "$PWD/dist:/p:ro" debian:12 sh -c '
+          docker run --rm ${{ matrix.docker_platform && format('--platform {0}', matrix.docker_platform) || '' }} -v "$PWD/dist:/p:ro" debian:12 sh -c '
             apt-get update -qq && apt-get install -y -qq /p/*.deb >/dev/null &&
             dpkg -l "sctgdesk-server-*" | tail -n 3 && rustdesk-utils genkeypair >/dev/null &&
             test -f /usr/lib/systemd/system/rustdesk-hbbs.service && test -f /usr/lib/systemd/system/rustdesk-hbbr.service &&
@@ -142,8 +198,10 @@ jobs:
       # The former rustdesk-server-* packages mask the unit and (purged) delete /var/lib/rustdesk-server
       - name: Migrate from the former packages on Debian
         run: |
-          docker run --rm -v "$PWD/dist:/p:ro" -v "$PWD/packaging:/t:ro" debian:12 sh /t/test-migration.sh /p
+          docker run --rm ${{ matrix.docker_platform && format('--platform {0}', matrix.docker_platform) || '' }} -v "$PWD/dist:/p:ro" -v "$PWD/packaging:/t:ro" debian:12 sh /t/test-migration.sh /p
+      # Fedora has no armv7 image: the rpm of armv7 is only built
       - name: Install the rpm on Fedora
+        if: ${{ !matrix.cross }}
         run: |
           docker run --rm -v "$PWD/dist:/p:ro" fedora:latest sh -c '
             dnf install -y -q /p/*.rpm >/dev/null &&
@@ -151,6 +209,23 @@ jobs:
             test -f /usr/lib/systemd/system/rustdesk-hbbs.service && test -f /usr/lib/systemd/system/rustdesk-hbbr.service &&
             dnf remove -y -q sctgdesk-server-hbbs sctgdesk-server-hbbr sctgdesk-server-utils >/dev/null &&
             test ! -e /usr/bin/hbbs'
+
+      # apk-tools takes the architecture of a package from /etc/apk/arch: set it to each OpenWrt architecture to install
+      # the package for real (the maintainer scripts need OpenWrt's /etc/rc.common, a stub stands in for it)
+      - name: Install the OpenWrt apk on Alpine
+        run: |
+          for openwrt in ${{ matrix.openwrt_archs }}; do
+            echo "== $openwrt"
+            docker run --rm ${{ matrix.docker_platform && format('--platform {0}', matrix.docker_platform) || '' }} -e OPENWRT_ARCH="$openwrt" -v "$PWD/dist:/p:ro" alpine:3.22 sh -c '
+              echo "$OPENWRT_ARCH" > /etc/apk/arch &&
+              printf "#!/bin/sh\nexit 0\n" > /etc/rc.common && chmod +x /etc/rc.common &&
+              apk add --allow-untrusted /p/*_"$OPENWRT_ARCH".apk >/dev/null &&
+              apk info -v | grep sctgdesk-server &&
+              test -x /etc/init.d/sctgdesk-hbbs && test -f /etc/config/sctgdesk-hbbr &&
+              rustdesk-utils genkeypair >/dev/null &&
+              apk del sctgdesk-server-hbbs sctgdesk-server-hbbr sctgdesk-server-utils >/dev/null &&
+              test ! -e /usr/bin/hbbs'
+          done
 
       # Only to hand the packages to the publish job; deleted after a day
       - uses: actions/upload-artifact@v4
@@ -161,9 +236,131 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
+  # OpenWrt routers with a MIPS CPU (32-bit, soft float, musl): ath79 is big endian (mips), ramips little endian
+  # (mipsel). Only apk packages: the build is a tier 3 target, see packaging/openwrt/build-mips.sh. The binaries are run
+  # under QEMU (user mode), including a real start of hbbs and hbbr.
+  mips:
+    name: ${{ matrix.arch }} (OpenWrt)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: mips
+            qemu: qemu-mips
+            openwrt_archs: "mips_24kc mips_4kec"
+          - arch: mipsel
+            qemu: qemu-mipsel
+            openwrt_archs: "mipsel_24kc mipsel_74kc"
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: The tag matches the version of Cargo.toml
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          case "$TAG" in sctg-v*) ;; *) echo "::error::the tag must start with sctg-v"; exit 1;; esac
+          version="${TAG#sctg-v}"
+          cargo_version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)
+          if [ "$version" != "$cargo_version" ]; then
+            echo "::error::the tag says $version but Cargo.toml says $cargo_version: the binaries would report the wrong version"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y perl make qemu-user curl
+          python3 -m venv "$RUNNER_TEMP/zig"
+          "$RUNNER_TEMP/zig/bin/pip" install --quiet ziglang==0.17.1
+          echo "$RUNNER_TEMP/zig/bin" >> "$GITHUB_PATH"
+
+      # tier 3 target: the standard library is built from source (-Zbuild-std)
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: packages-${{ matrix.arch }}-openwrt
+
+      # The web console and the API documentation are embedded in the binaries
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build
+        run: packaging/openwrt/build-mips.sh ${{ matrix.arch }}
+
+      - name: The binaries are static and run (QEMU)
+        run: |
+          bin="target/${{ matrix.arch }}-unknown-linux-musl/release"
+          for b in hbbs hbbr rustdesk-utils; do
+            file "$bin/$b"
+            file "$bin/$b" | grep -q "statically linked" || { echo "::error::$b is not static"; exit 1; }
+          done
+          ${{ matrix.qemu }} "$bin/rustdesk-utils" genkeypair > /dev/null
+          ${{ matrix.qemu }} "$bin/hbbs" --version
+          ${{ matrix.qemu }} "$bin/hbbr" --version
+          # a real start: the API server answers, the console is served, the relay accepts a connection
+          mkdir run && cd run
+          ${{ matrix.qemu }} "../$bin/hbbr" -p 21117 > hbbr.log 2>&1 &
+          ${{ matrix.qemu }} "../$bin/hbbs" --api-port 21114 > hbbs.log 2>&1 &
+          for i in $(seq 1 60); do curl -fsS -m 3 localhost:21114/api/software/version/server && break; sleep 3; done
+          echo
+          curl -fsS -o /dev/null -w "console %{http_code}\n" localhost:21114/ui/
+          (exec 3<>/dev/tcp/127.0.0.1/21117) && echo "hbbr accepts connections"
+          tail -n 5 hbbs.log
+
+      - name: Install nfpm
+        run: |
+          base="https://github.com/goreleaser/nfpm/releases/download/v${NFPM_VERSION}"
+          archive="nfpm_${NFPM_VERSION}_Linux_x86_64.tar.gz"
+          curl -fsSL -o "$archive" "$base/$archive"
+          curl -fsSL -o checksums.txt "$base/checksums.txt"
+          grep " $archive\$" checksums.txt | sha256sum -c -
+          sudo tar -xzf "$archive" -C /usr/local/bin nfpm
+
+      - name: Pack
+        env:
+          BIN_DIR: target/${{ matrix.arch }}-unknown-linux-musl/release
+        run: |
+          mkdir dist
+          # same version rule as for the other apk: 1.1.16-sctg.8 becomes 1.1.16.8
+          export VERSION="$(echo "$VERSION" | sed 's/-sctg\././')"
+          for openwrt in ${{ matrix.openwrt_archs }}; do
+            for p in hbbs hbbr utils; do
+              NFPM_ARCH="$openwrt" nfpm package --config "packaging/openwrt/nfpm-$p.yaml" --packager apk --target dist/
+            done
+          done
+          cd dist && sha256sum * | tee "SHA256SUMS-${{ matrix.arch }}"
+
+      # The binaries cannot run on the x86 runner: only the layout and the registration of the packages are checked
+      - name: Install the OpenWrt apk on Alpine
+        run: |
+          for openwrt in ${{ matrix.openwrt_archs }}; do
+            echo "== $openwrt"
+            docker run --rm -e OPENWRT_ARCH="$openwrt" -v "$PWD/dist:/p:ro" alpine:3.22 sh -c '
+              echo "$OPENWRT_ARCH" > /etc/apk/arch &&
+              printf "#!/bin/sh\nexit 0\n" > /etc/rc.common && chmod +x /etc/rc.common &&
+              apk add --allow-untrusted /p/*_"$OPENWRT_ARCH".apk >/dev/null &&
+              apk info -v | grep sctgdesk-server &&
+              test -x /etc/init.d/sctgdesk-hbbs && test -f /etc/config/sctgdesk-hbbr && test -x /usr/bin/hbbs'
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.publish }}
+        with:
+          name: packages-${{ matrix.arch }}
+          path: dist/*
+          retention-days: 1
+          if-no-files-found: error
+
   publish:
     name: Upload to the pre-release
-    needs: packages
+    needs: [packages, mips]
     if: ${{ inputs.publish }}
     runs-on: ubuntu-latest
     permissions:
@@ -182,6 +379,6 @@ jobs:
           ls -l dist
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "$TAG" \
-              --notes "Pre-release. deb and rpm packages (amd64 and arm64) of hbbs, hbbr and rustdesk-utils, built from static musl binaries. SHA-256 sums in SHA256SUMS-*."
+              --notes "Pre-release. deb and rpm packages (amd64, arm64 and armv7) and OpenWrt apk packages (including MIPS) of hbbs, hbbr and rustdesk-utils, built from static musl binaries. SHA-256 sums in SHA256SUMS-*."
           fi
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber dist/*

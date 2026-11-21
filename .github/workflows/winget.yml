@@ -1,0 +1,42 @@
+name: winget
+
+# Opens the pull request to microsoft/winget-pkgs for a release. It runs when a release is published as a full release
+# (a pre-release promoted by the maintainer, see docs/releases.md), or by hand for a tag.
+# Needs the secret WINGET_TOKEN (classic token, scope public_repo, of the account that owns a fork of winget-pkgs) and
+# a package that already exists in winget-pkgs: see packaging/winget/README.md for the first submission.
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, sctg-v<version> (for example sctg-v1.1.16-sctg.8)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  winget:
+    name: pull request to winget-pkgs
+    # winget-releaser runs on Windows
+    runs-on: windows-latest
+    steps:
+      - name: Version of the tag
+        id: v
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          case "$TAG" in sctg-v*) ;; *) echo "::error::the tag must start with sctg-v"; exit 1;; esac
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#sctg-v}" >> "$GITHUB_OUTPUT"
+      - uses: vedantmgoyal9/winget-releaser@v2
+        with:
+          identifier: SCTG.SCTGDeskServer
+          version: ${{ steps.v.outputs.version }}
+          release-tag: ${{ steps.v.outputs.tag }}
+          # the flat zips made by binaries.yml, not the archives with a versioned folder
+          installers-regex: '-winget-(x86_64|aarch64)\.zip$'
+          token: ${{ secrets.WINGET_TOKEN }}

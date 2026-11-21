@@ -7,6 +7,8 @@
   - [REST API](api.md)
 - [Building from source](building.md)
 - [Deploying a server](deployment.md)
+  - [On Windows](windows.md)
+  - [Package repositories and OpenWrt](repositories.md)
 - [Custom builds](custom-builds.md)
 - [Testing](testing.md)
 - [The client](client.md)
