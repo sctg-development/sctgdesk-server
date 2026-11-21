@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.9.0.schema.json
+PackageIdentifier: SCTG.SCTGDeskServer
+PackageVersion: <version>
+InstallerType: zip
+NestedInstallerType: portable
+NestedInstallerFiles:
+  - RelativeFilePath: hbbs.exe
+    PortableCommandAlias: hbbs
+  - RelativeFilePath: hbbr.exe
+    PortableCommandAlias: hbbr
+  - RelativeFilePath: rustdesk-utils.exe
+    PortableCommandAlias: rustdesk-utils
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/sctg-development/sctgdesk-server/releases/download/sctg-v<version>/sctgdesk-server-<version>-winget-x86_64.zip
+    InstallerSha256: <sha256 of the x86_64 zip>
+  - Architecture: arm64
+    InstallerUrl: https://github.com/sctg-development/sctgdesk-server/releases/download/sctg-v<version>/sctgdesk-server-<version>-winget-aarch64.zip
+    InstallerSha256: <sha256 of the aarch64 zip>
+ManifestType: installer
+ManifestVersion: 1.9.0

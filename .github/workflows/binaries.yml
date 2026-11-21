@@ -122,6 +122,15 @@ jobs:
           mkdir -p "dist/$name"
           for b in hbbs hbbr rustdesk-utils; do cp "$bin/$b${{ matrix.ext }}" "dist/$name/"; done
           cp LICENSE "dist/$name/"
+          # winget wants the programs at the root of the zip (the path of its nested installers must not hold the
+          # version, or each release would need its manifests rewritten by hand): a second, flat archive
+          if [ "${{ matrix.os_name }}" = windows ]; then
+            mkdir "dist/winget"
+            for b in hbbs hbbr rustdesk-utils; do cp "$bin/$b${{ matrix.ext }}" dist/winget/; done
+            cp LICENSE dist/winget/
+            powershell -NoProfile -Command "Compress-Archive -Path 'dist/winget/*' -DestinationPath 'dist/sctgdesk-server-${VERSION}-winget-${{ matrix.arch }}.zip'"
+            rm -rf dist/winget
+          fi
           cd dist
           if [ "${{ matrix.os_name }}" = windows ]; then
             powershell -NoProfile -Command "Compress-Archive -Path '$name' -DestinationPath '$name.zip'"
