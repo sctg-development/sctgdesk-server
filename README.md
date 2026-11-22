@@ -30,13 +30,27 @@ the former repositories `sctgdesk-api-server` and `sctgdesk`, which are archived
 * The server side of the **encrypted TCP and WebSocket connection** (key exchange versions 0 and 1), which the
   open-source upstream server does not implement. This is what makes the **web client** work.
 * A **REST API** embedded in `hbbs`, compatible with the clients: login (password, OpenID Connect / OAuth2:
-  GitHub, GitLab, Google, Dex...), sessions that survive a restart, personal and shared address books (per user and
+  GitHub, Dex or any standard OAuth2 provider), sessions that survive a restart, personal and shared address books (per user and
   per group, read-only / read-write / admin), users and groups, software-update endpoints.
 * A **web console** to manage all of that, and interactive API documentation.
 * A **connection history** with a note on each connection (what was done), searchable and exportable to CSV, filled by the RustDesk clients.
 * An option to refuse unauthenticated control (`--logged-in-only`).
 * A **client** (`client/`): upstream RustDesk plus a small overlay, branded at build time with your name, servers and
   key; and a **web client**.
+
+## One server, every platform
+
+The same server runs on a data-centre machine, a Windows server, a Mac, a Raspberry Pi or a router, from the same
+release, with the formats each platform expects:
+
+| Platform | Architectures | How to get it |
+|---|---|---|
+| **Linux** | amd64, arm64, armv7 (armhf) | `deb` and `rpm` packages, **signed apt and dnf repositories**, static binaries, Docker image (amd64, arm64) |
+| **OpenWrt** 25.12+ | x86_64, aarch64, armv7, **MIPS big endian** (ath79) and **MIPS little endian** (ramips) | **signed `apk` repository**, with a `procd` service and UCI configuration |
+| **Windows** | amd64, arm64 | zip, **winget**, and **native Windows services** (`sc.exe`) |
+| **macOS** | Intel, Apple Silicon | zip |
+
+Every Linux and OpenWrt binary is **static** (musl): no library to install, the same file on any distribution.
 
 Compatibility comes first: the server must keep working with official RustDesk clients, and our changes to upstream
 files are kept small so that new upstream releases can be merged.
@@ -93,7 +107,7 @@ apk update && apk add sctgdesk-server-hbbs sctgdesk-server-hbbr
 ```
 
 Each program is a `procd` service configured with UCI (`/etc/config/sctgdesk-hbbs`). `hbbs` is about 30 MB: put it, and
-its data, on a USB disk or an extroot. The MIPS builds are untested on real routers. Older OpenWrt releases and other
+its data, on a USB disk or an extroot. The `mips_24kc` build was tested on two real ath79 routers (QCA9558 and QCA956X); the other architectures were run under QEMU or on other hardware only. Older OpenWrt releases and other
 architectures can use the static binaries of a release. Details: [Package repositories](docs/repositories.md).
 
 ### Binaries (Linux, Windows, macOS)
@@ -230,10 +244,12 @@ session before it connects two peers. Anyone can still register their device, bu
 without logging in. A client that is not logged in sees "The connection is not allowed. You have not logged in."; one
 whose session ended sees "Your session expired."
 
-### Login with GitHub, GitLab, Google, Dex...
+### Login with GitHub, Dex or another OAuth2 provider
 
 Copy `oauth2.toml` and fill in the providers you use (each needs an application registered with the provider, whose
-callback is your API server), then set `OAUTH2_CONFIG_FILE=oauth2.toml`, and `OAUTH2_CREATE_USER=1` to create the
+callback is your API server). The provider types that can sign in are `Github`, `Dex` and the generic `Oauth2` (any
+standard OAuth2 / OpenID Connect provider: you give its addresses). The web console checks a file against the real
+provider before you save it. Then set `OAUTH2_CONFIG_FILE=oauth2.toml`, and `OAUTH2_CREATE_USER=1` to create the
 user at the first login. See the [deployment guide](docs/deployment.md#login-with-openid-connect-and-oauth2).
 
 ### Updates of the client

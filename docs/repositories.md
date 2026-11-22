@@ -81,9 +81,9 @@ Things to know about a router:
 - **Storage.** `hbbs` is about 30 MB. Install it on a USB disk or on an extroot, not on a small flash. The key pair and
   the database go to `datadir` (`/etc/sctgdesk-server` by default, on the flash): put it on the disk too, a database
   writes a lot.
-- **MIPS.** The MIPS builds are a tier 3 target of Rust, compiled with zig. They run (the CI starts `hbbs` and `hbbr` under
-  QEMU and queries the API), but they have not been tried on a real router by the maintainers: please report what you
-  see.
+- **MIPS.** The MIPS builds are a tier 3 target of Rust, compiled with zig. The `mips_24kc` build was tested on two real
+  routers (OpenWrt 25.12.6, ath79, QCA9558 and QCA956X: install from the repository, `hbbs` answering the API, `hbbr` as a
+  `procd` service). The other MIPS architectures are only run under QEMU in the CI: please report what you see.
 - **Ports.** Open 21115, 21116 (TCP and UDP), 21117, 21118 and 21119, and 21114 for the console, in the firewall of the
   router.
 
