@@ -46,12 +46,15 @@ For OpenWrt 25.12 and later, which use `apk`. Older releases (`opkg`) are not su
 
 ```sh
 wget -O /etc/apk/keys/sctgdesk.rsa.pub https://sctg-development.github.io/sctgdesk-server/apk/sctgdesk.rsa.pub
-echo "https://sctg-development.github.io/sctgdesk-server/apk/$(apk --print-arch)/APKINDEX.tar.gz" > /etc/apk/repositories.d/sctgdesk.list
+. /etc/openwrt_release        # DISTRIB_ARCH: the architecture of the packages of your router, for example mips_24kc
+echo "https://sctg-development.github.io/sctgdesk-server/apk/$DISTRIB_ARCH/APKINDEX.tar.gz" > /etc/apk/repositories.d/sctgdesk.list
 apk update
 apk add sctgdesk-server-hbbs sctgdesk-server-hbbr
 ```
 
-`apk --print-arch` is the architecture of the router. These are published:
+`DISTRIB_ARCH` (from `/etc/openwrt_release`, the same value as in `/etc/apk/arch`) is the architecture of the packages
+of your router. Do not use `apk --print-arch` for it: the `apk` of OpenWrt only prints the generic family (`mips`, not
+`mips_24kc`). These are published:
 
 | OpenWrt architecture | Devices (examples) |
 |---|---|
@@ -70,7 +73,7 @@ The packages install a `procd` service for each program and a UCI file to config
 uci set sctgdesk-hbbs.main.args='-r relay.example.com -k <your-key>'
 uci commit sctgdesk-hbbs
 /etc/init.d/sctgdesk-hbbs restart
-logread -e hbbs           # the log goes to the system log
+logread -e hbbs           # the log goes to the system log (the 1.1.16.8 packages show it under the name `sh`)
 ```
 
 Things to know about a router:

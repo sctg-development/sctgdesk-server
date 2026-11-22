@@ -11,6 +11,22 @@ use std::{
     time::{Instant, SystemTime},
 };
 
+/// Moves to the data directory named by `SCTGDESK_DATA_DIR` (created if needed), before anything reads or writes a file.
+///
+/// The servers keep their key pair, database, secrets and `.env` in the working directory. A service manager that
+/// starts them elsewhere sets this variable instead of wrapping the program in a shell: the Windows service manager
+/// starts in `C:\Windows\System32`, and the procd of OpenWrt has no setting for the working directory (a wrapper shell
+/// would also make the system log call the program `sh`). Nothing happens when the variable is unset or empty, so a
+/// `cd` or `WorkingDirectory=` keeps working as before. Use an absolute path.
+#[allow(dead_code)]
+pub fn enter_data_dir() -> ResultType<()> {
+    if let Some(dir) = std::env::var_os("SCTGDESK_DATA_DIR").filter(|d| !d.is_empty()) {
+        std::fs::create_dir_all(&dir).with_context(|| format!("cannot create {dir:?}"))?;
+        std::env::set_current_dir(&dir).with_context(|| format!("cannot enter {dir:?}"))?;
+    }
+    Ok(())
+}
+
 #[allow(dead_code)]
 pub(crate) fn get_expired_time() -> Instant {
     let now = Instant::now();
