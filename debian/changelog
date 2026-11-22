@@ -1,3 +1,10 @@
+rustdesk-server (1.1.16-sctg.9) UNRELEASED; urgency=medium
+
+  * smaller binaries for small routers: the web console and the API documentation are embedded gzip-compressed (served as gzip or decompressed on the fly), the source maps are no longer embedded
+  * new Cargo feature `s3` (enabled by default) so the AWS SDK can be left out; the MIPS builds are made without it and optimized for size (hbbs 32.9 MB to 12.6 MB)
+  * OpenWrt: the init scripts use SCTGDESK_DATA_DIR and the packages detect the architecture from DISTRIB_ARCH
+  * README: multi-platform and multi-architecture releases put forward
+
 rustdesk-server (1.1.16-sctg.8) UNRELEASED; urgency=medium
 
   * hbbs and hbbr run as Windows services with --windows-service (service manager, %ProgramData%\SCTGDesk or SCTGDESK_DATA_DIR, rotated log files, clean stop); the services are created with sc.exe
