@@ -20,7 +20,7 @@ mod extended_request;
 
 use std::collections::HashMap;
 use std::env;
-use std::io::Cursor;
+use std::io::{Cursor, Read};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -213,7 +213,6 @@ pub async fn build_rocket(figment: Figment) -> Rocket<Build> {
             favicon,
             webconsole_vue,
             openapi_snippet,
-            openapi_snippet_map,
         ])
         .mount(
             "/api/doc/",
@@ -2994,40 +2993,97 @@ async fn webconsole_index() -> Redirect {
     webconsole_index_multi().await
 }
 
-const STATIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../web/console/dist");
+/// The web console, compressed by `build.rs` (every file of `web/console/dist` is here as `<path>.gz`).
+const STATIC_DIR: Dir = include_dir!("$OUT_DIR/ui");
+/// The JavaScript of the API documentation, compressed by `build.rs`.
+const RAPIDOC_JS_GZ: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/rapidoc.min.js.gz"));
+
+/// Whether the client accepts gzip-compressed answers (`Accept-Encoding`, honouring `gzip;q=0`).
+struct AcceptsGzip(bool);
+
+#[async_trait]
+impl<'r> rocket::request::FromRequest<'r> for AcceptsGzip {
+    type Error = std::convert::Infallible;
+
+    async fn from_request(request: &'r Request<'_>) -> rocket::request::Outcome<Self, Self::Error> {
+        let accepts = request.headers().get("Accept-Encoding").any(|value| {
+            value.split(',').any(|coding| {
+                let mut parts = coding.split(';').map(str::trim);
+                parts
+                    .next()
+                    .is_some_and(|name| name.eq_ignore_ascii_case("gzip"))
+                    && !parts.any(|param| matches!(param, "q=0" | "q=0.0" | "q=0.00" | "q=0.000"))
+            })
+        });
+        rocket::request::Outcome::Success(AcceptsGzip(accepts))
+    }
+}
+
+/// A static file: its bytes, its type, and whether the bytes are gzip-compressed (then the answer says so).
 #[derive(Debug)]
-struct StaticFileResponse(Vec<u8>, ContentType);
+struct StaticFileResponse {
+    body: Vec<u8>,
+    content_type: ContentType,
+    gzip: bool,
+}
+
+impl StaticFileResponse {
+    /// A file served as it is.
+    fn plain(body: Vec<u8>, content_type: ContentType) -> Self {
+        Self {
+            body,
+            content_type,
+            gzip: false,
+        }
+    }
+
+    /// A file embedded compressed: sent as is to a client that accepts gzip, decompressed for the others.
+    fn from_gzip(compressed: &[u8], content_type: ContentType, accepts_gzip: bool) -> Option<Self> {
+        if accepts_gzip {
+            return Some(Self {
+                body: compressed.to_vec(),
+                content_type,
+                gzip: true,
+            });
+        }
+        let mut body = Vec::new();
+        flate2::read::GzDecoder::new(compressed)
+            .read_to_end(&mut body)
+            .ok()?;
+        Some(Self::plain(body, content_type))
+    }
+}
 
 #[async_trait]
 impl<'r> Responder<'r, 'r> for StaticFileResponse {
     fn respond_to(self, _: &'r Request<'_>) -> rocket::response::Result<'static> {
-        Response::build()
-            .header(self.1)
+        let mut response = Response::build();
+        response
+            .header(self.content_type)
             .header(Header {
                 name: "Cache-Control".into(),
                 value: "max-age=604800".into(), // 1 week
             })
-            .sized_body(self.0.len(), Cursor::new(self.0))
+            // the same address answers differently according to Accept-Encoding: caches must know
+            .header(Header {
+                name: "Vary".into(),
+                value: "Accept-Encoding".into(),
+            });
+        if self.gzip {
+            response.header(Header {
+                name: "Content-Encoding".into(),
+                value: "gzip".into(),
+            });
+        }
+        response
+            .sized_body(self.body.len(), Cursor::new(self.body))
             .ok()
     }
 }
 
 #[get("/js/sctgdesk-server.min.js")]
-async fn openapi_snippet() -> Option<StaticFileResponse> {
-    let content = include_str!("../../../web/rapidoc/dist/sctgdesk-server.min.js");
-    Some(StaticFileResponse(
-        content.as_bytes().to_vec(),
-        ContentType::JavaScript,
-    ))
-}
-
-#[get("/js/sctgdesk-server.min.js.map")]
-async fn openapi_snippet_map() -> Option<StaticFileResponse> {
-    let content = include_str!("../../../web/rapidoc/dist/sctgdesk-server.min.js.map");
-    Some(StaticFileResponse(
-        content.as_bytes().to_vec(),
-        ContentType::JavaScript,
-    ))
+async fn openapi_snippet(gzip: AcceptsGzip) -> Option<StaticFileResponse> {
+    StaticFileResponse::from_gzip(RAPIDOC_JS_GZ, ContentType::JavaScript, gzip.0)
 }
 
 #[get("/favicon.ico")]
@@ -3046,7 +3102,7 @@ async fn favicon() -> Redirect {
 /// * `Some(StaticFileResponse)` if the file exists, containing the file data and content type
 /// * `None` if the file does not exist
 #[get("/ui/<path..>")]
-async fn webconsole_vue(path: PathBuf) -> Option<StaticFileResponse> {
+async fn webconsole_vue(path: PathBuf, gzip: AcceptsGzip) -> Option<StaticFileResponse> {
     if env::var("VITE_DEVELOPMENT").is_ok() {
         let vite_base = env::var("VITE_DEVELOPMENT").unwrap_or("http://localhost:5173".to_string());
         let url = format!("{}/ui/{}", vite_base, path.to_str().unwrap_or(""));
@@ -3061,38 +3117,26 @@ async fn webconsole_vue(path: PathBuf) -> Option<StaticFileResponse> {
             .unwrap();
         let bytes = response.bytes().await.unwrap();
         let response_content: Vec<u8> = bytes.iter().map(|byte| *byte).collect();
-        let content = StaticFileResponse(response_content, content_type);
+        let content = StaticFileResponse::plain(response_content, content_type);
         return Some(content);
     }
 
+    // the files are embedded compressed (`<path>.gz`), their type is the one of the requested name
     let path = path.to_str().unwrap_or("");
-    let file = STATIC_DIR.get_file(path).map(|file| {
-        let content_type = ContentType::from_extension(
-            file.path()
-                .extension()
-                .unwrap_or_default()
-                .to_str()
-                .unwrap(),
-        )
-        .unwrap_or(ContentType::Binary);
-        StaticFileResponse(file.contents().to_vec(), content_type)
-    });
-    if file.is_some() {
-        return file;
-    } else {
-        let file = STATIC_DIR.get_file("index.html").map(|file| {
-            let content_type = ContentType::from_extension(
-                file.path()
-                    .extension()
-                    .unwrap_or_default()
-                    .to_str()
-                    .unwrap(),
-            )
-            .unwrap_or(ContentType::Binary);
-            StaticFileResponse(file.contents().to_vec(), content_type)
-        });
-        return file;
-    }
+    let embedded = |name: &str| STATIC_DIR.get_file(format!("{name}.gz"));
+    let (name, file) = match embedded(path) {
+        Some(file) => (path, file),
+        // a path of the single-page application: the router of the browser handles it
+        None => ("index.html", embedded("index.html")?),
+    };
+    let content_type = ContentType::from_extension(
+        std::path::Path::new(name)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or_default(),
+    )
+    .unwrap_or(ContentType::Binary);
+    StaticFileResponse::from_gzip(file.contents(), content_type, gzip.0)
 }
 
 /// The answer of `GET /api/backup`: the archive, never cached.

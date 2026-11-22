@@ -4,6 +4,11 @@ version = "1.1.16-sctg.7"
 edition = "2021"
 build = "build.rs"
 
+[features]
+# S3 download links of the clients (AWS SDK). Left out of the builds for small routers.
+default = ["s3"]
+s3 = ["s3software/aws"]
+
 [dependencies]
 log = "0.4"
 include_dir = "0.7"
@@ -18,7 +23,7 @@ serde_json = "1.0"
 state = { path = "../api-state" }
 utils = { path = "../api-utils" }
 oauth2 = { path = "../api-oauth2" }
-s3software = { path = "../api-s3software" }
+s3software = { path = "../api-s3software", default-features = false }
 uuid = { version = "1.10", features = ["v4"] }
 base64 = "0.22"
 url = { version = "2", features = ["serde"] }
@@ -26,3 +31,7 @@ urlencoding = "2.1"
 tar = "0.4"
 flate2 = "1"
 clap = { version = "4.5", features = ["derive"] }
+
+[build-dependencies]
+# compresses the embedded web assets (build.rs)
+flate2 = "1"

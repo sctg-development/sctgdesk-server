@@ -22,6 +22,20 @@ cargo test  --workspace --exclude oauth2 --locked -- --skip test_nat64
 `cargo build` also builds `web/console` and `web/rapidoc` with npm and embeds the result into the API server.
 To build without Node.js, set `SCTGDESK_SKIP_WEB_BUILD=1`: the console and API docs are then placeholders.
 
+## A smaller binary
+
+`hbbs` is about 33 MB for a MIPS router, and a router has little flash. What makes it smaller:
+
+- The web console and the JavaScript of the API documentation are embedded **compressed** (gzip, done by
+  `crates/api-server/build.rs`): the server sends them as they are to the browsers that accept gzip and decompresses
+  for the others. The 5 MB source map of the API documentation is not embedded.
+- The Cargo feature `s3` (on by default) brings the AWS SDK, which signs the download links of the clients and weighs
+  about 2 MB of code. `cargo build --no-default-features` leaves it out: the S3 settings can still be edited and
+  validated, but the download links answer that S3 is not built in.
+- `packaging/openwrt/build-mips.sh` also compiles for size (`opt-level = "z"`, no debug formatting text, no
+  file and line of the panics): see the comments of the script. The log lines of such a build show `<redacted>:0`
+  instead of the place in the source.
+
 ## Layout
 
 | Path | Content |

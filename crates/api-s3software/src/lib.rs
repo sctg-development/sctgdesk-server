@@ -13,13 +13,22 @@
 //
 // You should have received a copy of the Affero General Public License
 // along with SCTGDesk. If not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
+// The AWS SDK is optional (feature `aws`, on by default): it only signs the download links of the clients, it weighs
+// about 2 MB of code, and the builds for small routers leave it out. Without it the configuration can still be read,
+// edited and validated, and the functions that talk to the storage answer that S3 is not built in.
+#![cfg_attr(not(feature = "aws"), allow(dead_code, unused_imports))]
+#[cfg(feature = "aws")]
 use aws_config::{BehaviorVersion, ConfigLoader};
+#[cfg(feature = "aws")]
 use aws_sdk_s3::config::SharedHttpClient;
+#[cfg(feature = "aws")]
 use aws_sdk_s3::presigning::PresigningConfig;
+#[cfg(feature = "aws")]
 use aws_sdk_s3::{
     config::{Credentials, Region},
     Client,
 };
+#[cfg(feature = "aws")]
 use aws_smithy_http_client::{tls, Builder as HttpClientBuilder};
 use regex::Regex;
 use serde::Deserialize;
@@ -65,6 +74,7 @@ pub struct S3Config {
 pub struct Config {
     pub s3config: S3Config,
 }
+#[cfg(feature = "aws")]
 /// Get object using presigned request.
 async fn get_object(
     client: &Client,
@@ -83,6 +93,7 @@ async fn get_object(
     Ok(presigned_request.uri().to_string())
 }
 
+#[cfg(feature = "aws")]
 pub async fn get_signed_release_url(
     endpoint: &str,
     region: &str,
@@ -170,9 +181,11 @@ pub struct LiveCheck {
     pub message: String,
 }
 
+#[cfg(feature = "aws")]
 /// How long the bucket has to answer one request of [`check_live`].
 const LIVE_TIMEOUT: Duration = Duration::from_secs(15);
 
+#[cfg(feature = "aws")]
 /// The five download keys of `s3config.toml`, with the name shown to the administrator.
 fn download_keys(s: &S3Config) -> [(&'static str, &str); 5] {
     [
@@ -184,6 +197,7 @@ fn download_keys(s: &S3Config) -> [(&'static str, &str); 5] {
     ]
 }
 
+#[cfg(feature = "aws")]
 /// Explains a failed request to the bucket. A `ServiceError` means the server was reached and answered (so the
 /// connection works) with an HTTP status that tells what is wrong; anything else is a network failure.
 ///
@@ -222,6 +236,7 @@ fn explain_s3_error<E: std::fmt::Debug, R>(
     }
 }
 
+#[cfg(feature = "aws")]
 /// Checks an `s3config.toml` against the real storage, with the credentials it holds: for each download key,
 /// asks the bucket for the first byte of the object (the same signed `GET` that a user's download does, so a
 /// success here means the download works). A key with `{version}` is first resolved to the newest object.
@@ -359,6 +374,7 @@ pub async fn parse_config(config: &str) -> Result<Config, Box<dyn Error>> {
     Ok(config.unwrap())
 }
 
+#[cfg(feature = "aws")]
 /// Get the name of the s3 config file
 /// from the S3COONFIG_FILE environment variable or
 /// default to "s3config.toml"
@@ -388,6 +404,7 @@ pub async fn get_s3_config_file() -> Result<Config, Box<dyn Error>> {
     parse_config(&config_file_content).await
 }
 
+#[cfg(feature = "aws")]
 pub async fn get_signed_release_url_with_config(
     config: Config,
     key: &str,
@@ -402,6 +419,36 @@ pub async fn get_signed_release_url_with_config(
         900,
     )
     .await
+}
+
+/// What the functions that need the AWS SDK answer when the crate is built without the `aws` feature.
+#[cfg(not(feature = "aws"))]
+const NOT_BUILT: &str =
+    "S3 support is not built into this binary (built without the `aws` feature)";
+
+/// Without the `aws` feature: always an error, see [`NOT_BUILT`].
+#[cfg(not(feature = "aws"))]
+pub async fn get_latest_signed_release_url(
+    _config: Config,
+    _template: &str,
+) -> Result<String, BoxError> {
+    Err(NOT_BUILT.into())
+}
+
+/// Without the `aws` feature: always an error, see [`NOT_BUILT`].
+#[cfg(not(feature = "aws"))]
+pub async fn extract_version() -> Result<String, Box<dyn std::error::Error>> {
+    Err(NOT_BUILT.into())
+}
+
+/// Without the `aws` feature: a single `error` line saying so.
+#[cfg(not(feature = "aws"))]
+pub async fn check_live(_content: &str) -> Vec<LiveCheck> {
+    vec![LiveCheck {
+        target: "s3".into(),
+        level: "error",
+        message: NOT_BUILT.into(),
+    }]
 }
 
 #[cfg(test)]
@@ -428,8 +475,10 @@ mod tests {
         assert!(e.is_empty());
         assert_eq!(w.len(), 1);
     }
+    #[cfg(feature = "aws")]
     use reqwest::StatusCode;
 
+    #[cfg(feature = "aws")]
     /// With an endpoint nobody listens on, the check reports the connection (once) instead of one error per file.
     #[tokio::test]
     async fn live_check_reports_an_unreachable_endpoint() {
@@ -445,6 +494,7 @@ mod tests {
         assert_eq!(bad[0].level, "error");
     }
 
+    #[cfg(feature = "aws")]
     /// The HTTPS client must work with the one rustls provider of the build (ring): a second
     /// provider makes rustls panic when it is first used. A closed local port is enough to get there.
     #[tokio::test]
@@ -464,6 +514,7 @@ mod tests {
         assert!(result.is_err(), "nothing listens on this port");
     }
 
+    #[cfg(feature = "aws")]
     #[tokio::test]
     #[ignore = "calls the live S3 bucket described by s3config.toml; run explicitly with --ignored"]
     async fn test_get_signed_release_url() {
@@ -592,6 +643,7 @@ fn listing_target(config: &S3Config, prefix: &str) -> Result<ListingTarget, BoxE
     }
 }
 
+#[cfg(feature = "aws")]
 /// All the keys of the bucket that start with `prefix`, in the form used by `s3config.toml`.
 async fn list_keys(config: &S3Config, prefix: &str) -> Result<Vec<String>, BoxError> {
     let target = listing_target(config, prefix)?;
@@ -631,11 +683,13 @@ async fn list_keys(config: &S3Config, prefix: &str) -> Result<Vec<String>, BoxEr
     Ok(keys)
 }
 
+#[cfg(feature = "aws")]
 fn latest_cache() -> &'static Mutex<HashMap<String, (Instant, ResolvedKey)>> {
     static CACHE: OnceLock<Mutex<HashMap<String, (Instant, ResolvedKey)>>> = OnceLock::new();
     CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
+#[cfg(feature = "aws")]
 /// The object designated by a key of `s3config.toml`.
 ///
 /// A key without `{version}` is the object itself, nothing is asked to the bucket. A key with
@@ -669,6 +723,7 @@ pub async fn resolve_key(config: &Config, template: &str) -> Result<ResolvedKey,
     Ok(latest)
 }
 
+#[cfg(feature = "aws")]
 /// Presigned URL of the object designated by a key of `s3config.toml` (see `resolve_key`).
 pub async fn get_latest_signed_release_url(
     config: Config,
@@ -680,6 +735,7 @@ pub async fn get_latest_signed_release_url(
         .map_err(|e| e.to_string().into())
 }
 
+#[cfg(feature = "aws")]
 /// The version of the first platform key that has one: the newest one for a key with `{version}`.
 pub async fn extract_version() -> Result<String, Box<dyn std::error::Error>> {
     let config = get_s3_config_file().await?;
@@ -852,6 +908,7 @@ mod latest_tests {
         assert!(listing_target(&config(Some("master")), "other/sctgdesk-").is_err());
     }
 
+    #[cfg(feature = "aws")]
     #[tokio::test]
     async fn a_key_without_placeholder_is_used_as_it_is_without_asking_the_bucket() {
         let cfg = Config {
@@ -871,6 +928,7 @@ mod latest_tests {
         assert_eq!(no_version.version, None);
     }
 
+    #[cfg(feature = "aws")]
     /// Run on a host that has the real s3config.toml (S3CONFIG_FILE):
     /// `cargo test -p s3software live_latest -- --ignored --nocapture`
     #[tokio::test]

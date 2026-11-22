@@ -56,12 +56,18 @@ ipnetwork = "0.20"
 local-ip-address = "0.6"
 dns-lookup = "2.0"
 ping = "0.5"
-sctgdesk-api-server = { path = "crates/api-server" }
+sctgdesk-api-server = { path = "crates/api-server", default-features = false }
 flate2 = "1.0"
 
 rocket = { version = "0.5", default-features = false, features = ["json", "secrets"] }
 num_cpus = "1.16"
 
+
+[features]
+# S3 download links of the API server (AWS SDK, about 2 MB). Left out of the builds for small routers:
+# cargo build --no-default-features
+default = ["s3"]
+s3 = ["sctgdesk-api-server/s3"]
 
 [dev-dependencies]
 tar = "0.4"
