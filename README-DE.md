@@ -29,13 +29,27 @@ Die ehemaligen Repositories`sctgdesk-api-server`und`sctgdesk`, die archiviert si
 *   Die Serverseite der**verschlüsselte TCP- und WebSocket-Verbindung**(Schlüsselaustauschversionen 0 und 1), die die
     Open-Source-Upstream-Server wird nicht implementiert. Das ist es, was die**Webclient**Arbeit.
 *   A**REST API**eingebettet in`hbbs`, kompatibel mit den Clients: Login (Passwort, OpenID Connect / OAuth2: 
-    GitHub, GitLab, Google, Dex...), Sitzungen, die einen Neustart überstehen, persönliche und gemeinsame Adressbücher (pro Nutzer und
+    GitHub, Dex oder jeder Standard-OAuth2-Anbieter), Sitzungen, die einen Neustart überstehen, persönliche und geteilte Adressbücher (pro Benutzer und
     pro Gruppe, nur Lese-/Schreib- / Admin-Optionen), Benutzer und Gruppen, Software-Update-Endpunkte.
 *   A**Webkonsole**um all das zu verwalten, sowie interaktive API-Dokumentation.
 *   A**Verbindungshistorie**mit einer Anmerkung zu jeder Verbindung (was gemacht wurde), durchsuchbar und exportierbar in CSV, ausgefüllt von den RustDesk-Clients.
 *   Eine Option, eine nicht authentifizierte Kontrolle abzulehnen (`--logged-in-only`).
 *   A**Client**(`client/`): Upstream RustDesk plus ein kleines Overlay, das zum Build-Zeitpunkt mit Ihrem Namen, Servern und
     Schlüssel; und eine**Webclient**.
+
+## Ein Server, jede Plattform
+
+Derselbe Server läuft auf einem Rechenzentrum, einem Windows-Server, einem Mac, einem Raspberry Pi oder einem Router vom selben Gerät aus
+Veröffentlichung, mit den Formaten, die jede Plattform erwartet:
+
+| Plattform | Architekturen | Wie man es bekommt |
+|---|---|---|
+|**Linux**| amd64, arm64, armv7 (ARMHF) |`deb`und`rpm`Pakete,**Signierte APT- und DNF-Repositories**, statische Binärdate, Docker-Abbild (amd64, arm64) |
+|**OpenWrt**25,12+ | x86\_64, aarch64, armv7,**MIPS Big Endian**(ath79) und**MIPS Little Endian**(Ramips) |**unterzeichnet`apk`Repository**, mit einem`procd`Service und UCI-Konfiguration |
+|**Windows**| amd64, arm64 | zip,**Winget**, und**native Windows-Dienste**(`sc.exe`) |
+|**macOS**| Intel, Apple Silicon | zip |
+
+Jede Linux- und OpenWrt-Binärdatei ist**statisch**(MUSL): Keine Bibliothek zu installieren, dieselbe Datei auf jeder Distribution.
 
 Kompatibilität steht an erster Stelle: Der Server muss weiterhin mit offiziellen RustDesk-Clients und unseren Änderungen im Upstream funktionieren
 Dateien werden klein gehalten, damit neue Upstream-Releases zusammengeführt werden können.
@@ -89,7 +103,7 @@ apk update && apk add sctgdesk-server-hbbs sctgdesk-server-hbbr
 ```
 
 Jedes Programm ist ein`procd`Service, konfiguriert mit UCI (`/etc/config/sctgdesk-hbbs`).`hbbs`sind etwa 30 MB: setze es ein, und
-es sind Daten auf einer USB-Festplatte oder einem Extroot. Die MIPS-Builds sind auf echten Routern ungetestet. Ältere OpenWrt-Versionen und andere
+seine Daten, entweder auf einer USB-Festplatte oder einem Extroot. Die`mips_24kc`Build wurde auf zwei echten ATH79-Routern (QCA9558 und QCA956X) getestet; die anderen Architekturen wurden ausschließlich unter QEMU oder auf anderer Hardware betrieben. Ältere OpenWrt-Versionen und andere
 Architekturen können die statischen Binärdateien einer Version verwenden. Details:[Paket-Repositories](docs/repositories.md).
 
 ### Binärdateien (Linux, Windows, macOS)
@@ -223,10 +237,12 @@ Sitzung, bevor es zwei Peers verbindet. Jeder kann sein Gerät weiterhin registr
 ohne sich anzumelden. Ein Client, der nicht eingeloggt ist, sieht "Die Verbindung ist nicht erlaubt. Sie haben sich nicht angemeldet."; eins
 deren Sitzung beendet ist: "Ihre Sitzung ist abgelaufen."
 
-### Melden Sie sich mit GitHub, GitLab, Google, Dex... an
+### Melden Sie sich bei GitHub, Dex oder einem anderen OAuth2-Anbieter an
 
 Kopiert`oauth2.toml`und füllen die von Ihnen verwendeten Anbieter aus (jeder benötigt einen Antrag, der beim Anbieter registriert ist, dessen Anbieter
-Callback ist dein API-Server), dann setze`OAUTH2_CONFIG_FILE=oauth2.toml`, und`OAUTH2_CREATE_USER=1`um die
+Callback ist Ihr API-Server). Die Anbietertypen, die sich anmelden können, sind`Github`,`Dex`und das generische`Oauth2`(any
+Standard OAuth2 / OpenID Connect Provider: Sie geben dessen Adressen an). Die Webkonsole prüft eine Datei mit der realen
+Anbieter, bevor du es speicherst. Dann stell es ein`OAUTH2_CONFIG_FILE=oauth2.toml`, und`OAUTH2_CREATE_USER=1`um die
 Benutzer beim ersten Login. Siehe die[Bereitstellungsleitfaden](docs/deployment.md#login-with-openid-connect-and-oauth2).
 
 ### Updates des Clients

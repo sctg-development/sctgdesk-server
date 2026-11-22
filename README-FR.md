@@ -29,13 +29,27 @@ Les anciens dépôts`sctgdesk-api-server`et`sctgdesk`, qui sont archivés.
 *   Le côté serveur du**connexion TCP et WebSocket chiffrée**(échanges de clés versions 0 et 1), que le
     le serveur en amont open source ne s’implémente pas. C’est ce qui fait que le**client web**Travail.
 *   A**REST API**intégré dans`hbbs`, compatible avec les clients : login (mot de passe, OpenID Connect / OAuth2 : 
-    GitHub, GitLab, Google, Dex...), sessions qui survivent à un redémarrage, carnets d’adresses personnels et partagés (par utilisateur et
+    GitHub, Dex ou tout fournisseur OAuth2 standard), des sessions qui survivent à un redémarrage, des carnets d’adresses personnels et partagés (par utilisateur et
     par groupe, lecture seule / lecture-écriture / admin), utilisateurs et groupes, points de terminaison pour mise à jour logicielle.
 *   A**console web**pour gérer tout cela, et la documentation interactive de l’API.
 *   A**Historique des connexions**avec une note sur chaque connexion (ce qui a été fait), consultable et exportable en CSV, remplie par les clients RustDesk.
 *   Une option pour refuser un contrôle non authentifié (`--logged-in-only`).
 *   A**Client**(`client/`): RustDesk en amont plus une petite superposition, marquée au moment de la compilation avec votre nom, vos serveurs et
     clé ; et un**client web**.
+
+## Un seul serveur, chaque plateforme
+
+Le même serveur fonctionne sur une machine de centre de données, un serveur Windows, un Mac, un Raspberry Pi ou un routeur, depuis le même
+Sortie, avec les formats que chaque plateforme attend :
+
+| Plateforme | Architectures | Comment l’obtenir |
+|---|---|---|
+|**Linux**| AMD64, ARM64, ARMv7 (ARMHF) |`deb`et`rpm`colis :**Dépôts APT et DNF signés**, binaires statiques, image Docker (amd64, arm64) |
+|**OpenWrt**25.12+ | x86\_64, aarch64, armv7,**MIPS big endian**(ath79) et**MIPS little endian**(ramips) |**signé`apk`dépôt**, avec un`procd`service et configuration UCI |
+|**Windows**| AMD64, ARM64 | ZIP,**Winget**, et**Services Windows natifs**(`sc.exe`) |
+|**macOS**| Intel, Apple Silicon | zip |
+
+Chaque binaire Linux et OpenWrt est**statique**(MUSL) : Pas de bibliothèque à installer, même fichier sur n’importe quelle distribution.
 
 La compatibilité passe avant tout : le serveur doit continuer à fonctionner avec les clients officiels de RustDesk, et nos changements en amont
 Les fichiers sont maintenus petits afin que les nouvelles versions en amont puissent être fusionnées.
@@ -89,7 +103,7 @@ apk update && apk add sctgdesk-server-hbbs sctgdesk-server-hbbr
 ```
 
 Chaque programme est un`procd`service configuré avec UCI (`/etc/config/sctgdesk-hbbs`).`hbbs`fait environ 30 Mo : mettez-le, et
-ce sont des données, sur un disque USB ou un extra. Les versions MIPS ne sont pas testées sur de vrais routeurs. Anciennes versions OpenWrt et autres
+ses données, sur un disque USB ou un extra. Le`mips_24kc`La compilation a été testée sur deux vrais routeurs ath79 (QCA9558 et QCA956X) ; les autres architectures étaient exécutées sous QEMU ou uniquement sur d’autres matériels. Anciennes versions d’OpenWrt et autres
 Les architectures peuvent utiliser les binaires statiques d’une version. Détails :[Dépôts de paquets](docs/repositories.md).
 
 ### Binaires (Linux, Windows, macOS)
@@ -223,10 +237,12 @@ Avant de connecter deux pairs. N’importe qui peut toujours enregistrer son app
 sans se connecter. Un client qui n’est pas connecté voit « La connexion n’est pas autorisée. Vous ne vous êtes pas connecté. » ; un
 dont la session s’est terminée signifie « Votre session a expiré. »
 
-### Connectez-vous avec GitHub, GitLab, Google, Dex...
+### Connectez-vous avec GitHub, Dex ou un autre fournisseur OAuth2
 
 Copié`oauth2.toml`et remplissez les fournisseurs que vous utilisez (chacun nécessite une application enregistrée auprès du fournisseur, dont
-le callback est votre serveur API), puis réglez`OAUTH2_CONFIG_FILE=oauth2.toml`, et`OAUTH2_CREATE_USER=1`pour créer le
+le callback est votre serveur API). Les types de fournisseurs pouvant se connecter sont`Github`,`Dex`et le générique`Oauth2`(n’importe quel
+fournisseur standard OAuth2 / OpenID Connect : vous en donnez les adresses). La console web vérifie un fichier par rapport au réel
+Fournisseur avant de le sauvegarder. Puis définissez`OAUTH2_CONFIG_FILE=oauth2.toml`, et`OAUTH2_CREATE_USER=1`pour créer le
 utilisateur lors de la première connexion. Voir le[Guide de déploiement](docs/deployment.md#login-with-openid-connect-and-oauth2).
 
 ### Mises à jour du client

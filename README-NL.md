@@ -29,13 +29,27 @@ De voormalige repositories`sctgdesk-api-server`en`sctgdesk`, die zijn gearchivee
 *   De serverzijde van de**versleutelde TCP- en WebSocket-verbinding**(sleuteluitwisselingsversies 0 en 1), waarvan de
     open-source upstream server wordt niet geïmplementeerd. Dit is wat de**webclient**Werken.
 *   A**REST API**ingebed in`hbbs`, compatibel met de clients: login (wachtwoord, OpenID Connect / OAuth2: 
-    GitHub, GitLab, Google, Dex...), sessies die een herstart overleven, persoonlijke en gedeelde adresboeken (per gebruiker en
+    GitHub, Dex of een standaard OAuth2-provider), sessies die een herstart overleven, persoonlijke en gedeelde adresboeken (per gebruiker en
     per groep, alleen-lezen / lezen-schrijven / beheerder), gebruikers en groepen, software-update-eindpunten.
 *   A**webconsole**om dat allemaal te beheren, en interactieve API-documentatie.
 *   A**Verbindingsgeschiedenis**met een aantekening bij elke verbinding (wat er is gedaan), doorzoekbaar en exporteerbaar naar CSV, ingevuld door de RustDesk-clients.
 *   Een optie om niet-geauthenticeerde controle te weigeren (`--logged-in-only`).
 *   A**cliënt**(`client/`): upstream RustDesk plus een kleine overlay, bij bouwtijd voorzien van jouw naam, servers en
     key; en een**webclient**.
+
+## Eén server, elk platform
+
+Dezelfde server draait op een datacenter, een Windows-server, een Mac, een Raspberry Pi of een router, vanaf dezelfde
+Release, met de formaten die elk platform verwacht:
+
+| Platform | Architecturen | Hoe je het krijgt |
+|---|---|---|
+|**Linux**| amd64, arm64, armv7 (armhf) |`deb`en`rpm`pakketten,**ondertekende apt- en dnf-repositories**, statische binairs, Docker-afbeelding (amd64, arm64) |
+|**OpenWrt**25,12+ | x86\_64, aarch64, armv7,**MIPS big endian**(ath79) en**MIPS kleine endian**(ramips) |**ondertekend`apk`repository**, met een`procd`service en UCI-configuratie |
+|**Windows**| amd64, arm64 | zip,**Winget**, en**native Windows-services**(`sc.exe`) |
+|**macOS**| Intel, Apple Silicon | zip |
+
+Elke Linux- en OpenWrt-binary is**statisch**(musl): geen bibliotheek om te installeren, hetzelfde bestand op welke distributie dan ook.
 
 Compatibiliteit komt voorop: de server moet blijven werken met officiële RustDesk-clients en onze wijzigingen voor upstream
 bestanden worden klein gehouden zodat nieuwe upstream-releases kunnen worden samengevoegd.
@@ -89,7 +103,7 @@ apk update && apk add sctgdesk-server-hbbs sctgdesk-server-hbbr
 ```
 
 Elk programma is een`procd`service geconfigureerd met UCI (`/etc/config/sctgdesk-hbbs`).`hbbs`is ongeveer 30 MB: zet het neer, en
-het zijn data, op een USB-schijf of een extroot. De MIPS-versies zijn niet getest op echte routers. Oudere OpenWrt-releases en andere
+zijn data, op een USB-schijf of een extroot. De`mips_24kc`de build werd getest op twee echte ath79-routers (QCA9558 en QCA956X); de andere architecturen werden uitsluitend onder QEMU of op andere hardware uitgevoerd. Oudere OpenWrt-releases en andere
 architecturen kunnen de statische binaries van een release gebruiken. Details:[Pakketrepositories](docs/repositories.md).
 
 ### Binaries (Linux, Windows, macOS)
@@ -223,10 +237,12 @@ sessie voordat het twee peers verbindt. Iedereen kan zijn apparaat nog steeds re
 zonder in te loggen. Een client die niet is ingelogd ziet "De verbinding is niet toegestaan. U bent niet ingelogd."; één
 wiens sessie eindigde toont "Uw sessie is verlopen."
 
-### Log in met GitHub, GitLab, Google, Dex...
+### Log in met GitHub, Dex of een andere OAuth2-provider
 
 Kopieer`oauth2.toml`en vul de aanbieders in die u gebruikt (elk heeft een aanvraag nodig die geregistreerd is bij de aanbieder, wiens aanbieder
-callback is je API-server), en stel daarna in`OAUTH2_CONFIG_FILE=oauth2.toml`, en`OAUTH2_CREATE_USER=1`om de
+callback is uw API-server). De aanbiedertypes die kunnen inloggen zijn`Github`,`Dex`en het generieke`Oauth2`(any
+standaard OAuth2 / OpenID Connect-provider: u geeft de adressen op). De webconsole controleert een bestand tegen het echte
+provider voordat je het opslaat. Stel dan in`OAUTH2_CONFIG_FILE=oauth2.toml`, en`OAUTH2_CREATE_USER=1`om de
 gebruiker bij de eerste inlog. Zie de[Implementatiegids](docs/deployment.md#login-with-openid-connect-and-oauth2).
 
 ### Updates van de client
