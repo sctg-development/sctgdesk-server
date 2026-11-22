@@ -105,6 +105,7 @@ fn log_format(
 /// As a Windows service (`hbbs --windows-service`, see docs/windows.md) the program talks to the service manager and
 /// runs `run_server` as its body; otherwise it is the usual console program.
 fn main() -> ResultType<()> {
+    enter_data_dir()?;
     if hbbs::windows_service::requested() {
         return hbbs::windows_service::run("hbbs", run_server);
     }

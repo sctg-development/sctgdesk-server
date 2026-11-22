@@ -27,10 +27,10 @@ start_service() {
 	chmod 700 "$datadir"
 
 	procd_open_instance
-	# The program reads and writes its files in its working directory, and procd has no setting for it: a tiny
-	# shell moves there and replaces itself with the program ($args is split on purpose, it holds several options).
-	procd_set_param command /bin/sh -c 'dir=$1; shift; cd "$dir" && exec "$@"' sh "$datadir" "$PROG" $args
-	procd_set_param env OAUTH2_CREATE_USER=1 S3CONFIG_FILE=s3config.toml OAUTH2_CONFIG_FILE=oauth2.toml
+	# SCTGDESK_DATA_DIR: the program moves to its data directory itself (procd has no setting for the working
+	# directory, and a wrapper shell would make the system log call it "sh"). $args is split on purpose.
+	procd_set_param command "$PROG" $args
+	procd_set_param env SCTGDESK_DATA_DIR="$datadir" OAUTH2_CREATE_USER=1 S3CONFIG_FILE=s3config.toml OAUTH2_CONFIG_FILE=oauth2.toml
 	config_list_foreach main env append_env
 	procd_set_param limits nofile="1000000 1000000"
 	# restart after a crash, forever, waiting 10 s between two attempts

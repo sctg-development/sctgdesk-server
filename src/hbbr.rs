@@ -11,6 +11,7 @@ mod version;
 /// As a Windows service (`hbbr --windows-service`, see docs/windows.md) the program talks to the service manager and
 /// runs `run_relay` as its body; otherwise it is the usual console program.
 fn main() -> ResultType<()> {
+    common::enter_data_dir()?;
     if hbbs::windows_service::requested() {
         return hbbs::windows_service::run("hbbr", run_relay);
     }
