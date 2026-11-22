@@ -102,8 +102,10 @@ echo "https://sctg-development.github.io/sctgdesk-server/apk/$DISTRIB_ARCH/APKIN
 apk update && apk add sctgdesk-server-hbbs sctgdesk-server-hbbr
 ```
 
-Elk programma is een`procd`service geconfigureerd met UCI (`/etc/config/sctgdesk-hbbs`).`hbbs`is ongeveer 30 MB: zet het neer, en
-zijn data, op een USB-schijf of een extroot. De`mips_24kc`de build werd getest op twee echte ath79-routers (QCA9558 en QCA956X); de andere architecturen werden uitsluitend onder QEMU of op andere hardware uitgevoerd. Oudere OpenWrt-releases en andere
+Elk programma is een`procd`service geconfigureerd met UCI (`/etc/config/sctgdesk-hbbs`).`hbbs`is ongeveer 13 MB op MIPS (gebouwd
+voor grootte) en 33 MB op de andere architecturen: tenzij de flash ruimte heeft, zet deze en zijn data op een USB-schijf of een
+extroot;`hbbr`is 3 MB. De`mips_24kc`build werd getest op twee echte ath79-routers (QCA9558 en QCA956X); de andere
+architecturen werden uitgevoerd onder QEMU of alleen op andere hardware. Oudere OpenWrt-releases en andere
 architecturen kunnen de statische binaries van een release gebruiken. Details:[Pakketrepositories](docs/repositories.md).
 
 ### Binaries (Linux, Windows, macOS)
