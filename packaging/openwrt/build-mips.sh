@@ -49,10 +49,17 @@ var="${triple//-/_}"
 export "CC_$var=$bin/zigcc" "AR_$var=$bin/zigar" "RANLIB_$var=$bin/zigranlib"
 upper="$(printf %s "$var" | tr a-z A-Z)"
 export "CARGO_TARGET_${upper}_LINKER=$bin/zigcc"
-export RUSTFLAGS="--cfg has_std"
+# Built for size, because the programs go on routers with little flash (see docs/repositories.md):
+# - opt-level "z" instead of 3 (OPT_LEVEL to change it): about 25 % smaller, a little slower;
+# - -Zfmt-debug=none and -Zlocation-detail=none (nightly): no text for `{:?}` of derived types and no file:line of the
+#   panics, so the log lines show "<redacted>:0" instead of the place;
+# - no default feature: without the AWS SDK (the S3 download links of the clients), about 2 MB less.
+# RUSTFLAGS_EXTRA adds compiler flags.
+export CARGO_PROFILE_RELEASE_OPT_LEVEL="${OPT_LEVEL:-z}"
+export RUSTFLAGS="--cfg has_std -Zfmt-debug=none -Zlocation-detail=none ${RUSTFLAGS_EXTRA:-}"
 # the web console and the API documentation are embedded: they are built beforehand (see packages.yml)
 cd "$root"
-common=(-Zjson-target-spec -Zbuild-std=std,panic_abort --target "$spec" --release --locked)
+common=(-Zjson-target-spec -Zbuild-std=std,panic_abort --target "$spec" --release --locked --no-default-features)
 # 1. everything, position independent (the programs it links are replaced by the next step)
 cargo +nightly build "${common[@]}" --bins
 # 2. each program again, at a fixed address

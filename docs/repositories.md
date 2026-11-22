@@ -78,9 +78,13 @@ logread -e hbbs           # the log goes to the system log (the 1.1.16.8 package
 
 Things to know about a router:
 
-- **Storage.** `hbbs` is about 30 MB. Install it on a USB disk or on an extroot, not on a small flash. The key pair and
-  the database go to `datadir` (`/etc/sctgdesk-server` by default, on the flash): put it on the disk too, a database
-  writes a lot.
+- **Storage.** The MIPS builds are made for size and without the S3 download links (see
+  [A smaller binary](building.md#a-smaller-binary)): `hbbs` is about 12.6 MB (a 5.6 MB package) and `hbbr` 2.8 MB
+  (1.2 MB). The other architectures are not: `hbbs` is about 33 MB there. The flash of a router compresses programs about
+  two to one, so `hbbs` needs a little more than 6 MB of free flash on a MIPS router, plus room for its database: on
+  a router with 5 to 7 MB free it does not fit, install it on a USB disk or an extroot. `hbbr` fits any router. The key
+  pair and the database go to `datadir` (`/etc/sctgdesk-server` by default, on the flash): put it on the disk too, a
+  database writes a lot.
 - **MIPS.** The MIPS builds are a tier 3 target of Rust, compiled with zig. They run (the CI starts `hbbs` and `hbbr` under
   QEMU and queries the API), but they have not been tried on a real router by the maintainers: please report what you
   see.

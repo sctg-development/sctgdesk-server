@@ -177,6 +177,32 @@ impl Server {
             .expect("no HTTP answer")
     }
 
+    /// GET with extra header lines (each ending in \r\n): the status, the header block and the raw body.
+    fn get_with_headers(&self, path: &str, headers: &str) -> (u16, String, Vec<u8>) {
+        let mut stream = TcpStream::connect(("127.0.0.1", self.api_port)).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(20)))
+            .unwrap();
+        write!(
+            stream,
+            "GET {path} HTTP/1.1\r\nHost: localhost\r\n{headers}Connection: close\r\n\r\n"
+        )
+        .unwrap();
+        let mut answer = Vec::new();
+        let _ = stream.read_to_end(&mut answer);
+        let split = answer
+            .windows(4)
+            .position(|w| w == b"\r\n\r\n")
+            .expect("no header block");
+        let head = String::from_utf8_lossy(&answer[..split]).into_owned();
+        let status = head
+            .split_whitespace()
+            .nth(1)
+            .and_then(|c| c.parse().ok())
+            .expect("no status");
+        (status, head, answer[split + 4..].to_vec())
+    }
+
     /// GET with the given bearer token, returns the HTTP status and the raw body (binary).
     fn get_bytes(&self, path: &str, bearer: Option<&str>) -> (u16, Vec<u8>) {
         let mut stream = TcpStream::connect(("127.0.0.1", self.api_port)).unwrap();
@@ -1164,4 +1190,47 @@ async fn only_an_administrator_deletes_a_device() {
         server.delete_like_a_browser("/api/peers/DEL1", Some(&admin)),
         404
     );
+}
+
+// ---- the embedded web assets are compressed ----
+
+#[hbb_common::tokio::test(crate = "hbb_common::tokio")]
+async fn the_embedded_assets_are_served_with_or_without_gzip() {
+    let _lock = ONE_SERVER_AT_A_TIME
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let server = Server::start(&[], &[]);
+    let decompress = |bytes: &[u8]| {
+        let mut out = Vec::new();
+        flate2::read::GzDecoder::new(bytes)
+            .read_to_end(&mut out)
+            .expect("not a gzip stream");
+        out
+    };
+    let has = |head: &str, line: &str| head.to_lowercase().contains(&line.to_lowercase());
+
+    for path in ["/js/sctgdesk-server.min.js", "/ui/index.html"] {
+        // a client that accepts gzip gets the compressed bytes as they are
+        let (status, head, gz) = server.get_with_headers(path, "Accept-Encoding: gzip, deflate\r\n");
+        assert_eq!(status, 200, "{path}");
+        assert!(has(&head, "content-encoding: gzip"), "{path}: {head}");
+        assert!(has(&head, "vary: accept-encoding"), "{path}: {head}");
+        assert_eq!(&gz[..2], &[0x1f, 0x8b], "{path} is not gzip");
+        // one that does not (or refuses it) gets the same content, decompressed
+        for refusal in ["", "Accept-Encoding: identity\r\n", "Accept-Encoding: gzip;q=0\r\n"] {
+            let (status, head, plain) = server.get_with_headers(path, refusal);
+            assert_eq!(status, 200, "{path} with [{refusal}]");
+            assert!(!has(&head, "content-encoding"), "{path} with [{refusal}]: {head}");
+            assert_eq!(plain, decompress(&gz), "{path} with [{refusal}]");
+        }
+    }
+    // the type is the one of the requested name, not of the stored .gz
+    let (_, head, _) = server.get_with_headers("/js/sctgdesk-server.min.js", "");
+    assert!(has(&head, "content-type: text/javascript") || has(&head, "content-type: application/javascript"), "{head}");
+    // a path of the single-page application falls back to the index
+    let (status, head, _) = server.get_with_headers("/ui/some/page", "");
+    assert_eq!(status, 200);
+    assert!(has(&head, "content-type: text/html"), "{head}");
+    // the source map is not embedded any more
+    assert_eq!(server.get_with_headers("/js/sctgdesk-server.min.js.map", "").0, 404);
 }

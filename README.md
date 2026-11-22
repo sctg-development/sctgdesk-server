@@ -92,8 +92,8 @@ echo "https://sctg-development.github.io/sctgdesk-server/apk/$DISTRIB_ARCH/APKIN
 apk update && apk add sctgdesk-server-hbbs sctgdesk-server-hbbr
 ```
 
-Each program is a `procd` service configured with UCI (`/etc/config/sctgdesk-hbbs`). `hbbs` is about 30 MB: put it, and
-its data, on a USB disk or an extroot. The MIPS builds are untested on real routers. Older OpenWrt releases and other
+Each program is a `procd` service configured with UCI (`/etc/config/sctgdesk-hbbs`). `hbbs` is about 13 MB on MIPS (built for size) and 33 MB on the other
+architectures: unless the flash has room, put it, and its data, on a USB disk or an extroot; `hbbr` is 3 MB. The MIPS builds are untested on real routers. Older OpenWrt releases and other
 architectures can use the static binaries of a release. Details: [Package repositories](docs/repositories.md).
 
 ### Binaries (Linux, Windows, macOS)
