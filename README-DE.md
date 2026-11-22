@@ -83,7 +83,8 @@ RAMIPS)-Router:
 
 ```sh
 wget -O /etc/apk/keys/sctgdesk.rsa.pub https://sctg-development.github.io/sctgdesk-server/apk/sctgdesk.rsa.pub
-echo "https://sctg-development.github.io/sctgdesk-server/apk/$(apk --print-arch)/APKINDEX.tar.gz" > /etc/apk/repositories.d/sctgdesk.list
+. /etc/openwrt_release        # DISTRIB_ARCH: the architecture of the packages of your router, for example mips_24kc
+echo "https://sctg-development.github.io/sctgdesk-server/apk/$DISTRIB_ARCH/APKINDEX.tar.gz" > /etc/apk/repositories.d/sctgdesk.list
 apk update && apk add sctgdesk-server-hbbs sctgdesk-server-hbbr
 ```
 

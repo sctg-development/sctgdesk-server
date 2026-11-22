@@ -10,52 +10,46 @@
 
 # SCTGDesk
 
-![Docker Pulls](https://img.shields.io/docker/pulls/sctg/sctgdesk-server)並以服務形式運行
-([![CI](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml/badge.svg)](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml)
+![Docker Pulls](https://img.shields.io/docker/pulls/sctg/sctgdesk-server)
+[![CI](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml/badge.svg)](https://github.com/sctg-development/sctgdesk-server/actions/workflows/ci.yml)
 
-，以 創建[）： 參見](https://github.com/rustdesk/rustdesk)在 Windows 上**.**Docker
+SCTGDesk 是一款自架設的遠端桌面伺服器，擁有自身客戶端，源自[RustDesk](https://github.com/rustdesk/rustdesk).它是自由軟體，屬於**AGPL-3.0**.
 
-> **圖片發佈於**Docker 樞紐
+> **SCTGDesk 是一個獨立專案。它與 RustDesk 專案並無關聯、背書或贊助
+> 或 Purslane Ltd。**「RustDesk」是該專案的名稱;此處僅用來說明此軟體是什麼
+> 衍生自並相容於。
 
-如`sctgdesk-api-server`.
-另存為`sctgdesk`，取代
+這個儲存庫就是整個專案：伺服器、API 伺服器、網頁主控台以及用戶端覆蓋層。它取代
+前任資料庫`sctgdesk-api-server`以及`sctgdesk`這些資料已被封存。
 
-## 附上您的伺服器地址：
+## 你得到的是什麼
 
-*   對於 SELinux，請附加`hbbs`到卷，或使用`hbbr`.沒有`rustdesk-utils`直接點對點
-    連線無法正常運作（所有設備都經過繼電器）。舵手圖已在內
-*   （待重構）以及
-    範例顯示於**.**移植版本**|埠 |協定 |使用者 |目的 |
-    |---|---|---|---|
-    |21114 |TCP |**|REST API、網頁控制台、API 文件（
-*   ) |
-    |21115 |TCP |**|NAT 類型測試 |
-    |21116 |TCP +**UDP`hbbs`|
-*   |ID / 會合 |
-    |21117 |TCP |**|中繼 |
-    |21118 |TCP |**|WebSocket（網頁用戶端）|
-    |21119 |TCP |
-*   |WebSocket（網頁用戶端）|**請在防火牆上開啟它們。API 和 WebSocket 連接埠應該位於網際網路上的 TLS 反向代理後方：請參閱
-    該**部署指南
-*   .`--logged-in-only`首次演出
-*   以及**將他們的資料（金鑰對、SQLite 資料庫）保存在**現行目錄`client/`.**首次起跑**創造
+*   RustDesk 伺服器：`hbbs`（ID 與會合伺服器）以及`hbbr`（中繼），加`rustdesk-utils`（金鑰對，
+    連線檢查）。與官方 RustDesk 用戶端相容。
+*   伺服器端的**加密的 TCP 與 WebSocket 連線**（金鑰交換版本 0 與 1），其中
+    開源上游伺服器無法實作。這就是讓**網頁用戶端**工作。
+*   A**REST API**嵌入於`hbbs`，與用戶端相容：登入（密碼，OpenID Connect / OAuth2：
+    GitHub、GitLab、Google、Dex......）、能在重新啟動後存活的工作階段、個人與共享通訊錄（每位使用者及
+    每組、唯讀/讀寫/管理員）、使用者與群組、軟體更新端點。
+*   A**網頁主控台**管理所有這些，以及互動式 API 文件。
+*   A**連接歷史**每個連線都有備註（完成了什麼），可搜尋並匯出成 CSV，由 RustDesk 用戶端填寫。
+*   拒絕未驗證控制項的選項（`--logged-in-only`).
+*   A**客戶**(`client/`）：上游 RustDesk 加上一個小型覆蓋層，在建置時以您的名稱、伺服器及
+    key;以及**網頁用戶端**.
 
-（秘密） 以及
+相容性是第一位：伺服器必須持續與官方 RustDesk 用戶端及我們上游的變更相容
+檔案會保持較小，以便合併新的上游版本。
 
-## （
+## 安裝
 
-公鑰**，你將它交給
-您的客戶）。若要自行建立金鑰配對，或檢查其中一組：**若要拒絕沒有金鑰的用戶端，請以以下方式啟動兩台伺服器
+選一個。不管你選什麼，你都需要一個**金鑰對**以及下方的港口。
 
-### （或
+### Linux 套件（deb、rpm）及套件儲存庫
 
-).檢查一下
-伺服器在所有連接埠上回應如下：`sctgdesk-server-hbbs`.`sctgdesk-server-hbbr`預設管理員。`sctgdesk-server-utils`網頁主控台位於**以及 API 文件**.一個新的資料庫包含使用者**使用密碼**，即
-公眾：**首次登入時更改**.`armhf`配置`.deb`以及`.rpm`在命令列上取得選項（`rustdesk-server-*`）以及來自環境變數，或
+每個版本都有`sctgdesk-server-hbbs`,`sctgdesk-server-hbbr`以及`sctgdesk-server-utils`對於**amd64**,**arm64**以及**armv7**（32-bit ARM，`armhf`），如`.deb`以及`.rpm`，由靜態 musl 二進位檔建構（無函式庫依賴）。他們
+取代前者`rustdesk-server-*`包裹。
 
-**檔案。**|變數 |二進位 |說明 |
-|--- |--- |--- |
-|ALWAYS_USE_RELAY |hbbs |如果設定為
+**來自已簽署的資料庫**（系統更新）：
 
 ```bash
 # Debian, Ubuntu
@@ -69,54 +63,42 @@ sudo apt update && sudo apt install sctgdesk-server-hbbs sctgdesk-server-hbbr
 sudo dnf install sctgdesk-server-hbbs sctgdesk-server-hbbr
 ```
 
-**「Y」**
+**或是從某個版本的檔案中：**
 
 ```bash
 sudo apt install ./sctgdesk-server-hbbs_*_amd64.deb ./sctgdesk-server-hbbr_*_amd64.deb ./sctgdesk-server-utils_*_amd64.deb
 # or: sudo dnf install ./sctgdesk-server-*.rpm
 ```
 
-禁止直接連線 |
-|DB_URL |hbbs |SQLite 資料庫路徑（預設）`/etc/default/sctgdesk-hbbs`) |
-|LOGGED_IN_ONLY |hbbs |如果設定為`-hbbr`「Y」[只有已登入的使用者才能控制對等端（與](docs/deployment.md)) |
-|ALLOW_REMOTE_BACKUP |hbbs |如果設定為`rustdesk-server-*`「Y」**，管理員可以下載備份（資料庫、金鑰對、設定），並搭配**或從主控台（與`/var/lib/rustdesk-server`);預設關閉，請參閱`/var/log/rustdesk-server`部署指南
+在空資料目錄上首次安裝時，會以隨機金鑰對啟動兩個服務;選項會放入`/etc/default/sctgdesk-hbbs`以及`-hbbr`（參見[部署指南](docs/deployment.md)，這也解釋了
+從前者遷移`rustdesk-server-*`套件：**不要清除它們**).升級會重新啟動服務
+正在執行的。資料已輸入`/var/lib/rustdesk-server`，登入`/var/log/rustdesk-server`;這些單元以 root 執行。
 
-|
-|REQUIRE_KX_V1 |hbbs |如果設定為[「Y」](docs/repositories.md)拒絕使用舊版（版本 0）TCP 金鑰交換的用戶端（與
+儲存庫與簽章金鑰的描述如下[套件儲存庫](docs/repositories.md).
 
-### ) |&#xA;|DOWNGRADE_START_CHECK |HBBR |降級檢查前的延遲（秒數） |&#xA;|DOWNGRADE_THRESHOLD |HBBR |降級檢查門檻（bit/ms） |&#xA;|KEY |hbbs/hbbr |如果設定為 ，則強制使用特定鍵，若設定為
+### OpenWrt
 
-"\_"`apk`強制使用任意金鑰 |
-|LIMIT_SPEED |hbbr |速限（以 Mb/s） |
-|OAUTH2\_CONFIG_FILE |hbbs |OAuth2 / OpenID Connect 提供者檔案的路徑（`mips_24kc`) |
-|OAUTH2\_CREATE_USER |hbbs |如果設定為`mipsel_24kc`"1"
+適用於 OpenWrt 25.12 及更新版本 （`apk`），在 x86\_64、ARM（aarch64、armv7）及 MIPS（`mips_24kc`對於 ath79，`mipsel_24kc`對於
+RAMIPS）路由器：
 
 ```sh
 wget -O /etc/apk/keys/sctgdesk.rsa.pub https://sctg-development.github.io/sctgdesk-server/apk/sctgdesk.rsa.pub
-echo "https://sctg-development.github.io/sctgdesk-server/apk/$(apk --print-arch)/APKINDEX.tar.gz" > /etc/apk/repositories.d/sctgdesk.list
+. /etc/openwrt_release        # DISTRIB_ARCH: the architecture of the packages of your router, for example mips_24kc
+echo "https://sctg-development.github.io/sctgdesk-server/apk/$DISTRIB_ARCH/APKINDEX.tar.gz" > /etc/apk/repositories.d/sctgdesk.list
 apk update && apk add sctgdesk-server-hbbs sctgdesk-server-hbbr
 ```
 
-首次登入時使用提供者建立使用者 |
-|埠 |HBBS/HBBR |聆聽埠（HBBS 為 21116 - HBBR 為 21117）|
-|HEALTH_PORT |HBBR |如果設定，HBBR 會回應`procd`以及`/etc/config/sctgdesk-hbbs`（HTTP）在此埠上;預設關閉 |
-|中繼 |hbbs |執行 hbbr 的機器的 IP 位址/DNS 名稱（以逗號分隔）|
-|LOG_FORMAT |HBBS， HBBR |`hbbs`“json”[：每條日誌行一個 JSON 物件 （](docs/repositories.md),
+每個計畫都是`procd`以 UCI 配置的服務（`/etc/config/sctgdesk-hbbs`).`hbbs`大約 30 MB：輸入，然後
+其資料，儲存在 USB 磁碟或 extroot 上。MIPS 建置版本未經真實路由器測試。較舊的 OpenWrt 版本及其他版本
+架構可以使用版本的靜態二進位檔。詳細資訊：[套件儲存庫](docs/repositories.md).
 
-### ,
+### 二進位檔（Linux、Windows、macOS）
 
-,[,](https://github.com/sctg-development/sctgdesk-server/releases),`hbbs`);預設：文字 |
-|RUST_LOG |全部 |設定除錯等級（錯誤|警告|資訊|除錯|追蹤）|
-|ROCKET_SECRET_KEY |hbbs |用於簽署 API 伺服器 Cookie 的金鑰（base64,64 位元組）。預設值：於首次啟動時產生`hbbr`資料庫旁 |
-|S3CONFIG_FILE |hbbs |軟體更新檔案路徑（`rustdesk-utils`) |
-|SINGLE_BANDWIDTH |hbbr |單一連線的最大頻寬（單位：Mb/s）|
-|TOTAL_BANDWIDTH |hbbr |最大總頻寬（單位：Mb/s） |`SHA256SUMS-*`只有已登入的使用者才能控制[（或](#first-run)）
+該[發行作品](https://github.com/sctg-development/sctgdesk-server/releases)頁面也包含壓縮檔，具備`hbbs`,`hbbr`以及`rustdesk-utils`適用於 Windows（amd64、arm64）及 macOS（Intel、Apple Silicon），搭配`SHA256SUMS-*`檔案。
+解壓縮後，從資料應該存放的目錄執行（參見[首次演出](#first-run)).
 
-詢問 API 伺服器用戶端的權杖是否為有效
-在連線兩個節點之前，會話。任何人仍然可以註冊自己的裝置，但沒有人能控制裝置
-未登入。未登入的用戶端會看到「此連線不被允許。您尚未登入。」;一
-其會話結束時顯示「您的會話已過期」。**使用 GitHub、GitLab、Google、Dex 登入......**複製`winget install SCTG.SCTGDeskServer --scope machine`並填寫您使用的提供者（每個提供者都需要在該提供者註冊的應用程式，該應用程式的提供者
-回調是你的 API 伺服器，然後設定`hbbs.exe --windows-service`, created with `sc.exe`): see [On Windows](docs/windows.md).
+關於**Windows**它們可以安裝於以下方式`winget install SCTG.SCTGDeskServer --scope machine` and run as services
+(`hbbs.exe --windows-service`, created with `sc.exe`): see [On Windows](docs/windows.md).
 
 ### Docker
 
