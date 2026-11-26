@@ -95,6 +95,10 @@ impl Into<String> for Provider {
 }
 #[derive(Deserialize, Serialize)]
 pub struct Config {
+    /// An empty or commented-out configuration is valid and means that password login is the only
+    /// available login method.  The default is necessary because TOML files with no `[[provider]]`
+    /// entries do not contain this field at all.
+    #[serde(default)]
     pub provider: Vec<ProviderConfig>,
 }
 
@@ -113,14 +117,41 @@ pub struct TokenResponse {
 /// The providers config
 pub fn get_providers_config_from_file(config_file: &str) -> Vec<ProviderConfig> {
     // If file does not exist create it
-    if !std::path::Path::new(&config_file).exists() {
+    if !std::path::Path::new(config_file).exists() {
         log::error!("oauth2 config file does not exist, creating it, we recommend you to fill it with your own values, you can change the file path by setting the OAUTH2_CONFIG_FILE environment variable.");
         let oauth2_config = include_str!("../../api-server/oauth2.toml");
-        fs::write(&config_file, oauth2_config).expect("Failed to write oauth2 config file");
+        if let Err(error) = fs::write(config_file, oauth2_config) {
+            log::error!(
+                "Failed to create oauth2 config file '{}': {}",
+                config_file,
+                error
+            );
+            return Vec::new();
+        }
     }
-    let config_file_content = fs::read_to_string(config_file).expect("Failed to read config file");
-    let config: Config = toml::from_str(&config_file_content).expect("Failed to parse config file");
-    config.provider
+    let config_file_content = match fs::read_to_string(config_file) {
+        Ok(content) => content,
+        Err(error) => {
+            log::error!(
+                "Failed to read oauth2 config file '{}': {}",
+                config_file,
+                error
+            );
+            return Vec::new();
+        }
+    };
+
+    match toml::from_str::<Config>(&config_file_content) {
+        Ok(config) => config.provider,
+        Err(error) => {
+            log::error!(
+                "Failed to parse oauth2 config file '{}': {}",
+                config_file,
+                error
+            );
+            Vec::new()
+        }
+    }
 }
 
 /// Get the name of the provider config file
@@ -476,6 +507,35 @@ mod tests {
         let (e, w) = validate_config_toml("# nothing\n");
         assert!(e.is_empty());
         assert_eq!(w.len(), 1);
+    }
+
+    #[test]
+    fn empty_oauth2_config_returns_no_providers_without_panicking() {
+        for content in [
+            "",
+            "\n",
+            "# No oauth2 provider configured.\n",
+            " # No oauth2 provider configured.\n\n",
+            "provider = []\n",
+        ] {
+            let config_file = tempfile::NamedTempFile::new().unwrap();
+            std::fs::write(config_file.path(), content).unwrap();
+
+            let providers = get_providers_config_from_file(config_file.path().to_str().unwrap());
+            assert!(
+                providers.is_empty(),
+                "configuration {content:?} should disable all OAuth2 providers"
+            );
+        }
+    }
+
+    #[test]
+    fn malformed_oauth2_config_returns_no_providers_without_panicking() {
+        let config_file = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(config_file.path(), "[[provider]\n").unwrap();
+
+        let providers = get_providers_config_from_file(config_file.path().to_str().unwrap());
+        assert!(providers.is_empty());
     }
 
     #[test]

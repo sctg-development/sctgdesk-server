@@ -17,7 +17,7 @@ export interface LatestRelease { version: string; url: string }
 
 /**
  * Turns a version or a release tag into the list of its numbers, so that `1.1.16-sctg.10` is newer than
- * `1.1.16-sctg.9` (a plain string comparison would get that wrong). The `sctg-v` prefix of our tags is ignored.
+ * `1.1.16-sctg.10` (a plain string comparison would get that wrong). The `sctg-v` prefix of our tags is ignored.
  */
 export function versionParts(version: string): number[] {
   return (version.match(/\d+/g) ?? []).map(Number)

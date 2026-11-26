@@ -1,3 +1,7 @@
+rustdesk-server (1.1.16-sctg.10) UNRELEASED; urgency=medium
+
+  * fix issue #105 - an empty oauth2.toml cause a panic on hbbs. Thanks to @danilkinvv for reporting this.
+
 rustdesk-server (1.1.16-sctg.9) UNRELEASED; urgency=medium
 
   * smaller binaries for small routers: the web console and the API documentation are embedded gzip-compressed (served as gzip or decompressed on the fly), the source maps are no longer embedded
