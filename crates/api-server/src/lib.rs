@@ -1459,16 +1459,15 @@ async fn peers_cpus(
 async fn login_options(
     state: &State<ApiState>,
 ) -> Result<Json<Vec<String>>, status::Unauthorized<()>> {
-    let mut providers: Vec<String> = Vec::new();
-    let providers_config = state
+    // No configured provider is a valid setup (password login only): answer with an empty list
+    // instead of an error, otherwise the client cannot display the login page.
+    let providers: Vec<String> = state
         .get_oauth2_config(oauth2::get_providers_config_file().as_str())
-        .await;
-    if providers_config.is_none() {
-        return Err(status::Unauthorized::<()>(()));
-    }
-    for p in providers_config.unwrap() {
-        providers.push(p.op_auth_string);
-    }
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .map(|p| p.op_auth_string)
+        .collect();
     Ok(Json(providers))
 }
 
@@ -3297,5 +3296,180 @@ mod settings_tests {
         assert!(!validate_config_content("s3", "nonsense =").valid);
         assert!(validate_config_content("oauth2", "# empty").valid);
         assert!(validate_config_content("s3", s3software::CONFIG_TEMPLATE).valid);
+    }
+}
+
+/// End-to-end tests of `GET /api/login-options` (issue #105): a server without any OAuth2 provider must
+/// still let the client display the password login page.
+#[cfg(test)]
+mod login_options_tests {
+    use super::*;
+    use rocket::local::asynchronous::Client;
+
+    /// `OAUTH2_CONFIG_FILE` is process-wide, so the tests using it must not run concurrently.
+    static ENV_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+    const GITHUB_PROVIDER: &str = r#"
+[[provider]]
+provider = "Github"
+authorization_url = "https://github.com/login/oauth/authorize"
+token_exchange_url = "https://github.com/login/oauth/access_token"
+app_id = "id"
+app_secret = "secret"
+scope = "read:user"
+op_auth_string = "oidc/github"
+op = "github"
+"#;
+
+    /// A scratch directory holding the oauth2 file and the sqlite database of one test.
+    struct Sandbox {
+        dir: PathBuf,
+    }
+
+    impl Sandbox {
+        fn new(name: &str) -> Self {
+            let dir = std::env::temp_dir().join(format!(
+                "login-options-{}-{}-{}",
+                name,
+                std::process::id(),
+                Uuid::new_v4()
+            ));
+            std::fs::create_dir_all(&dir).unwrap();
+            Sandbox { dir }
+        }
+
+        fn oauth2_file(&self) -> PathBuf {
+            self.dir.join("oauth2.toml")
+        }
+
+        fn write_oauth2(&self, content: &str) {
+            std::fs::write(self.oauth2_file(), content).unwrap();
+            env::set_var("OAUTH2_CONFIG_FILE", self.oauth2_file());
+        }
+
+        async fn client(&self) -> Client {
+            let state = state::ApiState::new_with_db(self.dir.join("db.sqlite3")).await;
+            let rocket = rocket::build()
+                .manage(state)
+                .mount("/", openapi_get_routes![login_options]);
+            Client::tracked(rocket).await.unwrap()
+        }
+    }
+
+    impl Drop for Sandbox {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.dir);
+        }
+    }
+
+    async fn get_options(client: &Client) -> (Status, String) {
+        let response = client
+            .get("/api/login-options")
+            .header(ContentType::JSON)
+            .dispatch()
+            .await;
+        let status = response.status();
+        (status, response.into_string().await.unwrap_or_default())
+    }
+
+    /// The exact situation of the issue: the console saved a file with only a comment.
+    #[rocket::async_test]
+    async fn comment_only_file_returns_an_empty_list() {
+        let _guard = ENV_LOCK.lock().await;
+        let sandbox = Sandbox::new("comment");
+        sandbox.write_oauth2("# No oauth2 provider configured.\n");
+        let client = sandbox.client().await;
+
+        let (status, body) = get_options(&client).await;
+        assert_eq!(status, Status::Ok, "body: {body}");
+        assert_eq!(body, "[]");
+    }
+
+    /// Other ways of having "no provider" must behave the same way.
+    #[rocket::async_test]
+    async fn every_empty_flavour_returns_an_empty_list() {
+        let _guard = ENV_LOCK.lock().await;
+        for content in ["", "\n\n", "   \n# comment\n", "provider = []\n"] {
+            let sandbox = Sandbox::new("flavour");
+            sandbox.write_oauth2(content);
+            let client = sandbox.client().await;
+
+            let (status, body) = get_options(&client).await;
+            assert_eq!(status, Status::Ok, "content {content:?}, body: {body}");
+            assert_eq!(body, "[]", "content {content:?}");
+        }
+    }
+
+    /// First start: the default file is written and served (it ships one sample Dex provider).
+    #[rocket::async_test]
+    async fn missing_file_is_created_with_the_default_content() {
+        let _guard = ENV_LOCK.lock().await;
+        let sandbox = Sandbox::new("missing");
+        env::set_var("OAUTH2_CONFIG_FILE", sandbox.oauth2_file());
+        assert!(!sandbox.oauth2_file().exists());
+        let client = sandbox.client().await;
+
+        let (status, body) = get_options(&client).await;
+        assert_eq!(status, Status::Ok, "body: {body}");
+        assert_eq!(body, r#"["oidc/dex"]"#);
+        assert!(sandbox.oauth2_file().exists(), "the default file is created");
+    }
+
+    /// A broken file must not take the login page down either (it is logged instead).
+    #[rocket::async_test]
+    async fn malformed_file_returns_an_empty_list() {
+        let _guard = ENV_LOCK.lock().await;
+        let sandbox = Sandbox::new("malformed");
+        sandbox.write_oauth2("[[provider]\nx");
+        let client = sandbox.client().await;
+
+        let (status, body) = get_options(&client).await;
+        assert_eq!(status, Status::Ok, "body: {body}");
+        assert_eq!(body, "[]");
+    }
+
+    /// Regression guard: configured providers are still listed.
+    #[rocket::async_test]
+    async fn configured_provider_is_listed() {
+        let _guard = ENV_LOCK.lock().await;
+        let sandbox = Sandbox::new("configured");
+        sandbox.write_oauth2(GITHUB_PROVIDER);
+        let client = sandbox.client().await;
+
+        let (status, body) = get_options(&client).await;
+        assert_eq!(status, Status::Ok, "body: {body}");
+        assert_eq!(body, r#"["oidc/github"]"#);
+    }
+
+    /// The console clears the providers, then adds one again: the empty answer must not be cached.
+    #[rocket::async_test]
+    async fn empty_answer_is_not_cached() {
+        let _guard = ENV_LOCK.lock().await;
+        let sandbox = Sandbox::new("not-cached");
+        sandbox.write_oauth2("# No oauth2 provider configured.\n");
+        let client = sandbox.client().await;
+
+        let (_, body) = get_options(&client).await;
+        assert_eq!(body, "[]");
+
+        sandbox.write_oauth2(GITHUB_PROVIDER);
+        let (status, body) = get_options(&client).await;
+        assert_eq!(status, Status::Ok);
+        assert_eq!(body, r#"["oidc/github"]"#);
+    }
+
+    /// Repeated calls on an empty configuration keep answering 200 (no poisoned lock, no panic).
+    #[rocket::async_test]
+    async fn repeated_calls_stay_successful() {
+        let _guard = ENV_LOCK.lock().await;
+        let sandbox = Sandbox::new("repeat");
+        sandbox.write_oauth2("");
+        let client = sandbox.client().await;
+
+        for _ in 0..5 {
+            let (status, body) = get_options(&client).await;
+            assert_eq!(status, Status::Ok);
+            assert_eq!(body, "[]");
+        }
     }
 }

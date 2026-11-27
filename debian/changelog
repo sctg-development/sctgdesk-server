@@ -1,3 +1,7 @@
+rustdesk-server (1.1.16-sctg.11) UNRELEASED; urgency=medium
+
+  * fix issue #105 (follow-up) - GET /api/login-options answered 401 when no oauth2 provider is configured, so the client could not display the login page. It now returns an empty list. Thanks to @danilkinvv for reporting this.
+
 rustdesk-server (1.1.16-sctg.10) UNRELEASED; urgency=medium
 
   * fix issue #105 - an empty oauth2.toml cause a panic on hbbs. Thanks to @danilkinvv for reporting this.
