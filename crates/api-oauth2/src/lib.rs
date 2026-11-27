@@ -539,6 +539,76 @@ mod tests {
     }
 
     #[test]
+    fn missing_oauth2_config_file_is_created_from_the_template() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("oauth2.toml");
+        assert!(!path.exists());
+
+        let providers = get_providers_config_from_file(path.to_str().unwrap());
+        assert!(path.exists(), "the default file must be written");
+        assert!(
+            !providers.is_empty(),
+            "the default file ships a sample provider"
+        );
+    }
+
+    #[test]
+    fn unwritable_location_returns_no_providers_without_panicking() {
+        let dir = tempfile::tempdir().unwrap();
+        // The parent directory does not exist: creating the default file fails.
+        let path = dir.path().join("missing-dir").join("oauth2.toml");
+
+        let providers = get_providers_config_from_file(path.to_str().unwrap());
+        assert!(providers.is_empty());
+    }
+
+    #[test]
+    fn unreadable_oauth2_config_returns_no_providers_without_panicking() {
+        let dir = tempfile::tempdir().unwrap();
+        // A directory exists but cannot be read as a file.
+        let providers = get_providers_config_from_file(dir.path().to_str().unwrap());
+        assert!(providers.is_empty());
+    }
+
+    #[test]
+    fn non_utf8_oauth2_config_returns_no_providers_without_panicking() {
+        let config_file = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(config_file.path(), [0xff, 0xfe, 0x00, 0x80]).unwrap();
+
+        let providers = get_providers_config_from_file(config_file.path().to_str().unwrap());
+        assert!(providers.is_empty());
+    }
+
+    #[test]
+    fn provider_of_the_wrong_type_returns_no_providers_without_panicking() {
+        let config_file = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(config_file.path(), "provider = \"not a list\"\n").unwrap();
+
+        let providers = get_providers_config_from_file(config_file.path().to_str().unwrap());
+        assert!(providers.is_empty());
+    }
+
+    #[test]
+    fn configured_providers_are_still_returned() {
+        let config_file = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(
+            config_file.path(),
+            "# a comment\n[[provider]]\nprovider = \"Github\"\nauthorization_url = \"https://github.com/login/oauth/authorize\"\ntoken_exchange_url = \"https://github.com/login/oauth/access_token\"\napp_id = \"id\"\napp_secret = \"secret\"\nscope = \"read:user\"\nop_auth_string = \"oidc/github\"\nop = \"github\"\n",
+        )
+        .unwrap();
+
+        let providers = get_providers_config_from_file(config_file.path().to_str().unwrap());
+        assert_eq!(providers.len(), 1);
+        assert_eq!(providers[0].op_auth_string, "oidc/github");
+    }
+
+    #[test]
+    fn config_without_provider_field_deserializes_to_an_empty_list() {
+        let config: Config = toml::from_str("# No oauth2 provider configured.\n").unwrap();
+        assert!(config.provider.is_empty());
+    }
+
+    #[test]
     fn validate_reports_the_problems() {
         let (e, _) = validate_config_toml("[[provider]\nx");
         assert!(e[0].starts_with("Syntax error"));
