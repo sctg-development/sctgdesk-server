@@ -116,6 +116,45 @@ jobs:
           "$bin/hbbs${{ matrix.ext }}" --version | tee version.txt
           grep -q "$VERSION" version.txt || { echo "::error::hbbs does not report $VERSION"; exit 1; }
 
+      # macOS only: the programs are signed with the Developer ID certificate that signs the macOS client (same
+      # secrets as client-macos.yml), with the hardened runtime and a secure timestamp, which the notarization requires.
+      # Skipped, with a warning, when the secrets are not available (a fork, for example).
+      - name: Check the macOS signing secrets
+        if: ${{ matrix.os_name == 'macos' }}
+        id: macsign
+        env:
+          P12_BASE64: ${{ secrets.MACOS_P12_BASE64 }}
+        run: |
+          if [ -n "$P12_BASE64" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::no macOS signing certificate, the macOS binaries are not signed"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Import the codesign certificate
+        if: ${{ steps.macsign.outputs.enabled == 'true' }}
+        uses: apple-actions/import-codesign-certs@253ddeeac23f2bdad1646faac5c8c2832e800071 # v1
+        with:
+          p12-file-base64: ${{ secrets.MACOS_P12_BASE64 }}
+          p12-password: ${{ secrets.MACOS_P12_PASSWORD }}
+          keychain: build
+
+      - name: Sign the macOS binaries
+        if: ${{ steps.macsign.outputs.enabled == 'true' }}
+        env:
+          MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+        run: |
+          security default-keychain -s build.keychain
+          bin="target/${{ matrix.target }}/release"
+          for b in hbbs hbbr rustdesk-utils; do
+            codesign --force --timestamp --options runtime -s "$MACOS_CODESIGN_IDENTITY" "$bin/$b"
+            # a binary that is not signed, or altered after the signature, must stop the release
+            codesign --verify --strict --verbose=2 "$bin/$b"
+            codesign -dv "$bin/$b" 2>&1 | grep -E "Authority=Developer ID Application|TeamIdentifier"
+          done
+          "$bin/hbbs" --version | grep -q "$VERSION"
+
       # Windows only: the .exe files are signed by SignPath (OSS program), so that the archives and the winget zips
       # hold signed programs and their SHA-256 sums are the ones of the signed files.
       # SignPath does not take a file from us: it downloads from GitHub the artifact we upload here, which is how it
@@ -230,6 +269,21 @@ jobs:
           fi
           rm -rf "$name"
           ls -l
+
+      # A bare executable cannot be stapled, so the notarization ticket stays at Apple: Gatekeeper checks it online
+      # the first time a downloaded program is run. The zip is submitted, and the job fails if Apple rejects it.
+      - name: Notarize the macOS archive
+        if: ${{ steps.macsign.outputs.enabled == 'true' }}
+        env:
+          NOTARIZE_JSON_BASE64: ${{ secrets.MACOS_NOTARIZE_JSON }}
+        run: |
+          [ -n "$NOTARIZE_JSON_BASE64" ] || { echo "::warning::no notarization key, the macOS archive is not notarized"; exit 0; }
+          cd "$RUNNER_TEMP"
+          curl -fsSL -o rcodesign.tar.gz "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/apple-codesign-0.22.0-macos-universal.tar.gz"
+          tar -xzf rcodesign.tar.gz
+          echo "$NOTARIZE_JSON_BASE64" | base64 --decode > notarize.json
+          "./apple-codesign-0.22.0-macos-universal/rcodesign" notary-submit --api-key-path notarize.json "$GITHUB_WORKSPACE"/dist/*.zip
+          rm -f notarize.json
 
       # Only to hand the archives to the publish job; deleted after a day
       - uses: actions/upload-artifact@v4
