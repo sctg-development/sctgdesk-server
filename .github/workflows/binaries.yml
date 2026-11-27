@@ -33,6 +33,7 @@ on:
 
 permissions:
   contents: read
+  actions: read # the SignPath action reads the run and downloads the unsigned artifact (Windows signing)
 
 concurrency:
   group: binaries-${{ inputs.tag }}
@@ -114,6 +115,75 @@ jobs:
           "$bin/rustdesk-utils${{ matrix.ext }}" genkeypair > /dev/null
           "$bin/hbbs${{ matrix.ext }}" --version | tee version.txt
           grep -q "$VERSION" version.txt || { echo "::error::hbbs does not report $VERSION"; exit 1; }
+
+      # Windows only: the .exe files are signed by SignPath (OSS program), so that the archives and the winget zips
+      # hold signed programs and their SHA-256 sums are the ones of the signed files.
+      # SignPath does not take a file from us: it downloads from GitHub the artifact we upload here, which is how it
+      # checks that the files come from this repository and this run. The artifact holds the three .exe only.
+      # The API token is stored in 1Password; the organisation secret OP_SERVICE_ACCOUNT_TOKEN reads its vault.
+      - name: Load the SignPath token from 1Password
+        if: ${{ matrix.os_name == 'windows' }}
+        uses: 1password/load-secrets-action@v5
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          SIGNPATH_API_TOKEN: op://GitHub SCTG-Development/y7imec4bh6vvscatjhvqstoutq/identifiant
+
+      - name: Collect the unsigned executables
+        if: ${{ matrix.os_name == 'windows' }}
+        run: |
+          mkdir -p signpath/unsigned
+          for b in hbbs hbbr rustdesk-utils; do cp "target/${{ matrix.target }}/release/$b.exe" signpath/unsigned/; done
+
+      - name: Upload the unsigned executables for SignPath
+        if: ${{ matrix.os_name == 'windows' }}
+        id: unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-windows-${{ matrix.arch }}
+          path: signpath/unsigned/*.exe
+          retention-days: 1
+          if-no-files-found: error
+
+      # The signing policy is test-signing until SignPath validates the project; then set the repository variable
+      # SIGNPATH_SIGNING_POLICY to release-signing (no edit of this file).
+      - name: Sign the executables with SignPath
+        if: ${{ matrix.os_name == 'windows' }}
+        uses: signpath/github-action-submit-signing-request@a2c5b60d9c75f073142b653c354b632eedce097b # v3.2
+        with:
+          api-token: ${{ env.SIGNPATH_API_TOKEN }}
+          organization-id: 3afe2c7a-e2db-4dfc-9cb0-9a77ee8de07e
+          project-slug: sctgdesk-server
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signpath/signed
+
+      # The signed files replace the unsigned ones before they are archived. A file that is not signed (or whose
+      # signature is broken) fails the job: an unsigned binary must never reach a release by accident.
+      - name: Use the signed executables
+        if: ${{ matrix.os_name == 'windows' }}
+        shell: pwsh
+        run: |
+          foreach ($b in 'hbbs', 'hbbr', 'rustdesk-utils') {
+            $signed = "signpath/signed/$b.exe"
+            if (-not (Test-Path $signed)) { throw "$signed is missing from the signed artifact" }
+            $sig = Get-AuthenticodeSignature $signed
+            # release-signing: the chain must be trusted (Valid). test-signing uses an untrusted test certificate, so only
+            # check that a signature exists and matches the file.
+            $release = "${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}" -eq 'release-signing'
+            $ok = if ($release) { $sig.Status -eq 'Valid' } else { $sig.SignerCertificate -and $sig.Status -notin 'NotSigned', 'HashMismatch' }
+            if (-not $ok) { throw "$signed is not validly signed: $($sig.Status)" }
+            Write-Host "$b.exe signed by $($sig.SignerCertificate.Subject)"
+            Copy-Item $signed "target/${{ matrix.target }}/release/$b.exe" -Force
+          }
+
+      - name: The signed binaries still run
+        if: ${{ matrix.os_name == 'windows' }}
+        run: |
+          bin="target/${{ matrix.target }}/release"
+          "$bin/hbbs.exe" --version | grep -q "$VERSION"
 
       - name: Archive
         run: |
