@@ -122,13 +122,34 @@ jobs:
       # checks that the files come from this repository and this run. The artifact holds the three .exe only.
       # The API token is stored in 1Password; the organisation secret OP_SERVICE_ACCOUNT_TOKEN reads its vault.
       - name: Load the SignPath token from 1Password
-        if: ${{ matrix.os_name == 'windows' }}
+        if: ${{ matrix.os_name == 'windows' && matrix.arch != 'aarch64' }}
         uses: 1password/load-secrets-action@v5
         with:
           export-env: true
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           SIGNPATH_API_TOKEN: op://GitHub SCTG-Development/y7imec4bh6vvscatjhvqstoutq/identifiant
+
+      # 1Password publishes no Windows arm64 build of its CLI (the action above downloads op_windows_arm64 and gets a
+      # 404), so on the arm64 runner the x64 build is used: Windows 11 on ARM runs it under emulation. Same secret, same
+      # variable. The download is checked: it must carry a valid Authenticode signature from 1Password (the certificate says AgileBits or 1Password).
+      - name: Load the SignPath token from 1Password (Windows arm64)
+        if: ${{ matrix.os_name == 'windows' && matrix.arch == 'aarch64' }}
+        shell: pwsh
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          $v = '2.42.0'
+          Invoke-WebRequest -Uri "https://cache.agilebits.com/dist/1P/op2/pkg/v$v/op_windows_amd64_v$v.zip" -OutFile op.zip
+          Expand-Archive op.zip -DestinationPath op-cli
+          $sig = Get-AuthenticodeSignature op-cli/op.exe
+          if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'AgileBits|1Password') {
+            throw "op.exe is not signed by 1Password: $($sig.Status) $($sig.SignerCertificate.Subject)"
+          }
+          $token = & ./op-cli/op.exe read 'op://GitHub SCTG-Development/y7imec4bh6vvscatjhvqstoutq/identifiant'
+          if ($LASTEXITCODE -ne 0 -or -not $token) { throw "op read failed" }
+          Write-Output "::add-mask::$token"
+          "SIGNPATH_API_TOKEN=$token" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
 
       - name: Collect the unsigned executables
         if: ${{ matrix.os_name == 'windows' }}
