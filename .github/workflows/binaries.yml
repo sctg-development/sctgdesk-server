@@ -33,6 +33,7 @@ on:
 
 permissions:
   contents: read
+  actions: read # the SignPath action reads the run and downloads the unsigned artifact (Windows signing)
 
 concurrency:
   group: binaries-${{ inputs.tag }}
@@ -115,6 +116,135 @@ jobs:
           "$bin/hbbs${{ matrix.ext }}" --version | tee version.txt
           grep -q "$VERSION" version.txt || { echo "::error::hbbs does not report $VERSION"; exit 1; }
 
+      # macOS only: the programs are signed with the Developer ID certificate that signs the macOS client (same
+      # secrets as client-macos.yml), with the hardened runtime and a secure timestamp, which the notarization requires.
+      # Skipped, with a warning, when the secrets are not available (a fork, for example).
+      - name: Check the macOS signing secrets
+        if: ${{ matrix.os_name == 'macos' }}
+        id: macsign
+        env:
+          P12_BASE64: ${{ secrets.MACOS_P12_BASE64 }}
+        run: |
+          if [ -n "$P12_BASE64" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::no macOS signing certificate, the macOS binaries are not signed"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Import the codesign certificate
+        if: ${{ steps.macsign.outputs.enabled == 'true' }}
+        uses: apple-actions/import-codesign-certs@253ddeeac23f2bdad1646faac5c8c2832e800071 # v1
+        with:
+          p12-file-base64: ${{ secrets.MACOS_P12_BASE64 }}
+          p12-password: ${{ secrets.MACOS_P12_PASSWORD }}
+          keychain: build
+
+      - name: Sign the macOS binaries
+        if: ${{ steps.macsign.outputs.enabled == 'true' }}
+        env:
+          MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+        run: |
+          security default-keychain -s build.keychain
+          bin="target/${{ matrix.target }}/release"
+          for b in hbbs hbbr rustdesk-utils; do
+            codesign --force --timestamp --options runtime -s "$MACOS_CODESIGN_IDENTITY" "$bin/$b"
+            # a binary that is not signed, or altered after the signature, must stop the release
+            codesign --verify --strict --verbose=2 "$bin/$b"
+            codesign -dv "$bin/$b" 2>&1 | grep -E "Authority=Developer ID Application|TeamIdentifier"
+          done
+          "$bin/hbbs" --version | grep -q "$VERSION"
+
+      # Windows only: the .exe files are signed by SignPath (OSS program), so that the archives and the winget zips
+      # hold signed programs and their SHA-256 sums are the ones of the signed files.
+      # SignPath does not take a file from us: it downloads from GitHub the artifact we upload here, which is how it
+      # checks that the files come from this repository and this run. The artifact holds the three .exe only.
+      # The API token is stored in 1Password; the organisation secret OP_SERVICE_ACCOUNT_TOKEN reads its vault.
+      - name: Load the SignPath token from 1Password
+        if: ${{ matrix.os_name == 'windows' && matrix.arch != 'aarch64' }}
+        uses: 1password/load-secrets-action@v5
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          SIGNPATH_API_TOKEN: op://GitHub SCTG-Development/y7imec4bh6vvscatjhvqstoutq/identifiant
+
+      # 1Password publishes no Windows arm64 build of its CLI (the action above downloads op_windows_arm64 and gets a
+      # 404), so on the arm64 runner the x64 build is used: Windows 11 on ARM runs it under emulation. Same secret, same
+      # variable. The download is checked: it must carry a valid Authenticode signature from 1Password (the certificate says AgileBits or 1Password).
+      - name: Load the SignPath token from 1Password (Windows arm64)
+        if: ${{ matrix.os_name == 'windows' && matrix.arch == 'aarch64' }}
+        shell: pwsh
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          $v = '2.42.0'
+          Invoke-WebRequest -Uri "https://cache.agilebits.com/dist/1P/op2/pkg/v$v/op_windows_amd64_v$v.zip" -OutFile op.zip
+          Expand-Archive op.zip -DestinationPath op-cli
+          $sig = Get-AuthenticodeSignature op-cli/op.exe
+          if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'AgileBits|1Password') {
+            throw "op.exe is not signed by 1Password: $($sig.Status) $($sig.SignerCertificate.Subject)"
+          }
+          $token = & ./op-cli/op.exe read 'op://GitHub SCTG-Development/y7imec4bh6vvscatjhvqstoutq/identifiant'
+          if ($LASTEXITCODE -ne 0 -or -not $token) { throw "op read failed" }
+          Write-Output "::add-mask::$token"
+          "SIGNPATH_API_TOKEN=$token" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - name: Collect the unsigned executables
+        if: ${{ matrix.os_name == 'windows' }}
+        run: |
+          mkdir -p signpath/unsigned
+          for b in hbbs hbbr rustdesk-utils; do cp "target/${{ matrix.target }}/release/$b.exe" signpath/unsigned/; done
+
+      - name: Upload the unsigned executables for SignPath
+        if: ${{ matrix.os_name == 'windows' }}
+        id: unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-windows-${{ matrix.arch }}
+          path: signpath/unsigned/*.exe
+          retention-days: 1
+          if-no-files-found: error
+
+      # The signing policy is test-signing until SignPath validates the project; then set the repository variable
+      # SIGNPATH_SIGNING_POLICY to release-signing (no edit of this file).
+      - name: Sign the executables with SignPath
+        if: ${{ matrix.os_name == 'windows' }}
+        uses: signpath/github-action-submit-signing-request@a2c5b60d9c75f073142b653c354b632eedce097b # v3.2
+        with:
+          api-token: ${{ env.SIGNPATH_API_TOKEN }}
+          organization-id: 3afe2c7a-e2db-4dfc-9cb0-9a77ee8de07e
+          project-slug: sctgdesk-server
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signpath/signed
+
+      # The signed files replace the unsigned ones before they are archived. A file that is not signed (or whose
+      # signature is broken) fails the job: an unsigned binary must never reach a release by accident.
+      - name: Use the signed executables
+        if: ${{ matrix.os_name == 'windows' }}
+        shell: pwsh
+        run: |
+          foreach ($b in 'hbbs', 'hbbr', 'rustdesk-utils') {
+            $signed = "signpath/signed/$b.exe"
+            if (-not (Test-Path $signed)) { throw "$signed is missing from the signed artifact" }
+            $sig = Get-AuthenticodeSignature $signed
+            # release-signing: the chain must be trusted (Valid). test-signing uses an untrusted test certificate, so only
+            # check that a signature exists and matches the file.
+            $release = "${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}" -eq 'release-signing'
+            $ok = if ($release) { $sig.Status -eq 'Valid' } else { $sig.SignerCertificate -and $sig.Status -notin 'NotSigned', 'HashMismatch' }
+            if (-not $ok) { throw "$signed is not validly signed: $($sig.Status)" }
+            Write-Host "$b.exe signed by $($sig.SignerCertificate.Subject)"
+            Copy-Item $signed "target/${{ matrix.target }}/release/$b.exe" -Force
+          }
+
+      - name: The signed binaries still run
+        if: ${{ matrix.os_name == 'windows' }}
+        run: |
+          bin="target/${{ matrix.target }}/release"
+          "$bin/hbbs.exe" --version | grep -q "$VERSION"
+
       - name: Archive
         run: |
           name="sctgdesk-server-${VERSION}-${{ matrix.os_name }}-${{ matrix.arch }}"
@@ -139,6 +269,21 @@ jobs:
           fi
           rm -rf "$name"
           ls -l
+
+      # A bare executable cannot be stapled, so the notarization ticket stays at Apple: Gatekeeper checks it online
+      # the first time a downloaded program is run. The zip is submitted, and the job fails if Apple rejects it.
+      - name: Notarize the macOS archive
+        if: ${{ steps.macsign.outputs.enabled == 'true' }}
+        env:
+          NOTARIZE_JSON_BASE64: ${{ secrets.MACOS_NOTARIZE_JSON }}
+        run: |
+          [ -n "$NOTARIZE_JSON_BASE64" ] || { echo "::warning::no notarization key, the macOS archive is not notarized"; exit 0; }
+          cd "$RUNNER_TEMP"
+          curl -fsSL -o rcodesign.tar.gz "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/apple-codesign-0.22.0-macos-universal.tar.gz"
+          tar -xzf rcodesign.tar.gz
+          echo "$NOTARIZE_JSON_BASE64" | base64 --decode > notarize.json
+          "./apple-codesign-0.22.0-macos-universal/rcodesign" notary-submit --api-key-path notarize.json "$GITHUB_WORKSPACE"/dist/*.zip
+          rm -f notarize.json
 
       # Only to hand the archives to the publish job; deleted after a day
       - uses: actions/upload-artifact@v4

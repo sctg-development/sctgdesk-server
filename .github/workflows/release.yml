@@ -51,6 +51,8 @@ jobs:
     uses: ./.github/workflows/binaries.yml
     permissions:
       contents: write
+      actions: read # SignPath downloads the unsigned artifact of this run
+    secrets: inherit # OP_SERVICE_ACCOUNT_TOKEN, to read the SignPath token in 1Password
     with:
       tag: ${{ github.event.release.tag_name }}
       publish: true

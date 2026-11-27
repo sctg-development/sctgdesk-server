@@ -9,8 +9,9 @@ name: Client build (Windows)
 # - On a pull request touching this build it builds only.
 # - By hand it also copies the .exe files to S3, as `<app>-<version>-x86_64.exe` and `<app>-<version>-i686.exe`
 #   next to the other clients: the download links of the landing page follow (api-s3software, `{version}` keys).
-# The result is never a workflow artifact nor a release: it embeds the address of the rendezvous server and
-# this repository is public.
+# The result is never a release. Outside a pull request, the files are signed by SignPath, which needs them as
+# short-lived (one day) workflow artifacts, downloadable by anyone as this repository is public, although they embed
+# the address of the rendezvous server (accepted: the signing is worth it).
 on:
   workflow_dispatch:
     inputs:
@@ -38,6 +39,7 @@ on:
 
 permissions:
   contents: read
+  actions: read # the SignPath action reads the run and downloads the unsigned artifacts
 
 # a push to the pull request replaces the build that is running: it takes about forty minutes
 concurrency:
@@ -238,36 +240,72 @@ jobs:
           name: topmostwindow-artifacts-x64
           path: "./rustdesk"
 
-      # The certificates are stored as the secrets MACOS_P12_BASE64, MACOS2_... and MACOS3_... (there are
-      # three of them, and one password); signing is skipped when they are not set.
-      - name: Extract the signing certificates
-        shell: bash
+      # Signing by SignPath (OSS program). It does not take a file from us: it downloads from GitHub the artifact
+      # uploaded below, which is how it checks that the files come from this repository and this run. Not done on a
+      # pull request (the secrets are not available to forks, and nothing is published from a pull request).
+      # WARNING: this repository is public, so these artifacts can be downloaded by anyone for the day they are kept,
+      # and the files embed the rendezvous server address and public key.
+      # The API token is stored in 1Password; the organisation secret OP_SERVICE_ACCOUNT_TOKEN reads its vault.
+      - name: Load the SignPath token from 1Password
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: 1password/load-secrets-action@v5
+        with:
+          export-env: true
         env:
-          P12_1: ${{ secrets.MACOS_P12_BASE64 }}
-          P12_2: ${{ secrets.MACOS2_P12_BASE64 }}
-          P12_3: ${{ secrets.MACOS3_P12_BASE64 }}
-        run: |
-          [ -n "$P12_1" ] || { echo "no certificate, the files are not signed"; exit 0; }
-          echo "$P12_1" | base64 --decode > certificate.pfx
-          [ -z "$P12_2" ] || echo "$P12_2" | base64 --decode > certificate2.pfx
-          [ -z "$P12_3" ] || echo "$P12_3" | base64 --decode > certificate3.pfx
-          ls certificate*.pfx
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          SIGNPATH_API_TOKEN: op://GitHub SCTG-Development/y7imec4bh6vvscatjhvqstoutq/identifiant
 
-      - name: Get SignTool location
-        uses: eltorio/action-signtoolLocation@main
-        id: signtoolLocation
-
-      - name: Sign the files
-        shell: powershell
-        continue-on-error: true
-        env:
-          P12_PASSWORD: ${{ secrets.MACOS_P12_PASSWORD }}
+      # First the programs and libraries, then (after the packing) the self-extracting executable that holds them
+      # Third-party libraries that already carry a signature (Flutter, Microsoft runtimes, ...) are left as they are:
+      # only the files without any signature, ours, are sent to SignPath.
+      - name: Select the unsigned client files
+        if: ${{ github.event_name != 'pull_request' }}
+        shell: pwsh
         run: |
-          if (-not (Test-Path .\certificate.pfx)) { Write-Host "no certificate, nothing signed"; exit 0 }
-          $signtool = "${{ steps.signtoolLocation.outputs.signtoolLocation }}"
-          foreach ($pattern in './rustdesk/*.exe', './rustdesk/*.dll') {
-            & $signtool sign /tr http://timestamp.digicert.com /td sha256 /fd SHA256 /f ./certificate.pfx /p $env:P12_PASSWORD $pattern
+          New-Item -ItemType Directory -Force signpath/to-sign | Out-Null
+          foreach ($f in Get-ChildItem "rustdesk/*" -Include *.exe, *.dll) {
+            $status = (Get-AuthenticodeSignature $f.FullName).Status
+            if ($status -eq 'NotSigned') { Copy-Item $f.FullName signpath/to-sign/ }
+            else { Write-Host "left as is ($status): $($f.Name)" }
           }
+          Get-ChildItem signpath/to-sign
+
+      - name: Upload the client files for SignPath
+        if: ${{ github.event_name != 'pull_request' }}
+        id: unsigned_app
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-client-files-x64
+          path: signpath/to-sign/*
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Sign the client files with SignPath
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: signpath/github-action-submit-signing-request@a2c5b60d9c75f073142b653c354b632eedce097b # v3.2
+        with:
+          api-token: ${{ env.SIGNPATH_API_TOKEN }}
+          organization-id: 3afe2c7a-e2db-4dfc-9cb0-9a77ee8de07e
+          project-slug: sctgdesk-server
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}
+          github-artifact-id: ${{ steps.unsigned_app.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signpath/signed-files
+
+      # The signed files replace the unsigned ones. rustdesk.exe must carry a valid signature, or the job fails: an
+      # unsigned client must not reach S3 by accident.
+      - name: Use the signed client files
+        if: ${{ github.event_name != 'pull_request' }}
+        shell: pwsh
+        run: |
+          Copy-Item signpath/signed-files/* "rustdesk/" -Force
+          $sig = Get-AuthenticodeSignature "rustdesk/rustdesk.exe"
+          # release-signing: the chain must be trusted (Valid). test-signing uses an untrusted test certificate, so only
+          # check that a signature exists and matches the file.
+          $release = "${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}" -eq 'release-signing'
+          $ok = if ($release) { $sig.Status -eq 'Valid' } else { $sig.SignerCertificate -and $sig.Status -notin 'NotSigned', 'HashMismatch' }
+          if (-not $ok) { throw "rustdesk.exe is not validly signed: $($sig.Status)" }
+          Write-Host "rustdesk.exe signed by $($sig.SignerCertificate.Subject)"
 
       - name: Build the self-extracting executable
         shell: bash
@@ -282,14 +320,42 @@ jobs:
           mv ./target/release/rustdesk-portable-packer.exe "./SignOutput/${APP_NAME_LOW}-${VERSION}-x86_64.exe"
           ls -l ./SignOutput
 
-      - name: Sign the self-extracting executable
-        shell: powershell
-        continue-on-error: true
-        env:
-          P12_PASSWORD: ${{ secrets.MACOS_P12_PASSWORD }}
+      - name: Upload the self-extracting executable for SignPath
+        if: ${{ github.event_name != 'pull_request' }}
+        id: unsigned_packer
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-client-packer-x64
+          path: SignOutput/*.exe
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Sign the self-extracting executable with SignPath
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: signpath/github-action-submit-signing-request@a2c5b60d9c75f073142b653c354b632eedce097b # v3.2
+        with:
+          api-token: ${{ env.SIGNPATH_API_TOKEN }}
+          organization-id: 3afe2c7a-e2db-4dfc-9cb0-9a77ee8de07e
+          project-slug: sctgdesk-server
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}
+          github-artifact-id: ${{ steps.unsigned_packer.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signpath/signed-packer
+
+      - name: Use the signed self-extracting executable
+        if: ${{ github.event_name != 'pull_request' }}
+        shell: pwsh
         run: |
-          if (-not (Test-Path .\certificate.pfx)) { Write-Host "no certificate, nothing signed"; exit 0 }
-          & "${{ steps.signtoolLocation.outputs.signtoolLocation }}" sign /tr http://timestamp.digicert.com /td sha256 /fd SHA256 /f ./certificate.pfx /p $env:P12_PASSWORD ./SignOutput/*.exe
+          Copy-Item signpath/signed-packer/*.exe SignOutput/ -Force
+          foreach ($f in Get-ChildItem SignOutput/*.exe) {
+            $sig = Get-AuthenticodeSignature $f.FullName
+            # release-signing: the chain must be trusted (Valid). test-signing uses an untrusted test certificate, so only
+            # check that a signature exists and matches the file.
+            $release = "${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}" -eq 'release-signing'
+            $ok = if ($release) { $sig.Status -eq 'Valid' } else { $sig.SignerCertificate -and $sig.Status -notin 'NotSigned', 'HashMismatch' }
+            if (-not $ok) { throw "$($f.Name) is not validly signed: $($sig.Status)" }
+            Write-Host "$($f.Name) signed by $($sig.SignerCertificate.Subject)"
+          }
 
       - name: Copy the executable to S3
         if: inputs.publish
@@ -412,29 +478,72 @@ jobs:
             ls -l ./libs/portable/Runner.res;
           fi
 
-      - name: Extract the signing certificates
-        shell: bash
+      # Signing by SignPath (OSS program). It does not take a file from us: it downloads from GitHub the artifact
+      # uploaded below, which is how it checks that the files come from this repository and this run. Not done on a
+      # pull request (the secrets are not available to forks, and nothing is published from a pull request).
+      # WARNING: this repository is public, so these artifacts can be downloaded by anyone for the day they are kept,
+      # and the files embed the rendezvous server address and public key.
+      # The API token is stored in 1Password; the organisation secret OP_SERVICE_ACCOUNT_TOKEN reads its vault.
+      - name: Load the SignPath token from 1Password
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: 1password/load-secrets-action@v5
+        with:
+          export-env: true
         env:
-          P12_1: ${{ secrets.MACOS_P12_BASE64 }}
-        run: |
-          [ -n "$P12_1" ] || { echo "no certificate, the files are not signed"; exit 0; }
-          echo "$P12_1" | base64 --decode > certificate.pfx
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          SIGNPATH_API_TOKEN: op://GitHub SCTG-Development/y7imec4bh6vvscatjhvqstoutq/identifiant
 
-      - name: Get SignTool location
-        uses: eltorio/action-signtoolLocation@main
-        id: signtoolLocation
-
-      - name: Sign the files
-        shell: powershell
-        continue-on-error: true
-        env:
-          P12_PASSWORD: ${{ secrets.MACOS_P12_PASSWORD }}
+      # First the programs and libraries, then (after the packing) the self-extracting executable that holds them
+      # Third-party libraries that already carry a signature (Flutter, Microsoft runtimes, ...) are left as they are:
+      # only the files without any signature, ours, are sent to SignPath.
+      - name: Select the unsigned client files
+        if: ${{ github.event_name != 'pull_request' }}
+        shell: pwsh
         run: |
-          if (-not (Test-Path .\certificate.pfx)) { Write-Host "no certificate, nothing signed"; exit 0 }
-          $signtool = "${{ steps.signtoolLocation.outputs.signtoolLocation }}"
-          foreach ($pattern in './Release/*.exe', './Release/*.dll') {
-            & $signtool sign /tr http://timestamp.digicert.com /td sha256 /fd SHA256 /f ./certificate.pfx /p $env:P12_PASSWORD $pattern
+          New-Item -ItemType Directory -Force signpath/to-sign | Out-Null
+          foreach ($f in Get-ChildItem "Release/*" -Include *.exe, *.dll) {
+            $status = (Get-AuthenticodeSignature $f.FullName).Status
+            if ($status -eq 'NotSigned') { Copy-Item $f.FullName signpath/to-sign/ }
+            else { Write-Host "left as is ($status): $($f.Name)" }
           }
+          Get-ChildItem signpath/to-sign
+
+      - name: Upload the client files for SignPath
+        if: ${{ github.event_name != 'pull_request' }}
+        id: unsigned_app
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-client-files-x86
+          path: signpath/to-sign/*
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Sign the client files with SignPath
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: signpath/github-action-submit-signing-request@a2c5b60d9c75f073142b653c354b632eedce097b # v3.2
+        with:
+          api-token: ${{ env.SIGNPATH_API_TOKEN }}
+          organization-id: 3afe2c7a-e2db-4dfc-9cb0-9a77ee8de07e
+          project-slug: sctgdesk-server
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}
+          github-artifact-id: ${{ steps.unsigned_app.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signpath/signed-files
+
+      # The signed files replace the unsigned ones. rustdesk.exe must carry a valid signature, or the job fails: an
+      # unsigned client must not reach S3 by accident.
+      - name: Use the signed client files
+        if: ${{ github.event_name != 'pull_request' }}
+        shell: pwsh
+        run: |
+          Copy-Item signpath/signed-files/* "Release/" -Force
+          $sig = Get-AuthenticodeSignature "Release/rustdesk.exe"
+          # release-signing: the chain must be trusted (Valid). test-signing uses an untrusted test certificate, so only
+          # check that a signature exists and matches the file.
+          $release = "${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}" -eq 'release-signing'
+          $ok = if ($release) { $sig.Status -eq 'Valid' } else { $sig.SignerCertificate -and $sig.Status -notin 'NotSigned', 'HashMismatch' }
+          if (-not $ok) { throw "rustdesk.exe is not validly signed: $($sig.Status)" }
+          Write-Host "rustdesk.exe signed by $($sig.SignerCertificate.Subject)"
 
       - name: Build the self-extracting executable
         shell: bash
@@ -449,14 +558,42 @@ jobs:
           mv ./target/release/rustdesk-portable-packer.exe "./SignOutput/${APP_NAME_LOW}-${VERSION}-i686.exe"
           ls -l ./SignOutput
 
-      - name: Sign the self-extracting executable
-        shell: powershell
-        continue-on-error: true
-        env:
-          P12_PASSWORD: ${{ secrets.MACOS_P12_PASSWORD }}
+      - name: Upload the self-extracting executable for SignPath
+        if: ${{ github.event_name != 'pull_request' }}
+        id: unsigned_packer
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-client-packer-x86
+          path: SignOutput/*.exe
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Sign the self-extracting executable with SignPath
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: signpath/github-action-submit-signing-request@a2c5b60d9c75f073142b653c354b632eedce097b # v3.2
+        with:
+          api-token: ${{ env.SIGNPATH_API_TOKEN }}
+          organization-id: 3afe2c7a-e2db-4dfc-9cb0-9a77ee8de07e
+          project-slug: sctgdesk-server
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}
+          github-artifact-id: ${{ steps.unsigned_packer.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signpath/signed-packer
+
+      - name: Use the signed self-extracting executable
+        if: ${{ github.event_name != 'pull_request' }}
+        shell: pwsh
         run: |
-          if (-not (Test-Path .\certificate.pfx)) { Write-Host "no certificate, nothing signed"; exit 0 }
-          & "${{ steps.signtoolLocation.outputs.signtoolLocation }}" sign /tr http://timestamp.digicert.com /td sha256 /fd SHA256 /f ./certificate.pfx /p $env:P12_PASSWORD ./SignOutput/*.exe
+          Copy-Item signpath/signed-packer/*.exe SignOutput/ -Force
+          foreach ($f in Get-ChildItem SignOutput/*.exe) {
+            $sig = Get-AuthenticodeSignature $f.FullName
+            # release-signing: the chain must be trusted (Valid). test-signing uses an untrusted test certificate, so only
+            # check that a signature exists and matches the file.
+            $release = "${{ vars.SIGNPATH_SIGNING_POLICY || 'test-signing' }}" -eq 'release-signing'
+            $ok = if ($release) { $sig.Status -eq 'Valid' } else { $sig.SignerCertificate -and $sig.Status -notin 'NotSigned', 'HashMismatch' }
+            if (-not $ok) { throw "$($f.Name) is not validly signed: $($sig.Status)" }
+            Write-Host "$($f.Name) signed by $($sig.SignerCertificate.Subject)"
+          }
 
       - name: Copy the executable to S3
         if: inputs.publish
