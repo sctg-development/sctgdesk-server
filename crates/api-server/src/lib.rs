@@ -3412,7 +3412,10 @@ op = "github"
         let (status, body) = get_options(&client).await;
         assert_eq!(status, Status::Ok, "body: {body}");
         assert_eq!(body, r#"["oidc/dex"]"#);
-        assert!(sandbox.oauth2_file().exists(), "the default file is created");
+        assert!(
+            sandbox.oauth2_file().exists(),
+            "the default file is created"
+        );
     }
 
     /// A broken file must not take the login page down either (it is logged instead).

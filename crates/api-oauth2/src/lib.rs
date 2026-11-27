@@ -546,7 +546,10 @@ mod tests {
 
         let providers = get_providers_config_from_file(path.to_str().unwrap());
         assert!(path.exists(), "the default file must be written");
-        assert!(!providers.is_empty(), "the default file ships a sample provider");
+        assert!(
+            !providers.is_empty(),
+            "the default file ships a sample provider"
+        );
     }
 
     #[test]
