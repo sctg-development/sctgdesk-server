@@ -67,8 +67,9 @@ and `Group=`. The configuration files named in `Environment=` (`oauth2.toml`, `s
 
 Download the zip of your platform from the release, check it against `SHA256SUMS-*`, unpack it in the directory that
 will hold the data and run `hbbr` and `hbbs -r <relay>` from there. On Windows, the programs run as services
-themselves (`--windows-service`, created with `sc.exe`): see [On Windows](windows.md); open the ports in the Windows firewall. The macOS binaries are not signed
-or notarized: Gatekeeper asks for confirmation (`xattr -d com.apple.quarantine <file>`).
+themselves (`--windows-service`, created with `sc.exe`): see [On Windows](windows.md); open the ports in the Windows firewall. The Windows
+binaries are signed by [SignPath.io](https://signpath.io), the macOS ones are signed and notarized: Gatekeeper checks
+the notarization online the first time a downloaded program runs.
 
 ### Docker and Kubernetes
 

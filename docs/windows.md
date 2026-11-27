@@ -83,4 +83,6 @@ The data folder is never deleted.
   to run the server by hand, leave it out.
 - The services run as `LocalSystem` by default. For a less privileged account, use `sc.exe config ... obj=` and give the
   account write access to the data folder.
-- The Windows binaries are not code-signed: SmartScreen or an antivirus may warn on the first run.
+- The Windows binaries are code-signed by [SignPath.io](https://signpath.io) (free code signing for open source,
+  certificate of the [SignPath Foundation](https://signpath.org)): the publisher is shown in the file properties.
+  SmartScreen may still warn about a program that few people have run yet.

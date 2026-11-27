@@ -121,6 +121,9 @@ Unpack, then run them from the directory where the data should live (see [First 
 On **Windows** they can be installed with `winget install SCTG.SCTGDeskServer --scope machine` and run as services
 (`hbbs.exe --windows-service`, created with `sc.exe`): see [On Windows](docs/windows.md).
 
+The Windows executables are code-signed, free of charge, by [SignPath.io](https://signpath.io) with a certificate from
+the [SignPath Foundation](https://signpath.org). See [Code signing](#code-signing).
+
 ### Docker
 
 Images are published on [Docker hub](https://hub.docker.com/r/sctg/sctgdesk-server/) as `sctg/sctgdesk-server`.
@@ -323,6 +326,18 @@ client builds, packaging, releases and syncing with upstream.
 * Change the default admin password, keep `id_ed25519` secret and back it up: changing it makes every client reject
   your server.
 * Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
+
+## Code signing
+
+Free code signing for the Windows executables of the releases is provided by [SignPath.io](https://signpath.io), with a
+certificate from the [SignPath Foundation](https://signpath.org). Thank you to SignPath for supporting open source
+projects with this service: a signed program shows its publisher and lets Windows (SmartScreen) and antivirus software
+check that it was not modified after the build.
+
+* The files are built from the source of this repository by the GitHub Actions workflows (`.github/workflows/`), then
+  sent to SignPath from the same run: SignPath checks that they come from this repository.
+* The macOS programs are signed and notarized with the Apple Developer ID of the maintainers.
+* Check the SHA-256 sums published with each release in any case.
 
 ## License and source code
 
